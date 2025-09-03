@@ -1,0 +1,10 @@
+# 🔧 EJEMPLO: .env.local para MODO REAL
+# Reemplaza ESTOS valores con los de TU proyecto Supabase:
+
+NEXT_PUBLIC_SUPABASE_URL=https://tunombreproyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1bm9tYnJlcHJveWVjdG8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYzOTU4ODc4NywiZXhwIjoxOTU1MTY0Nzg3fQ.ejemplo-key-aqui
+
+# ⚠️ IMPORTANTE:
+# - Reemplaza "tunombreproyecto" con el ID real de tu proyecto
+# - La key debe ser la "anon public" key, no la service role
+# - NO subas este archivo a GitHub (ya está en .gitignore)
