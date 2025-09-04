@@ -6,12 +6,12 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Sidebar from '@/components/Sidebar'
 import UserAvatar from '@/components/UserAvatar'
 
-// Usuario demo para el dashboard
+// Usuario demo para el dashboard  
 const demoUser: UserProfile = {
   id: 'demo-user-dashboard',
   email: 'usuario.demo@cop.com',
-  role: 'ConsultaCOP',
-  nombre_completo: 'Usuario Demo COP',
+  role: 'OperacionTRIB',
+  nombre_completo: 'Usuario Demo Tributaria',
   telefono: '3001234567',
   must_change_password: false
 }
@@ -24,7 +24,8 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={['AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionTRIB']}>
+      {/* Dashboard accesible para TODOS los perfiles del sistema */}
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar */}
         <Sidebar 
@@ -32,63 +33,48 @@ export default function DashboardLayout({
           onClose={() => setSidebarOpen(false)} 
         />
 
-        {/* Main content */}
-        <div className="lg:pl-64">
-          {/* Top bar */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-            <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-              {/* Botón hamburguesa (solo visible en móviles) */}
-              <div className="flex items-center lg:hidden">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-colors"
-                  aria-label="Abrir menú"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              </div>
+        {/* Main content optimizado */}
+        <div className="lg:pl-60">
+          {/* Título principal del dashboard */}
+          <div className="bg-white border-b border-gray-200/80 px-3 lg:px-6 py-2">
+            <h1 className="text-2xl font-bold text-bolivar-green">
+              Centro de Órdenes de Pago
+            </h1>
+          </div>
 
-              {/* Título de la página (desktop) */}
-              <div className="hidden lg:block">
-                <h1 className="text-xl font-semibold text-bolivar-black">
-                  <span className="text-bolivar-green font-bold">Seguros Bolívar</span> - Dashboard COP
-                </h1>
-                <p className="text-sm text-bolivar-gray mt-0.5">
-                  Centro de Órdenes de Pago - Modo Demo
-                </p>
-              </div>
+          {/* Top bar minimalista - solo perfil de usuario */}
+          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200/80">
+            <div className="flex items-center justify-between h-12 px-3 lg:px-6">
+              {/* Botón hamburguesa (solo móviles) */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100"
+                aria-label="Abrir menú"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
 
-              {/* Logo en móviles */}
-              <div className="flex items-center space-x-2 lg:hidden">
-                <div className="w-8 h-6 bg-bolivar-green rounded flex items-center justify-center shadow-sm">
-                  <span className="text-white font-black text-xs tracking-wider">SB</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-bolivar-green leading-none">SEGUROS</span>
-                  <span className="text-xs text-bolivar-gray-dark leading-none">BOLÍVAR</span>
-                </div>
-              </div>
+              {/* Espaciador */}
+              <div className="flex-1"></div>
 
               {/* Avatar del usuario */}
               <div className="flex items-center">
-                {/* Información del usuario (desktop) */}
                 <div className="hidden md:flex md:flex-col md:items-end mr-3">
                   <span className="text-sm font-medium text-gray-900">
                     {demoUser.nombre_completo}
                   </span>
                   <span className="text-xs text-gray-500">{demoUser.role}</span>
                 </div>
-
                 <UserAvatar user={demoUser} />
               </div>
             </div>
           </div>
 
-          {/* Main content area */}
-          <main className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main content area optimizado */}
+          <main className="p-2 lg:p-3">
+            <div className="max-w-none">
               {children}
             </div>
           </main>

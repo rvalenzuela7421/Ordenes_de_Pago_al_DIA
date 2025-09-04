@@ -197,12 +197,19 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
           }, 3000)
           return
         } else {
-          // Modo producción
+          // Modo producción - mensaje permanente hasta que el usuario haga clic
           setMessage('¡Cuenta creada exitosamente! Revisa tu email para confirmar tu cuenta.')
+          
+          // En modo producción para registro, no redirigir automáticamente
+          // Para registro, el mensaje permanece hasta acción del usuario
+          return
         }
       }
 
-      onSuccess?.()
+      // Solo llamar onSuccess para login, no para registro en producción
+      if (mode === 'login') {
+        onSuccess?.()
+      }
     } catch (error) {
       let errorMessage = 'Error inesperado'
       
@@ -227,8 +234,10 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
   // Función para traducir errores comunes al español
   const translateError = (error: string): string => {
     const errorTranslations: { [key: string]: string } = {
-      'Invalid login credentials': 'Credenciales de acceso inválidas. Verifica tu email y contraseña.',
-      'Email not confirmed': 'Email no confirmado. Revisa tu bandeja de entrada.',
+      'Invalid login credentials': 'Credenciales incorrectas o el usuario no existe. Verifica tu email y contraseña, o regístrate si aún no tienes cuenta.',
+      'User not found': 'Usuario no encontrado. Verifica el email ingresado o regístrate si aún no tienes cuenta.',
+      'Email not found': 'Email no encontrado en el sistema. Verifica el email ingresado o regístrate.',
+      'Email not confirmed': 'Email no confirmado. Revisa tu bandeja de entrada para confirmar tu cuenta.',
       'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
       'User already registered': 'El usuario ya está registrado. Intenta iniciar sesión.',
       'Invalid email': 'El formato del email es inválido.',
@@ -238,6 +247,8 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
       'Unable to validate email address: invalid format': 'Formato de email inválido.',
       'Password is too weak': 'La contraseña es muy débil. Debe cumplir los criterios de seguridad.',
       'Rate limit exceeded': 'Demasiados intentos. Espera un momento antes de intentar nuevamente.',
+      'Email link is invalid or has expired': 'El enlace del email es inválido o ha expirado.',
+      'Token has expired or is invalid': 'La sesión ha expirado. Inicia sesión nuevamente.',
     }
 
     for (const [englishError, spanishError] of Object.entries(errorTranslations)) {
@@ -312,25 +323,97 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Mensaje de éxito */}
         {message && (
-          <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start space-x-3">
+              <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {message}
+              <div className="flex-1">
+                <p className="text-green-800 text-sm font-medium mb-2">{message}</p>
+                
+                {/* Botones de acción para registro exitoso */}
+                {mode === 'register' && !message.includes('🎭') && (
+                  <div className="flex flex-col space-y-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMessage('')
+                        onSuccess?.()
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Ir al Iniciar Sesión</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setMessage('')}
+                      className="w-full bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>Cerrar mensaje</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Información adicional para registro */}
+                {mode === 'register' && !message.includes('🎭') && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-start space-x-2">
+                      <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-blue-800 text-xs">
+                        <p className="font-medium mb-1">¿Qué sigue?</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Revisa tu bandeja de entrada de correo</li>
+                          <li>Confirma tu cuenta haciendo clic en el enlace</li>
+                          <li>Luego podrás iniciar sesión normalmente</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Mensaje de error */}
         {errors.general && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              {errors.general}
+              <div className="flex-1">
+                <p className="text-red-700 text-sm mb-2">{errors.general}</p>
+                {/* Mensaje adicional de ayuda para errores de login */}
+                {mode === 'login' && (errors.general.toLowerCase().includes('credenciales') || 
+                  errors.general.toLowerCase().includes('usuario no') || 
+                  errors.general.toLowerCase().includes('email no')) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-2 mt-2">
+                    <div className="flex items-start space-x-1">
+                      <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-blue-800 text-xs">
+                        <p className="font-medium mb-1">¿Necesitas ayuda?</p>
+                        <p>• Si no tienes cuenta, <a href="/auth/register" className="text-blue-600 underline hover:text-blue-800">regístrate aquí</a></p>
+                        <p>• Si olvidaste tu contraseña, <a href="/auth/reset-password" className="text-blue-600 underline hover:text-blue-800">recupérala aquí</a></p>
+                        <p>• Contacta al administrador si el problema persiste</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -542,6 +625,28 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
           </div>
         )}
 
+        {/* Indicador de validación para login */}
+        {mode === 'login' && !isFormValid() && (formData.email || formData.password) && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div className="text-sm text-yellow-800">
+                <p className="font-medium mb-1">Para habilitar el botón de login:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  {!isValidEmail(formData.email.trim()) && (
+                    <li>✅ Email válido (ejemplo: usuario@dominio.com)</li>
+                  )}
+                  {formData.password.length < 6 && (
+                    <li>✅ Contraseña de al menos 6 caracteres</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Botón de envío */}
         <button
           type="submit"
@@ -552,9 +657,11 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
               : 'hover:scale-[1.02] hover:shadow-lg'
           }`}
           title={
-            mode === 'register' && !isFormValid() 
-              ? 'Complete todos los campos obligatorios para habilitar el registro'
-              : ''
+            mode === 'login' && !isFormValid() 
+              ? 'Complete los campos requeridos para habilitar el login'
+              : mode === 'register' && !isFormValid() 
+                ? 'Complete todos los campos obligatorios para habilitar el registro'
+                : ''
           }
         >
           {loading ? (

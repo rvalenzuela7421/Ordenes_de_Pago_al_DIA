@@ -15,8 +15,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       const demoUser: UserProfile = {
         id: 'demo-user-current-session',
         email: 'usuario.demo@cop.com',
-        role: 'ConsultaCOP',
-        nombre_completo: 'Usuario Demo COP',
+        role: 'OperacionTRIB',
+        nombre_completo: 'Usuario Demo Tributaria',
         telefono: '3001234567',
         must_change_password: false
       }

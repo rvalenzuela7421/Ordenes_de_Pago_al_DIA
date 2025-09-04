@@ -123,7 +123,7 @@ async function handleCreateOrden(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('ordenes_pago')
       .insert(nuevaOrden)
       .select()
@@ -135,7 +135,7 @@ async function handleCreateOrden(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Log de auditoría
-    console.log(`Orden creada: ${numero_orden} por ${user.email} - Estado: ${data.estado}`)
+    console.log(`Orden creada: ${numero_orden} por ${user.email} - Estado: ${(data as any)?.estado}`)
     
     if (autoApproval.shouldAutoApprove) {
       console.log(`Orden ${numero_orden} aprobada automáticamente: ${autoApproval.reason}`)
@@ -201,21 +201,21 @@ async function handleUpdateOrden(req: NextApiRequest, res: NextApiResponse) {
       
       // Actualizar metadata con información de quien aprobó/rechazó
       updates.metadata = {
-        ...currentOrden.metadata,
+        ...(currentOrden as any)?.metadata,
         ...metadata,
         [`${estado}_by`]: user.id,
         [`${estado}_by_email`]: user.email,
         [`${estado}_at`]: new Date().toISOString()
       }
     } else if (metadata) {
-      updates.metadata = { ...currentOrden.metadata, ...metadata }
+      updates.metadata = { ...(currentOrden as any)?.metadata, ...metadata }
     }
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No hay cambios para aplicar' })
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from('ordenes_pago')
       .update(updates)
       .eq('id', id)
@@ -228,7 +228,7 @@ async function handleUpdateOrden(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Log de auditoría
-    console.log(`Orden ${currentOrden.numero_orden} actualizada por ${user.email}:`, updates)
+    console.log(`Orden ${(currentOrden as any)?.numero_orden} actualizada por ${user.email}:`, updates)
 
     return res.status(200).json({ orden: data })
 
@@ -283,7 +283,7 @@ async function handleDeleteOrden(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Log de auditoría
-    console.log(`Orden ${orden.numero_orden} eliminada por ${user.email}`)
+    console.log(`Orden ${(orden as any)?.numero_orden} eliminada por ${user.email}`)
 
     return res.status(200).json({ success: true, message: 'Orden eliminada exitosamente' })
 

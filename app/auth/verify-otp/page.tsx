@@ -14,8 +14,8 @@ export default function VerifyOTPPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const emailParam = searchParams.get('email')
-    const methodParam = searchParams.get('method') as 'email' | 'sms'
+    const emailParam = searchParams?.get('email')
+    const methodParam = searchParams?.get('method') as 'email' | 'sms'
     
     if (!emailParam) {
       router.push('/auth/reset-password')

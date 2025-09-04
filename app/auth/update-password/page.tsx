@@ -18,7 +18,7 @@ export default function UpdatePasswordPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const required = searchParams.get('required') === 'true'
+    const required = searchParams?.get('required') === 'true'
     setIsRequired(required)
   }, [searchParams])
 
