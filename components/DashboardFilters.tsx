@@ -18,11 +18,11 @@ interface DashboardFiltersProps {
 }
 
 const ESTADOS_LABELS = {
-  'solicitada': 'Solicitada',
-  'devuelta': 'Devuelta', 
-  'generada': 'Generada',
-  'aprobada': 'Aprobada',
-  'pagada': 'Pagada'
+  'Solicitada': 'Solicitada',
+  'Devuelta': 'Devuelta', 
+  'Generada': 'Generada',
+  'Aprobada': 'Aprobada',
+  'Pagada': 'Pagada'
 }
 
 export default function DashboardFilters({ 

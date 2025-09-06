@@ -29,11 +29,15 @@ export default async function handler(
       }
       user = data.user
     } else {
-      const { data, error } = await supabase.auth.admin.getUserByEmail(email)
-      if (error || !data.user) {
+      const { data: usersData, error } = await supabase.auth.admin.listUsers()
+      if (error) {
+        return res.status(500).json({ error: 'Error al obtener usuario' })
+      }
+      const foundUser = usersData.users.find(u => u.email === email)
+      if (!foundUser) {
         return res.status(404).json({ error: 'Usuario no encontrado' })
       }
-      user = data.user
+      user = foundUser
     }
 
     // Generar contraseña temporal
@@ -60,13 +64,7 @@ export default async function handler(
       // Por ahora usando el sistema de Supabase para generar un link de reset
       const { error: emailError } = await supabase.auth.admin.generateLink({
         type: 'recovery',
-        email: user.email!,
-        options: {
-          data: {
-            temp_password: tempPassword,
-            type: 'temp_password'
-          }
-        }
+        email: user.email!
       })
 
       if (emailError) {

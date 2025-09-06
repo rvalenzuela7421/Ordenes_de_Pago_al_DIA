@@ -71,9 +71,6 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">COP</span>
               </div>
-              <span className="ml-3 text-xl font-semibold text-gray-900">
-                Centro de Órdenes de Pago
-              </span>
             </Link>
 
             {/* Navegación principal - Desktop */}

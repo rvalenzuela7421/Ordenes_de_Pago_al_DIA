@@ -137,14 +137,18 @@ async function handleVerifyOTP(req: NextApiRequest, res: NextApiResponse) {
 
     const supabase = createAdminClient()
 
-    // Obtener el usuario por email
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email)
+    // Obtener el usuario por email usando listUsers
+    const { data: usersData, error: userError } = await supabase.auth.admin.listUsers()
     
-    if (userError || !userData.user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' })
+    if (userError) {
+      return res.status(500).json({ error: 'Error al obtener usuario' })
     }
 
-    const user = userData.user
+    const user = usersData.users.find(u => u.email === email)
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
 
     // Verificar el código OTP
     const { data: otpData, error: otpError } = await supabase
@@ -158,13 +162,15 @@ async function handleVerifyOTP(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'Código OTP inválido' })
     }
 
+    const otp = otpData as any
+
     // Verificar que no haya expirado
-    if (new Date(otpData.expires_at) < new Date()) {
+    if (new Date(otp.expires_at) < new Date()) {
       // Limpiar código expirado
       await supabase
         .from('otp_codes')
         .delete()
-        .eq('id', otpData.id)
+        .eq('id', otp.id)
 
       return res.status(400).json({ error: 'Código OTP expirado' })
     }
@@ -173,7 +179,7 @@ async function handleVerifyOTP(req: NextApiRequest, res: NextApiResponse) {
     await supabase
       .from('otp_codes')
       .delete()
-      .eq('id', otpData.id)
+      .eq('id', otp.id)
 
     // Generar token temporal para cambio de contraseña
     const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64')
