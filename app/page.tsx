@@ -6,6 +6,7 @@ import { OrdenPago, getDashboardStats, getOrdenesRecientes, formatDate, formatCu
 import DashboardFilters from '@/components/DashboardFilters'
 import { getCurrentUserProfile } from '@/lib/auth'
 import { UserProfile } from '@/lib/database.types'
+import '@/styles/table-scroll.css'
 
 type SortField = keyof OrdenPago
 type SortDirection = 'asc' | 'desc'
@@ -50,6 +51,19 @@ export default function Dashboard() {
     proveedores: [],
     estados: []
   })
+
+  // Función para detectar scroll horizontal
+  const checkHorizontalScroll = useCallback(() => {
+    const container = document.querySelector('.table-scroll-container')
+    if (container) {
+      const hasScroll = container.scrollWidth > container.clientWidth
+      if (hasScroll) {
+        container.classList.add('has-scroll')
+      } else {
+        container.classList.remove('has-scroll')
+      }
+    }
+  }, [])
 
   const loadDashboardData = async () => {
     try {
@@ -106,6 +120,30 @@ export default function Dashboard() {
     loadDashboardData()
   }, [])
 
+  // Verificar scroll horizontal cuando cambie la data o el tamaño de ventana
+  useEffect(() => {
+    checkHorizontalScroll()
+    
+    // Agregar listener para resize
+    const handleResize = () => {
+      checkHorizontalScroll()
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [checkHorizontalScroll, ordenesRecientes, loading])
+
+  // También verificar scroll después de que la tabla se renderice
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkHorizontalScroll()
+    }, 100)
+    
+    return () => clearTimeout(timer)
+  }, [checkHorizontalScroll, ordenesRecientes])
+
   // Aplicar filtros, búsqueda, ordenamiento y paginación
   useEffect(() => {
     let filtered = [...allOrdenes]
@@ -146,6 +184,7 @@ export default function Dashboard() {
         orden.proveedor.toLowerCase().includes(searchLower) ||
         orden.concepto.toLowerCase().includes(searchLower) ||
         orden.estado.toLowerCase().includes(searchLower) ||
+        (orden.compania_receptora && orden.compania_receptora.toLowerCase().includes(searchLower)) ||
         (orden.numero_op && orden.numero_op.toLowerCase().includes(searchLower))
       )
     }
@@ -470,7 +509,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="table-scroll-container relative">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bolivar-green"></div>
@@ -485,12 +524,12 @@ export default function Dashboard() {
               <p className="text-gray-400 text-sm mt-1">Intenta ajustar los filtros o crear una nueva orden</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" style={{minWidth: '1400px'}}>
               <thead className="bg-gray-50">
                 <tr>
                   <th 
                     onClick={() => handleSort('fecha_solicitud')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -502,7 +541,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('numero_solicitud')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[110px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">No.Solicitud</div>
@@ -510,8 +549,20 @@ export default function Dashboard() {
                     </div>
                   </th>
                   <th 
+                    onClick={() => handleSort('compania_receptora')}
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[140px]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="capitalize">
+                        <div>Compañía</div>
+                        <div>Receptora</div>
+                      </div>
+                      {getSortIcon('compania_receptora')}
+                    </div>
+                  </th>
+                  <th 
                     onClick={() => handleSort('proveedor')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[120px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[130px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">Proveedor</div>
@@ -520,7 +571,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('concepto')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[150px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[160px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">Concepto</div>
@@ -529,7 +580,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('monto_solicitud')}
-                    className="px-2 py-2 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
+                    className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -541,7 +592,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('iva')}
-                    className="px-2 py-2 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[70px]"
+                    className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">Iva</div>
@@ -550,7 +601,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('total_solicitud')}
-                    className="px-2 py-2 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
+                    className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -562,7 +613,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('fecha_op')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -574,7 +625,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('numero_op')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">No.Op</div>
@@ -583,7 +634,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('fecha_aprobada')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -595,7 +646,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('fecha_pago')}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -607,14 +658,14 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('estado')}
-                    className="px-2 py-2 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
+                    className="px-3 py-3 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">Estado</div>
                       {getSortIcon('estado')}
                     </div>
                   </th>
-                  <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 min-w-[80px]">
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 min-w-[90px]">
                     Anexos
                   </th>
                 </tr>
@@ -624,51 +675,56 @@ export default function Dashboard() {
                   const badge = getEstadoBadge(orden.estado)
                   return (
                     <tr key={orden.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-500">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                         {formatDate(orden.fecha_solicitud)}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         <div className="text-xs font-medium text-gray-900">{orden.numero_solicitud}</div>
                       </td>
-                      <td className="px-2 py-2 max-w-[120px]">
+                      <td className="px-3 py-3 max-w-[140px]">
+                        <div className="text-xs text-gray-900 truncate" title={orden.compania_receptora || 'No especificado'}>
+                          {orden.compania_receptora?.replace('NT-', '').split('-')[1] || 'No especificado'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 max-w-[130px]">
                         <div className="text-xs text-gray-900 truncate" title={orden.proveedor}>
                           {orden.proveedor}
                         </div>
                       </td>
-                      <td className="px-2 py-2 max-w-[150px]">
+                      <td className="px-3 py-3 max-w-[160px]">
                         <div className="text-xs text-gray-900 truncate" title={orden.concepto}>
                           {orden.concepto}
                         </div>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-900 text-right">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900 text-right">
                         {formatCurrency(orden.monto_solicitud).replace('$ ', '$')}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-600 text-right">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-600 text-right">
                         {orden.iva ? formatCurrency(orden.iva).replace('$ ', '$') : '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-right">
+                      <td className="px-3 py-3 whitespace-nowrap text-right">
                         <div className="text-xs font-medium text-gray-900">
                           {formatCurrency(orden.total_solicitud).replace('$ ', '$')}
                         </div>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-500">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                         {orden.fecha_op ? formatDate(orden.fecha_op) : '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-600">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-600">
                         {orden.numero_op || '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-500">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                         {orden.fecha_aprobada ? formatDate(orden.fecha_aprobada) : '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-xs text-gray-500">
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                         {orden.fecha_pago ? formatDate(orden.fecha_pago) : '-'}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-center">
+                      <td className="px-3 py-3 whitespace-nowrap text-center">
                         <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded border ${badge.style}`}>
                           {badge.label}
                         </span>
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap text-center">
+                      <td className="px-3 py-3 whitespace-nowrap text-center">
                         <div className="flex items-center justify-start space-x-2 min-w-[60px]">
                           {/* Icono PDF siempre a la izquierda */}
                           <div className="flex-shrink-0">

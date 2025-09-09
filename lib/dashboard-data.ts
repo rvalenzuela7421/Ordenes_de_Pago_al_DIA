@@ -4,6 +4,7 @@ export interface OrdenPago {
   id: string
   fecha_solicitud: string
   numero_solicitud: string
+  compania_receptora: string
   proveedor: string
   concepto: string
   descripcion?: string

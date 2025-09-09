@@ -2,9 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { supabase } from '@/lib/supabase'
 import { isDemoMode } from '@/lib/utils'
 import { createClient } from '@supabase/supabase-js'
+import { enviarNotificacionNuevaSolicitud } from '@/lib/email'
 
 // Tipos para la solicitud de OP
 interface SolicitudOPData {
+  companiaReceptora: string
   acreedor: string
   concepto: string
   valorSolicitud: number
@@ -46,6 +48,7 @@ export default async function handler(
 
   try {
     const {
+      companiaReceptora,
       acreedor,
       concepto,
       descripcion,
@@ -61,9 +64,16 @@ export default async function handler(
     } = req.body
 
     // Validaciones básicas
-    if (!acreedor || !concepto || !valorSolicitud) {
+    if (!companiaReceptora || !acreedor || !concepto || !valorSolicitud) {
       return res.status(400).json({ 
-        error: 'Datos incompletos. Acreedor, concepto y valor son requeridos.' 
+        error: 'Datos incompletos. Compañía receptora, acreedor, concepto y valor son requeridos.' 
+      })
+    }
+
+    // Validar que compañía receptora sea de GRUPO_BOLIVAR
+    if (!companiaReceptora.startsWith('NT-')) {
+      return res.status(400).json({ 
+        error: 'Compañía receptora debe ser una empresa válida del Grupo Bolívar.' 
       })
     }
 
@@ -86,6 +96,7 @@ export default async function handler(
     // Crear objeto de solicitud usando nombres de campos de ordenes_pago
     const nuevaSolicitud = {
       numero_solicitud: numeroSolicitud,
+      compania_receptora: companiaReceptora, // Nuevo campo compañía receptora
       proveedor: acreedor, // Mapear acreedor -> proveedor
       concepto,
       descripcion: descripcion || null, // Nuevo campo descripcion
@@ -114,6 +125,38 @@ export default async function handler(
 
       // Agregar a array de demo
       demoSolicitudes.push(nuevaSolicitud)
+
+      // Enviar notificación por email en modo demo
+      try {
+        const fechaFormateada = new Date(nuevaSolicitud.fecha_solicitud)
+          .toLocaleDateString('es-CO', {
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+
+        const resultadoEmail = await enviarNotificacionNuevaSolicitud(
+          'usuario.demo@cop.com',
+          'Usuario Demo Tributaria',
+          {
+            numeroSolicitud: numeroSolicitud,
+            companiaReceptora: nuevaSolicitud.compania_receptora,
+            proveedor: nuevaSolicitud.proveedor,
+            concepto: nuevaSolicitud.concepto,
+            montoSolicitud: nuevaSolicitud.monto_solicitud,
+            totalSolicitud: nuevaSolicitud.total_solicitud,
+            fechaSolicitud: fechaFormateada
+          }
+        )
+
+        if (resultadoEmail.success) {
+          console.log('🎭 MODO DEMO: Email simulado enviado exitosamente')
+        }
+      } catch (emailError) {
+        console.error('🎭 MODO DEMO: Error al simular email:', emailError)
+      }
 
       return res.status(200).json({
         success: true,
@@ -194,6 +237,58 @@ export default async function handler(
       } catch (auditError) {
         console.warn('No se pudo insertar en audit log (tabla opcional):', auditError)
         // No fallar por esto, es opcional
+      }
+
+      // Enviar notificación por email al usuario
+      try {
+        // Obtener perfil del usuario para el email y nombre
+        const { data: userProfile, error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .select('email, nombre_completo')
+          .eq('id', user.id)
+          .single()
+
+        if (!profileError && userProfile) {
+          // Formatear fecha para el email
+          const fechaFormateada = new Date(nuevaSolicitud.fecha_solicitud)
+            .toLocaleDateString('es-CO', {
+              year: 'numeric',
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+
+          // Enviar notificación por email
+          const resultadoEmail = await enviarNotificacionNuevaSolicitud(
+            userProfile.email,
+            userProfile.nombre_completo || userProfile.email,
+            {
+              numeroSolicitud: numeroSolicitud,
+              companiaReceptora: nuevaSolicitud.compania_receptora,
+              proveedor: nuevaSolicitud.proveedor,
+              concepto: nuevaSolicitud.concepto,
+              montoSolicitud: nuevaSolicitud.monto_solicitud,
+              totalSolicitud: nuevaSolicitud.total_solicitud,
+              fechaSolicitud: fechaFormateada
+            }
+          )
+
+          if (resultadoEmail.success) {
+            console.log('✅ Email de notificación enviado:', {
+              to: userProfile.email,
+              solicitud: numeroSolicitud,
+              messageId: resultadoEmail.messageId
+            })
+          } else {
+            console.warn('⚠️ No se pudo enviar email de notificación:', resultadoEmail.error)
+          }
+        } else {
+          console.warn('⚠️ No se pudo obtener perfil del usuario para enviar email')
+        }
+      } catch (emailError) {
+        console.error('❌ Error al enviar email de notificación:', emailError)
+        // No fallar la creación de solicitud por error en email
       }
 
       return res.status(200).json({
