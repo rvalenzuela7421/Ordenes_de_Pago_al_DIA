@@ -780,55 +780,89 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 6: EXTRACCIÓN DE IVA (Valor específico del PDF) ✅
     console.log('6️⃣ Extrayendo valor del IVA...')
     
-    // BÚSQUEDA EN LÍNEAS: Identifica líneas que contengan "IVA"
-    console.log('🔍 Búsqueda en líneas: Identifica líneas que contengan "IVA"...')
+    // LÓGICA SIMPLIFICADA: Buscar líneas que contengan "IVA" y tomar el valor al final
+    console.log('🔍 Buscando líneas que contengan "IVA" y extrayendo valor al final...')
+    
     const ivaLines = text.split('\n').filter(line => line.includes('IVA'))
     console.log(`📊 Líneas que contienen "IVA" encontradas: ${ivaLines.length}`)
     
+    let valoresIvaEncontrados: number[] = []
+    
     if (ivaLines.length > 0) {
-      console.log('📋 Líneas con "IVA":')
-      ivaLines.forEach((line, index) => {
-        console.log(`  ${index + 1}. "${line.trim()}"`)
+      console.log('📋 Líneas con "IVA" y extracción del valor al final:')
+      
+      ivaLines.forEach((linea, index) => {
+        console.log(`  ${index + 1}. "${linea.trim()}"`)
+        
+        // MÚLTIPLES PATRONES para capturar diferentes formatos de IVA
+        const patronesIVA = [
+          // Patrón 1: IVA seguido de $ y número (ej: "IVA $ 18,923,728")
+          /IVA[^$]*\$\s*([\d,\.]+)/i,
+          // Patrón 2: IVA con porcentaje y $ (ej: "IVA (19%) $ 18,923,728")
+          /IVA\s*\([0-9]+%?\)\s*\$?\s*([\d,\.]+)/i,
+          // Patrón 3: IVA seguido directamente de número (ej: "IVA 18,923,728")
+          /IVA[^0-9]*?([\d,\.]+)/i,
+          // Patrón 4: Cualquier número significativo después de IVA
+          /IVA.*?([\d,\.]{4,})/i,
+          // Patrón 5: El último número grande de la línea
+          /([\d,\.]{4,})(?![0-9])/g
+        ]
+        
+        let valorEncontradoEnLinea: number | null = null
+        
+        for (let i = 0; i < patronesIVA.length; i++) {
+          const patron = patronesIVA[i]
+          const match = linea.match(patron)
+          
+          if (match) {
+            console.log(`    🔍 Patrón ${i + 1} encontró: "${match[0]}"`)
+            
+            // Si es el patrón global (último), tomar todos los matches
+            if (i === patronesIVA.length - 1) {
+              const allMatches = Array.from(linea.matchAll(patron))
+              for (const m of allMatches) {
+                const valorLimpio = cleanNumericValue(m[1])
+                const valorNum = parseFloat(valorLimpio)
+                
+                console.log(`    📊 Evaluando número: "${m[1]}" -> ${valorNum}`)
+                
+                // VALIDACIÓN: Debe ser > 1000 y no ser porcentaje
+                if (valorNum > 1000 && valorNum !== 19 && valorNum !== 16 && valorNum !== 5) {
+                  if (!valorEncontradoEnLinea || valorNum > valorEncontradoEnLinea) {
+                    valorEncontradoEnLinea = valorNum
+                    console.log(`    ⭐ Mejor candidato actualizado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
+                  }
+                }
+              }
+            } else {
+              // Para patrones específicos, tomar el primer grupo
+              const valorLimpio = cleanNumericValue(match[1])
+              const valorNum = parseFloat(valorLimpio)
+              
+              console.log(`    📊 Valor extraído: "${match[1]}" -> ${valorNum}`)
+              
+              // VALIDACIÓN: Debe ser > 1000 y no ser porcentaje
+              if (valorNum > 1000 && valorNum !== 19 && valorNum !== 16 && valorNum !== 5) {
+                valorEncontradoEnLinea = valorNum
+                console.log(`    ⭐ Valor válido encontrado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
+                break // Salir del loop, ya encontramos un valor válido
+              }
+            }
+          }
+        }
+        
+        if (valorEncontradoEnLinea) {
+          valoresIvaEncontrados.push(valorEncontradoEnLinea)
+          console.log(`    ✅ Valor IVA final para esta línea: $${Math.round(valorEncontradoEnLinea).toLocaleString('es-CO')}`)
+        } else {
+          console.log(`    ❌ No se encontró valor IVA válido en esta línea`)
+        }
       })
     } else {
       console.log('❌ No se encontraron líneas que contengan "IVA"')
     }
     
-    // Extraer valores numéricos de las líneas que contengan "IVA"
-    let valoresIvaEncontrados: number[] = []
-    
-    if (ivaLines.length > 0) {
-      console.log('🔍 Extrayendo valores numéricos de líneas con "IVA"...')
-      
-      ivaLines.forEach((linea, index) => {
-        console.log(`📋 Línea ${index + 1}: "${linea.trim()}"`)
-        
-        // Buscar todos los valores numéricos en esta línea
-        const numerosEnLinea = linea.match(/[\d,\.]+/g)
-        
-        if (numerosEnLinea && numerosEnLinea.length > 0) {
-          console.log(`🔢 Números encontrados: [${numerosEnLinea.join(', ')}]`)
-          
-          numerosEnLinea.forEach(num => {
-            // Limpiar y validar cada número
-            const valorLimpio = cleanNumericValue(num)
-            const valorNum = parseFloat(valorLimpio)
-            
-            // VALIDACIÓN: El valor debe ser > 0 (descartar porcentajes como "19")
-            if (valorNum > 0 && valorNum !== 19) {
-              valoresIvaEncontrados.push(valorNum)
-              console.log(`✅ Valor IVA válido: "${num}" -> $${Math.round(valorNum).toLocaleString('es-CO')}`)
-            } else {
-              console.log(`❌ Descartado (porcentaje o valor cero): "${num}" -> ${valorNum}`)
-            }
-          })
-        } else {
-          console.log(`❌ No se encontraron números en esta línea`)
-        }
-      })
-    }
-    
-    console.log(`📊 Total de valores IVA encontrados: ${valoresIvaEncontrados.length}`)
+    console.log(`📊 Total de valores IVA válidos encontrados: ${valoresIvaEncontrados.length}`)
 
     // Selección del valor final del IVA
     let ivaFinalEncontrado: number | null = null
@@ -838,7 +872,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
       const valorMaximoIva = Math.max(...valoresIvaEncontrados)
       ivaFinalEncontrado = Math.round(valorMaximoIva) // Número entero redondeado
       
-      console.log(`🎯 Seleccionado valor IVA más grande de ${valoresIvaEncontrados.length} encontrados`)
+      console.log(`🎯 Seleccionando valor IVA más grande de ${valoresIvaEncontrados.length} encontrados`)
       console.log(`💸 Valores encontrados: ${valoresIvaEncontrados.map(v => `$${Math.round(v).toLocaleString('es-CO')}`).join(', ')}`)
       console.log(`✅ Valor IVA final: $${ivaFinalEncontrado.toLocaleString('es-CO')}`)
     } else {
@@ -861,52 +895,69 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 7: EXTRACCIÓN DE TOTAL SOLICITUD (Valor total final con IVA incluido) ✅
     console.log('7️⃣ Extrayendo valor total de la solicitud...')
     
-    // Buscar específicamente "TOTAL" (todo en mayúsculas)
-    console.log('📋 Buscando patrón "TOTAL" (todo en mayúsculas)...')
+    // NUEVA LÓGICA MEJORADA: Buscar específicamente líneas que contengan "TOTAL" en mayúsculas
+    console.log('🔍 Buscando líneas que contengan exactamente "TOTAL" (todo en mayúsculas)...')
     
-    // Múltiples patrones para diferentes formatos
-    const totalPatrones = [
-      // 1. TOTAL $X,XXX,XXX
-      /(?:^|[\s\n\r])TOTAL\s*\$?\s*([\d,\.]+)/gm,
-      // 2. TOTAL: $X,XXX,XXX  
-      /(?:^|[\s\n\r])TOTAL:\s*\$?\s*([\d,\.]+)/gm,
-      // 3. TOTAL $X,XXX,XXX (espacios múltiples)
-      /(?:^|[\s\n\r])TOTAL\s+\$?\s*([\d,\.]+)/gm,
-      // 4. ^TOTAL $X,XXX,XXX (inicio de línea)
-      /^TOTAL\s*\$?\s*([\d,\.]+)/gm
-    ]
+    // Dividir el texto en líneas y buscar las que contienen "TOTAL"
+    const lineasTotal = text.split('\n').filter(linea => linea.includes('TOTAL'))
+    console.log(`📊 Líneas que contienen "TOTAL" encontradas: ${lineasTotal.length}`)
     
     let valoresTotalEncontrados: number[] = []
     
-    for (let i = 0; i < totalPatrones.length; i++) {
-      const patron = totalPatrones[i]
-      const matches = Array.from(text.matchAll(patron))
+    if (lineasTotal.length > 0) {
+      console.log('📋 Analizando líneas con "TOTAL":')
       
-      console.log(`📊 Patrón ${i+1} encontró ${matches.length} matches`)
-      
-      if (matches.length > 0) {
-        for (let j = 0; j < matches.length; j++) {
-          const match = matches[j]
-          console.log(`🔍 Patrón ${i+1}, Match ${j+1}: "${match[0].replace(/[\r\n]/g, ' ').trim()}"`)
+      lineasTotal.forEach((linea, index) => {
+        console.log(`  ${index + 1}. "${linea.trim()}"`)
         
-        if (match[1]) {
-            console.log(`💰 Valor crudo encontrado: "${match[1]}"`)
+        // PATRONES ESPECÍFICOS para extraer valor después de "TOTAL"
+        const patronesTotalEspecificos = [
+          // Patrón 1: TOTAL $ 123,456,789
+          /\bTOTAL\s*\$\s*([\d,\.]+)/i,
+          // Patrón 2: TOTAL: $ 123,456,789
+          /\bTOTAL:\s*\$\s*([\d,\.]+)/i,
+          // Patrón 3: TOTAL 123,456,789 (sin $)
+          /\bTOTAL\s+([\d,\.]+)/i,
+          // Patrón 4: TOTAL: 123,456,789 (sin $)
+          /\bTOTAL:\s+([\d,\.]+)/i,
+          // Patrón 5: Solo TOTAL seguido de espacios y número
+          /\bTOTAL\s*:?\s*\$?\s*([\d,\.]{4,})/i
+        ]
+        
+        let valorEncontradoEnLinea: number | null = null
+        
+        for (let i = 0; i < patronesTotalEspecificos.length; i++) {
+          const patron = patronesTotalEspecificos[i]
+          const match = linea.match(patron)
+          
+          if (match && match[1]) {
+            console.log(`    🔍 Patrón ${i + 1} encontró: "${match[0]}"`)
             
-            // Aplicar limpieza de formato colombiano
             const valorLimpio = cleanNumericValue(match[1])
             const valorNum = parseFloat(valorLimpio)
-            console.log(`🧮 Después de limpiar: "${match[1]}" -> "${valorLimpio}" -> ${valorNum}`)
             
-            // Validación: El valor debe ser > 0
-            if (valorNum > 0) {
-              valoresTotalEncontrados.push(valorNum)
-              console.log(`✅ Valor TOTAL válido agregado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
+            console.log(`    📊 Valor extraído: "${match[1]}" -> ${valorNum}`)
+            
+            // VALIDACIÓN: El valor debe ser > 1000 (valores significativos)
+            if (valorNum > 1000) {
+              valorEncontradoEnLinea = valorNum
+              console.log(`    ⭐ Valor TOTAL válido encontrado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
+              break // Salir del loop, ya encontramos un valor válido
             } else {
-              console.log(`❌ Valor inválido (≤ 0): ${valorNum}`)
+              console.log(`    ❌ Valor muy pequeño (≤ 1000): ${valorNum}`)
             }
           }
         }
-      }
+        
+        if (valorEncontradoEnLinea) {
+          valoresTotalEncontrados.push(valorEncontradoEnLinea)
+          console.log(`    ✅ Valor TOTAL final para esta línea: $${Math.round(valorEncontradoEnLinea).toLocaleString('es-CO')}`)
+        } else {
+          console.log(`    ❌ No se encontró valor TOTAL válido en esta línea`)
+        }
+      })
+    } else {
+      console.log('❌ No se encontraron líneas que contengan "TOTAL"')
     }
     
     // Selección: Si hay múltiples matches, tomar el valor más grande
