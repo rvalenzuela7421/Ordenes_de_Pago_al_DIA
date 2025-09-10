@@ -3,24 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getEmpresasGrupoBolivar, type EmpresaGrupoBolivar, getIVAVigente } from '@/lib/parametros-data'
+import { 
+  getEmpresasGrupoBolivar, type EmpresaGrupoBolivar, 
+  getAcreedoresAutorizados, type Acreedor,
+  getConceptosValidos, type Concepto,
+  getIVAVigente 
+} from '@/lib/parametros-data'
 import Link from 'next/link'
 
-// Usando EmpresaGrupoBolivar de parametros-data.ts
-
-const ACREEDORES = [
-  { value: 'NT-860034313-DAVIVIENDA S.A.', label: 'NT-860034313-DAVIVIENDA S.A.' }
-]
-
-const CONCEPTOS = [
-  { value: 'Convenio de uso de red', label: 'Convenio de uso de red' },
-  { value: 'Reconocimiento y pago de comisiones por recaudo Leasing', label: 'Reconocimiento y pago de comisiones por recaudo Leasing' },
-  { value: 'Reconocimiento y pago de comisiones por recaudo Vida Deudores Leasing', label: 'Reconocimiento y pago de comisiones por recaudo Vida Deudores Leasing' },
-  { value: 'Costo de recaudo TRC', label: 'Costo de recaudo TRC' },
-  { value: 'Referenciación de clientes', label: 'Referenciación de clientes' },
-  { value: 'Bono cumplimiento penetraciones seguros voluntarios', label: 'Bono cumplimiento penetraciones seguros voluntarios' },
-  { value: 'Retornos títulos de capitalización GanaMás', label: 'Retornos títulos de capitalización GanaMás' }
-]
+// Todos los datos se cargan desde la base de datos - tabla parametros
 
 interface FormData {
   fechaCuentaCobro: string
@@ -46,6 +37,10 @@ interface IVAVigente {
 export default function NuevaSolicitudPage() {
   const [empresasGrupoBolivar, setEmpresasGrupoBolivar] = useState<EmpresaGrupoBolivar[]>([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
+  const [acreedores, setAcreedores] = useState<Acreedor[]>([])
+  const [loadingAcreedores, setLoadingAcreedores] = useState(true)
+  const [conceptos, setConceptos] = useState<Concepto[]>([])
+  const [loadingConceptos, setLoadingConceptos] = useState(true)
   
   const [formData, setFormData] = useState<FormData>({
     fechaCuentaCobro: '',
@@ -75,15 +70,24 @@ export default function NuevaSolicitudPage() {
   const [ivaVigente, setIVAVigente] = useState<IVAVigente | null>(null)
   const [showPDFExtractionDialog, setShowPDFExtractionDialog] = useState(false)
   const [pendingPDFFile, setPendingPDFFile] = useState<File | null>(null)
-  const [showValidationModal, setShowValidationModal] = useState(false)
+  // Modal de validación eliminado - los datos se aplican automáticamente
   const [extractedData, setExtractedData] = useState<any>(null)
   const router = useRouter()
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    cargarIVAVigente()
-    cargarEmpresasGrupoBolivar()
+    cargarDatosIniciales()
   }, [])
+
+  // Cargar todos los datos necesarios desde la base de datos
+  const cargarDatosIniciales = async () => {
+    await Promise.all([
+      cargarIVAVigente(),
+      cargarEmpresasGrupoBolivar(),
+      cargarAcreedoresAutorizados(),
+      cargarConceptosValidos()
+    ])
+  }
 
   // Cargar IVA vigente desde tabla parametros
   const cargarIVAVigente = async () => {
@@ -158,6 +162,62 @@ export default function NuevaSolicitudPage() {
     }
   }
 
+  // Cargar acreedores autorizados desde tabla parametros
+  const cargarAcreedoresAutorizados = async () => {
+    try {
+      setLoadingAcreedores(true)
+      console.log('🏦 Cargando acreedores autorizados desde parámetros...')
+      
+      const { acreedores: acreedoresCargados, count, error } = await getAcreedoresAutorizados(true)
+      
+      if (error) {
+        console.error('❌ Error al cargar acreedores:', error)
+        throw new Error(error)
+      }
+      
+      if (acreedoresCargados && acreedoresCargados.length > 0) {
+        setAcreedores(acreedoresCargados)
+        console.log('✅ Acreedores autorizados cargados:', count)
+      } else {
+        console.error('❌ No se encontraron acreedores en la base de datos')
+        setAcreedores([])
+      }
+    } catch (error) {
+      console.error('💥 Error inesperado cargando acreedores:', error)
+      setAcreedores([])
+    } finally {
+      setLoadingAcreedores(false)
+    }
+  }
+
+  // Cargar conceptos válidos desde tabla parametros
+  const cargarConceptosValidos = async () => {
+    try {
+      setLoadingConceptos(true)
+      console.log('📋 Cargando conceptos válidos desde parámetros...')
+      
+      const { conceptos: conceptosCargados, count, error } = await getConceptosValidos(true)
+      
+      if (error) {
+        console.error('❌ Error al cargar conceptos:', error)
+        throw new Error(error)
+      }
+      
+      if (conceptosCargados && conceptosCargados.length > 0) {
+        setConceptos(conceptosCargados)
+        console.log('✅ Conceptos válidos cargados:', count)
+      } else {
+        console.error('❌ No se encontraron conceptos en la base de datos')
+        setConceptos([])
+      }
+    } catch (error) {
+      console.error('💥 Error inesperado cargando conceptos:', error)
+      setConceptos([])
+    } finally {
+      setLoadingConceptos(false)
+    }
+  }
+
   // Calcular automáticamente IVA y total
   const calcularIVAyTotal = (valor: string, tieneIVA: boolean) => {
     const valorNum = parseFloat(valor) || 0
@@ -221,11 +281,13 @@ export default function NuevaSolicitudPage() {
 
       // Mostrar modal de validación antes de aplicar los datos
       if (data.success && data.extractedFields.length > 0) {
-        console.log('📋 Datos extraídos recibidos - mostrando modal de validación')
+        console.log('📋 Datos extraídos recibidos - aplicando automáticamente al formulario')
         setExtractedData(data)
-        setShowValidationModal(true)
+        // Aplicar datos automáticamente al formulario sin mostrar modal
+        applyExtractedDataToForm(data)
         setPdfDataExtracted(true)
         setExtractionConfidence(data.confidence)
+        console.log('✅ Datos del PDF aplicados automáticamente al formulario')
       } else {
         console.log('ℹ️ No se pudieron extraer datos útiles del PDF')
       }
@@ -269,14 +331,75 @@ export default function NuevaSolicitudPage() {
             
             // 2. Compañía Receptora
             if (solicitud.companiaReceptora) {
-              newFormData.proveedor = solicitud.companiaReceptora
-              console.log('✨ Compañía Receptora auto-seleccionada:', solicitud.companiaReceptora)
+              console.log('🔍 Intentando asignar compañía receptora extraída:', solicitud.companiaReceptora)
+              console.log('📋 Empresas disponibles del Grupo Bolívar:', empresasGrupoBolivar.length)
+              
+              // Verificar si el valor extraído coincide exactamente con alguna opción
+              const empresaEncontrada = empresasGrupoBolivar.find(empresa => 
+                empresa.valorCompleto === solicitud.companiaReceptora
+              )
+              
+              if (empresaEncontrada) {
+                newFormData.proveedor = solicitud.companiaReceptora
+                console.log('✅ Compañía Receptora auto-seleccionada (coincidencia exacta):', solicitud.companiaReceptora)
+              } else {
+                console.log('⚠️ Buscando coincidencia parcial para compañía receptora...')
+                
+                // Buscar coincidencia parcial por NIT, código o nombre
+                const empresaParcial = empresasGrupoBolivar.find(empresa => {
+                  const valorExtraido = solicitud.companiaReceptora.toLowerCase()
+                  const valorEmpresa = empresa.valorCompleto.toLowerCase()
+                  
+                  return (
+                    // Coincidencia por NIT (considerando dígito de verificación)
+                    (empresa.nit && valorExtraido.includes(empresa.nit)) ||
+                    // Coincidencia por nombre de empresa
+                    (empresa.nombre && valorExtraido.includes(empresa.nombre.toLowerCase())) ||
+                    // Coincidencia parcial en cualquier dirección
+                    valorEmpresa.includes(valorExtraido) ||
+                    valorExtraido.includes(valorEmpresa)
+                  )
+                })
+                
+                if (empresaParcial) {
+                  newFormData.proveedor = empresaParcial.valorCompleto
+                  console.log('✅ Compañía Receptora auto-seleccionada (coincidencia parcial):', empresaParcial.valorCompleto)
+                  console.log('🔄 Valor original extraído:', solicitud.companiaReceptora)
+                } else {
+                  console.log('❌ Compañía receptora extraída no coincide con opciones disponibles:', solicitud.companiaReceptora)
+                  console.log('📋 Opciones disponibles:')
+                  empresasGrupoBolivar.forEach(empresa => {
+                    console.log(`  - ${empresa.valorCompleto} (NIT: ${empresa.nit})`)
+                  })
+                }
+              }
             }
             
             // 3. Acreedor  
             if (solicitud.acreedor) {
-              newFormData.acreedor = solicitud.acreedor
-              console.log('✨ Acreedor auto-seleccionado:', solicitud.acreedor)
+              console.log('🔍 Intentando asignar acreedor extraído:', solicitud.acreedor)
+              
+              // Verificar si el valor extraído coincide exactamente con alguna opción
+              const acreedorEncontrado = acreedores.find(acreedor => acreedor.valor === solicitud.acreedor)
+              
+              if (acreedorEncontrado) {
+                newFormData.acreedor = solicitud.acreedor
+                console.log('✅ Acreedor auto-seleccionado (coincidencia exacta):', solicitud.acreedor)
+              } else {
+                // Buscar coincidencia parcial por NIT o nombre
+                const acreedorParcial = acreedores.find(acreedor => 
+                  acreedor.valor.toLowerCase().includes(solicitud.acreedor.toLowerCase()) ||
+                  solicitud.acreedor.toLowerCase().includes(acreedor.valor.toLowerCase())
+                )
+                
+                if (acreedorParcial) {
+                  newFormData.acreedor = acreedorParcial.valor
+                  console.log('✅ Acreedor auto-seleccionado (coincidencia parcial):', acreedorParcial.valor)
+                } else {
+                  console.log('⚠️ Acreedor extraído no coincide con opciones disponibles:', solicitud.acreedor)
+                  console.log('📋 Opciones disponibles:', acreedores.map(a => a.valor))
+                }
+              }
             }
             
             // 6. Concepto
@@ -337,24 +460,7 @@ export default function NuevaSolicitudPage() {
         console.log(`✅ Se aplicaron ${fieldsCount} campos validados al formulario con confianza ${data.confidence}`)
   }
 
-  // Función para confirmar y aplicar los datos extraídos
-  const handleConfirmExtractedData = () => {
-    if (extractedData) {
-      applyExtractedDataToForm(extractedData)
-      setShowValidationModal(false)
-      setExtractedData(null)
-      console.log('✅ Datos validados aplicados al formulario')
-    }
-  }
-
-  // Función para rechazar los datos extraídos
-  const handleRejectExtractedData = () => {
-    setShowValidationModal(false)
-    setExtractedData(null)
-    setPdfDataExtracted(false)
-    setExtractionConfidence(null)
-    console.log('❌ Datos extraídos rechazados - formulario sin cambios')
-  }
+  // Funciones del modal eliminadas - los datos se aplican automáticamente
 
   const handlePDFChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -726,7 +832,7 @@ export default function NuevaSolicitudPage() {
                     <option key="empty" value="">Seleccione una empresa</option>,
                     ...empresasGrupoBolivar.map((empresa) => (
                       <option key={empresa.id} value={empresa.valorCompleto}>
-                        {empresa.nombre}
+                        {empresa.valorCompleto}
                       </option>
                     ))
                   ]
@@ -757,14 +863,29 @@ export default function NuevaSolicitudPage() {
                     ? 'border-red-500 focus:border-red-500' 
                     : 'border-gray-300 focus:border-bolivar-green'
                 }`}
+                disabled={loadingAcreedores}
               >
-                <option value="">Seleccione un acreedor</option>
-                {ACREEDORES.map((acreedor) => (
-                  <option key={acreedor.value} value={acreedor.value}>
-                    {acreedor.label}
-                  </option>
-                ))}
+                {loadingAcreedores ? (
+                  <option value="">Cargando acreedores autorizados...</option>
+                ) : acreedores.length === 0 ? (
+                  <option value="">❌ No hay acreedores disponibles - Verificar base de datos</option>
+                ) : (
+                  [
+                    <option key="empty" value="">Seleccione un acreedor</option>,
+                    ...acreedores.map((acreedor) => (
+                      <option key={acreedor.id} value={acreedor.valor}>
+                        {acreedor.label}
+                      </option>
+                    ))
+                  ]
+                )}
               </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {loadingAcreedores ? 'Cargando...' : 
+                 acreedores.length === 0 ? 
+                 '⚠️ No hay acreedores disponibles. Debe insertar datos en tabla parametros (grupo: ACREEDORES)' : 
+                 `✅ ${acreedores.length} acreedores autorizados disponibles`}
+              </p>
               {errors.acreedor && (
                 <p className="mt-1 text-sm text-red-600">{errors.acreedor}</p>
               )}
@@ -782,14 +903,29 @@ export default function NuevaSolicitudPage() {
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green ${
                   errors.concepto ? 'border-red-500' : 'border-gray-300'
                 }`}
+                disabled={loadingConceptos}
               >
-                <option value="">Seleccione un concepto</option>
-                {CONCEPTOS.map((concepto) => (
-                  <option key={concepto.value} value={concepto.value}>
-                    {concepto.label}
-                  </option>
-                ))}
+                {loadingConceptos ? (
+                  <option value="">Cargando conceptos válidos...</option>
+                ) : conceptos.length === 0 ? (
+                  <option value="">❌ No hay conceptos disponibles - Verificar base de datos</option>
+                ) : (
+                  [
+                    <option key="empty" value="">Seleccione un concepto</option>,
+                    ...conceptos.map((concepto) => (
+                      <option key={concepto.id} value={concepto.valor}>
+                        {concepto.label}
+                      </option>
+                    ))
+                  ]
+                )}
               </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {loadingConceptos ? 'Cargando...' : 
+                 conceptos.length === 0 ? 
+                 '⚠️ No hay conceptos disponibles. Debe insertar datos en tabla parametros (grupo: CONCEPTOS)' : 
+                 `✅ ${conceptos.length} conceptos válidos disponibles`}
+              </p>
               {errors.concepto && (
                 <p className="mt-1 text-sm text-red-600">{errors.concepto}</p>
               )}
@@ -999,8 +1135,8 @@ export default function NuevaSolicitudPage() {
                     // DATOS DE PRUEBA basados en la imagen proporcionada
                     const datosDemo: any = {
                       fechaCuentaCobro: "23-07-2025",
-                      companiaReceptora: "NT-860002503-2-COMPAÑÍA SEGUROS BOLÍVAR S.A.",
-                      acreedor: "NT-860034313-7-DAVIVIENDA S.A.",
+                      companiaReceptora: "NT-860002503-COMPAÑÍA DE SEGUROS BOLÍVAR S.A.",
+                      acreedor: "NT-860034313-DAVIVIENDA S.A.",
                       concepto: "Reconocimiento y pago de comisiones por recaudo Vida Deudores Leasing",
                       descripcion: `CUENTA DE COBRO No 25-1115
 
@@ -1014,8 +1150,9 @@ Por concepto de reconocimiento y pago de comisiones por recaudo Vida Deudores Le
                       extractedFields: ["fechaCuentaCobro", "companiaReceptora", "acreedor", "concepto", "descripcion", "valorSolicitud", "tieneIVA", "valorIVA", "valorTotalSolicitud"]
                     };
                     setExtractedData(datosDemo);
-                    setShowValidationModal(true);
-                    console.log('🧪 Mostrando datos de demostración basados en la imagen proporcionada');
+                    // Aplicar datos de demo automáticamente al formulario
+                    applyExtractedDataToForm(datosDemo);
+                    console.log('🧪 ✅ Datos de demostración aplicados automáticamente al formulario');
                   }}
                   className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
                 >
@@ -1273,263 +1410,7 @@ Por concepto de reconocimiento y pago de comisiones por recaudo Vida Deudores Le
         </div>
       )}
 
-      {/* Modal de validación de datos extraídos */}
-      {showValidationModal && extractedData && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-6 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-4">
-                📋 Datos Extraídos del PDF
-              </h3>
-              <div className="text-sm text-gray-600 mb-6">
-                <p className="mb-2">
-                  Se extrajeron <strong>{extractedData.extractedFields.length} de 9 campos</strong> con confianza <strong>{extractedData.confidence}</strong>
-                </p>
-                <p className="text-xs text-gray-500">
-                  📋 Campos definidos: Fecha, Compañía Receptora, Acreedor, Concepto, Descripción, Valor, IVA, Valor IVA, Total
-                </p>
-                <p className="text-xs text-gray-500">Por favor revise la información y confirme si es correcta</p>
-              </div>
-
-              {/* Mostrar datos extraídos organizados */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  {/* VISUALIZACIÓN COMPLETA DE LOS 9 CAMPOS */}
-                  <>
-                    {/* 1. FECHA DE LA CUENTA DE COBRO */}
-                    {extractedData.fechaCuentaCobro ? (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📅 Fecha Cuenta de Cobro</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            {(() => {
-                              try {
-                                // Fecha viene en formato dd-mm-yyyy desde la API
-                                const fechaString = extractedData.fechaCuentaCobro
-                                if (fechaString && fechaString.includes('-')) {
-                                  const [dia, mes, año] = fechaString.split('-')
-                                  
-                                  // Crear fecha y formatear para mostrar
-                                  const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
-                                  
-                                  return fecha.toLocaleDateString('es-CO', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    timeZone: 'America/Bogota'
-                                  })
-                                } else {
-                                  return fechaString
-                                }
-                              } catch (error) {
-                                console.error('Error formateando fecha:', error)
-                                return extractedData.fechaCuentaCobro
-                              }
-                            })()}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">📅 Fecha Cuenta de Cobro</label>
-                          <div className="text-sm text-gray-500 mt-1 italic">No extraída</div>
-                        </div>
-                      )}
-
-                    {/* 2. COMPAÑÍA RECEPTORA */}
-                    {extractedData.companiaReceptora ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏢 Compañía Receptora</label>
-                        <div className="text-sm text-gray-900 mt-1">{extractedData.companiaReceptora.replace('NT-', '').split('-')[1] || extractedData.companiaReceptora}</div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🏢 Compañía Receptora</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No extraída</div>
-                      </div>
-                    )}
-
-                    {/* 3. ACREEDOR */}
-                    {extractedData.acreedor ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏛️ Acreedor</label>
-                        <div className="text-sm text-gray-900 mt-1">{extractedData.acreedor.replace('NT-', '').split('-')[1] || extractedData.acreedor}</div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🏛️ Acreedor</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
-                      </div>
-                    )}
-
-                    {/* 4. CONCEPTO */}
-                    {extractedData.concepto ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📝 Concepto</label>
-                        <div className="text-sm text-gray-900 mt-1">{extractedData.concepto}</div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Concepto</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
-                      </div>
-                    )}
-
-                    {/* 6. VALOR SOLICITUD */}
-                    {extractedData.valorSolicitud ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor Solicitud</label>
-                        <div className="text-sm text-gray-900 mt-1">
-                          ${extractedData.valorSolicitud.toLocaleString('es-CO')}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">💰 Valor Solicitud</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
-                      </div>
-                    )}
-
-                    {/* 7. TIENE IVA */}
-                    <div className="bg-white p-3 rounded border">
-                      <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📊 Tiene IVA</label>
-                      <div className="text-sm text-gray-900 mt-1">
-                        {extractedData.tieneIVA ? (
-                          <span className="text-green-600">✅ Sí tiene IVA</span>
-                        ) : (
-                          <span className="text-red-600">❌ No tiene IVA</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 8. VALOR IVA */}
-                    {extractedData.valorIVA ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor IVA</label>
-                        <div className="text-sm text-gray-900 mt-1">
-                          ${extractedData.valorIVA.toLocaleString('es-CO')}
-                          <div className="text-xs text-gray-500 mt-1">
-                            Extraído específicamente del PDF
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">💰 Valor IVA</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
-                      </div>
-                    )}
-
-                    {/* 9. VALOR TOTAL SOLICITUD */}
-                    {extractedData.valorTotalSolicitud ? (
-                      <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🎯 Valor Total Solicitud</label>
-                        <div className="text-sm text-gray-900 mt-1">
-                          ${extractedData.valorTotalSolicitud.toLocaleString('es-CO')}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Calculado automáticamente (Valor Solicitud + IVA)
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🎯 Valor Total Solicitud</label>
-                        <div className="text-sm text-gray-500 mt-1 italic">No calculado</div>
-                      </div>
-                    )}
-
-                  </>
-                </div>
-
-                {/* 5. DESCRIPCIÓN COMPLETA (ocupa toda la fila con scroll) */}
-                {extractedData.descripcion ? (
-                  <div className="bg-white p-4 rounded border mt-4 shadow-sm">
-                    <label className="text-sm font-semibold text-gray-800 uppercase tracking-wide mb-2 flex items-center">
-                      📄 Descripción Completa Extraída
-                    </label>
-                    <div className="text-sm text-gray-900 whitespace-pre-line border border-gray-200 rounded p-3 bg-gray-50 max-h-40 overflow-y-auto font-mono text-xs leading-relaxed">
-                      {extractedData.descripcion}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                      ℹ️ Esta descripción fue generada automáticamente combinando la línea de cuenta de cobro, 
-                      el párrafo "Por concepto de" y la tabla de valores del PDF
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 p-4 rounded border border-dashed border-gray-300 mt-4">
-                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
-                      📄 Descripción Completa
-                    </label>
-                    <div className="text-sm text-gray-500 italic p-3">
-                      No se pudo generar la descripción completa del documento
-                    </div>
-                  </div>
-                )}
-
-                {/* Campos extraídos */}
-                <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-4">
-                  <label className="text-xs font-semibold text-blue-700 uppercase tracking-wide">✨ Campos Procesados</label>
-                  <div className="text-xs text-blue-600 mt-1">
-                    {extractedData.extractedFields.map((field: string, index: number) => (
-                      <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mr-2 mb-1">
-                        {field}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Confianza */}
-                <div className={`border rounded p-3 mt-4 ${
-                  extractedData.confidence === 'high' ? 'bg-green-50 border-green-200' :
-                  extractedData.confidence === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                  'bg-red-50 border-red-200'
-                }`}>
-                  <label className={`text-xs font-semibold uppercase tracking-wide ${
-                    extractedData.confidence === 'high' ? 'text-green-700' :
-                    extractedData.confidence === 'medium' ? 'text-yellow-700' :
-                    'text-red-700'
-                  }`}>
-                    📈 Confianza de Extracción
-                  </label>
-                  <div className={`text-sm mt-1 ${
-                    extractedData.confidence === 'high' ? 'text-green-900' :
-                    extractedData.confidence === 'medium' ? 'text-yellow-900' :
-                    'text-red-900'
-                  }`}>
-                    {extractedData.confidence === 'high' && '🟢 Alta - Los datos fueron extraídos con alta precisión'}
-                    {extractedData.confidence === 'medium' && '🟡 Media - Revise cuidadosamente los datos'}
-                    {extractedData.confidence === 'low' && '🔴 Baja - Verifique manualmente todos los datos'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Botones de acción */}
-              <div className="flex justify-center space-x-4">
-                <button
-                  onClick={handleRejectExtractedData}
-                  className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                >
-                  ❌ Rechazar datos
-                </button>
-                <button
-                  onClick={handleConfirmExtractedData}
-                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                >
-                  ✅ Confirmar y aplicar
-                </button>
-              </div>
-
-              <div className="mt-4 text-xs text-gray-500">
-                💡 Tip: Si confirma, estos datos se aplicarán automáticamente al formulario. Si rechaza, podrá llenar los campos manualmente.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de validación eliminado - los datos se procesan automáticamente */}
     </div>
   )
 }

@@ -49,12 +49,12 @@ const PATTERNS = {
   
   // 3. TOTAL (respetando mayúsculas - "Total" exacto)
   totalEspecifico: /(?:^|\n|\s)Total\s*\$?\s*([\d,\.]+)/g,
-  
+
   // 3b. TOTAL FINAL (todo mayúsculas "TOTAL")
   totalFinal: /(?:^|\n|\s)TOTAL\s*\$?\s*([\d,\.]+)/g,
   
-  // 4. IVA (respetando "IVA" o "Iva" exacto)
-  ivaEspecifico: /(?:^|\n|\s)(?:IVA|Iva)(?:\s*\([0-9]+%?\))?\s*(?:\n|\s)*\$?\s*([\d,\.]+)/g,
+  // 4. IVA (solo "IVA" en mayúsculas exacto - CASE SENSITIVE)
+  ivaEspecifico: /(?:^|\n|\s)IVA(?:\s*\([0-9]+%?\))?\s*(?:\n|\s)*\$?\s*([\d,\.]+)/g,
   
   // 5. NÚMEROS DE FACTURA - ELIMINADO POR CAUSAR EXTRACCIONES INCORRECTAS
   
@@ -216,33 +216,49 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 2: DETECCIÓN DE ACREEDOR (Auto-detección) ✅
     console.log('2️⃣ Detectando Acreedor...')
     
+    // DIAGNÓSTICO DETALLADO: Mostrar más contexto del texto
+    console.log('🔍 DIAGNÓSTICO ACREEDOR - Buscando "DEBE A:" en el texto...')
+    const debeAIndex = text.indexOf('DEBE A:')
+    const debeAIndexCaseInsensitive = text.toLowerCase().indexOf('debe a:')
+    console.log(`📍 "DEBE A:" encontrado en posición: ${debeAIndex}`)
+    console.log(`📍 "debe a:" (case insensitive) encontrado en posición: ${debeAIndexCaseInsensitive}`)
+    
+    if (debeAIndex >= 0 || debeAIndexCaseInsensitive >= 0) {
+      const contextStart = Math.max(0, Math.max(debeAIndex, debeAIndexCaseInsensitive) - 50)
+      const contextEnd = Math.min(text.length, Math.max(debeAIndex, debeAIndexCaseInsensitive) + 200)
+      console.log('📄 Contexto alrededor de "DEBE A:":', text.substring(contextStart, contextEnd).replace(/\s+/g, ' '))
+    } else {
+      console.log('❌ No se encontró "DEBE A:" en el texto')
+      console.log('📄 Primeros 500 caracteres del documento:', text.substring(0, 500).replace(/\s+/g, ' '))
+    }
+    
     // Extraer la sección después de "DEBE A:" hasta "Por concepto de"
-    const seccionAcreedorMatch = text.match(/DEBE\s+A:\s*(.*?)(?:Por\s+concepto\s+de|$)/i)
+    const seccionAcreedorMatch = text.match(/DEBE\s+A:\s*([\s\S]*?)(?:Por\s+concepto\s+de|$)/i)
     let seccionAcreedor = seccionAcreedorMatch ? seccionAcreedorMatch[1] : ''
     
-    console.log('📋 Analizando sección acreedor después de "DEBE A:":', seccionAcreedor.substring(0, 200).replace(/\s+/g, ' '))
+    console.log(`📋 Sección acreedor extraída (${seccionAcreedor.length} chars):`, seccionAcreedor.substring(0, 300).replace(/\s+/g, ' '))
     
     // Base de datos de acreedores disponibles
     const acreedoresDisponibles = [
       {
-        nit: '8600343137',
-        nitFormateado: '860.034.313-7',
+        nit: '860034313',
+        nitFormateado: '860.034.313',
         nombre: 'DAVIVIENDA S.A.',
-        codigo: 'NT-860034313-7-DAVIVIENDA S.A.',
+        codigo: 'NT-860034313-DAVIVIENDA S.A.',
         palabrasClave: ['davivienda']
       },
       {
-        nit: '8600025032',
-        nitFormateado: '860.002.503-2',
-        nombre: 'COMPAÑÍA SEGUROS BOLÍVAR S.A.',
-        codigo: 'NT-860002503-2-COMPAÑÍA SEGUROS BOLÍVAR S.A.',
-        palabrasClave: ['compañía', 'seguros', 'bolivar', 'bolívar']
+        nit: '860002503',
+        nitFormateado: '860.002.503',
+        nombre: 'COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
+        codigo: 'NT-860002503-COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
+        palabrasClave: ['compañía', 'de', 'seguros', 'bolivar', 'bolívar']
       },
       {
-        nit: '8300254487',
-        nitFormateado: '830.025.448-7',
+        nit: '830025448',
+        nitFormateado: '830.025.448',
         nombre: 'GRUPO BOLÍVAR S.A.',
-        codigo: 'NT-830025448-7-GRUPO BOLÍVAR S.A.',
+        codigo: 'NT-830025448-GRUPO BOLÍVAR S.A.',
         palabrasClave: ['grupo', 'bolivar', 'bolívar']
       }
     ]
@@ -289,7 +305,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
         .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
       
       for (const acreedor of acreedoresDisponibles) {
-        let coincidencias = 0
+      let coincidencias = 0
         const palabrasEncontradas: string[] = []
         
         for (const palabra of acreedor.palabrasClave) {
@@ -298,7 +314,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
             .replace(/[\u0300-\u036f]/g, '')
           
           if (seccionNormalizada.includes(palabraNormalizada)) {
-            coincidencias++
+          coincidencias++
             palabrasEncontradas.push(palabra)
           }
         }
@@ -317,16 +333,45 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // FALLBACK: Método regex básico (si auto-detección falla)
     if (!acreedorEncontrado) {
       console.log('🔍 Fallback: Método regex básico...')
-      const acreedorMatch = text.match(PATTERNS.acreedor)
-      if (acreedorMatch && acreedorMatch[1]) {
-        const nombreExtraido = acreedorMatch[1]
-          .replace(/nit[\s\.].*$/gi, '') // Remover NIT si está en la misma línea
-          .trim()
+      
+      // Intentar múltiples patrones de fallback (SIN limitaciones de caracteres)
+      const fallbackPatterns = [
+        /(?:DEBE\s+A:?|ACREEDOR:?)\s*\n?\s*([^\n\r]+)/gi,  // Patrón básico hasta fin de línea
+        /DEBE\s+A\s*:?\s*(.*?)(?:\n.*?NIT|Por\s+concepto|$)/gi, // Hasta NIT o "Por concepto"
+        /DEBE\s+A\s*:?\s*(.*?)(?:\n\n|Por\s+concepto)/gi  // Hasta doble salto o "Por concepto"
+      ]
+      
+      for (let i = 0; i < fallbackPatterns.length; i++) {
+        console.log(`🎯 Probando patrón fallback ${i+1}...`)
+        const acreedorMatch = text.match(fallbackPatterns[i])
+        console.log(`📊 Patrón ${i+1} encontró ${acreedorMatch?.length || 0} matches`)
         
-        // Crear resultado básico sin NIT específico
-        result.acreedor = nombreExtraido
-        result.extractedFields.push('acreedor')
-        console.log('✅ Acreedor extraído (fallback):', result.acreedor)
+        if (acreedorMatch && acreedorMatch.length > 0) {
+          for (let j = 0; j < acreedorMatch.length; j++) {
+            console.log(`🔍 Match ${j+1}:`, acreedorMatch[j].trim())
+          }
+          
+          if (acreedorMatch[1]) {
+            const nombreExtraido = acreedorMatch[1]
+              .replace(/nit[\s\.].*$/gi, '') // Remover NIT si está en la misma línea
+              .replace(/\s+/g, ' ') // Limpiar espacios múltiples
+              .trim()
+            
+            if (nombreExtraido.trim()) {
+              // Crear resultado básico sin NIT específico (basado en contenido, no en longitud)
+              result.acreedor = nombreExtraido
+              result.extractedFields.push('acreedor')
+              console.log('✅ Acreedor extraído (fallback):', result.acreedor)
+              break
+            } else {
+              console.log(`❌ Nombre vacío después de limpieza: "${nombreExtraido}"`)
+            }
+          }
+        }
+      }
+      
+      if (!result.acreedor) {
+        console.log('❌ FALLBACK FALLÓ: No se pudo extraer acreedor con ningún patrón')
       }
     } else {
       // Asignar resultado de auto-detección
@@ -363,24 +408,24 @@ function extractDataFromText(text: string): ExtractedPDFData {
         palabrasClave: ['constructora', 'bolivar', 'bolívar']
       },
       {
-        nit: '8600025032',
-        nitFormateado: '860.002.503-2', 
-        nombre: 'COMPAÑÍA SEGUROS BOLÍVAR S.A.',
-        codigo: 'NT-860002503-2-COMPAÑÍA SEGUROS BOLÍVAR S.A.',
-        palabrasClave: ['compañia', 'compañía', 'seguros', 'bolivar', 'bolívar']
+        nit: '860002503',
+        nitFormateado: '860.002.503', 
+        nombre: 'COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
+        codigo: 'NT-860002503-COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
+        palabrasClave: ['compañia', 'compañía', 'de', 'seguros', 'bolivar', 'bolívar']
       },
       {
-        nit: '8600343137',
-        nitFormateado: '860.034.313-7',
+        nit: '860034313',
+        nitFormateado: '860.034.313',
         nombre: 'DAVIVIENDA S.A.',
-        codigo: 'NT-860034313-7-DAVIVIENDA S.A.',
+        codigo: 'NT-860034313-DAVIVIENDA S.A.',
         palabrasClave: ['davivienda', 'banco']
       },
       {
-        nit: '8300254487',
-        nitFormateado: '830.025.448-7',
+        nit: '830025448',
+        nitFormateado: '830.025.448',
         nombre: 'GRUPO BOLÍVAR S.A.',
-        codigo: 'NT-830025448-7-GRUPO BOLÍVAR S.A.',
+        codigo: 'NT-830025448-GRUPO BOLÍVAR S.A.',
         palabrasClave: ['grupo', 'bolivar', 'bolívar']
       },
       {
@@ -577,33 +622,80 @@ function extractDataFromText(text: string): ExtractedPDFData {
       console.log('❌ Parte 1 no encontrada')
     }
     
-    // PARTE 2: Párrafo completo que inicia con "Por concepto de"
-    console.log('📋 Parte 2: Buscando párrafo "Por concepto de"...')
+    // PARTE 2: El párrafo COMPLETO que comienza con "Por concepto de" (basado en contenido, NO por longitud)
+    console.log('📋 Parte 2: Extrayendo párrafo COMPLETO "Por concepto de" basado en su contenido natural...')
     let parte2 = ''
     
-    // Usar los mismos patrones que usamos para extraer concepto
-    const parrafoPatternsDescripcion = [
-      // Párrafo completo hasta dos puntos (:)
-      /Por\s+concepto\s+de\s+([^:]+:?)/gi,
-      // Párrafo hasta salto de línea doble o final
-      /Por\s+concepto\s+de\s+([^\n\r]+(?:\n[^\n\r]+)*?)(?:\n\s*\n|$)/gi,
-      // Párrafo hasta encontrar una línea que empiece con mayúscula (nueva sección)
-      /Por\s+concepto\s+de\s+(.*?)(?=\n[A-ZÁÉÍÓÚÑ]|$)/gi,
-      // Fallback simple para una sola línea
-      /Por\s+concepto\s+de\s*([^\n\r]+)/gi
-    ]
-    
-    for (const pattern of parrafoPatternsDescripcion) {
-      const match = text.match(pattern)
-      if (match && match[0]) {
-        parte2 = match[0].trim()
-        console.log('✅ Parte 2 encontrada:', parte2.substring(0, 100) + '...')
+    // MÉTODO 1: Buscar línea por línea para encontrar la que comienza con "Por concepto de"
+    const lineas = text.split('\n')
+    for (let i = 0; i < lineas.length; i++) {
+      const lineaLimpia = lineas[i].trim()
+      if (lineaLimpia.toLowerCase().startsWith('por concepto de')) {
+        console.log('🎯 Línea inicial encontrada:', lineaLimpia)
+        let parrafoCompleto = lineaLimpia
+        
+        // Si la línea no termina con : o . , buscar continuación en líneas siguientes
+        if (!lineaLimpia.endsWith(':') && !lineaLimpia.endsWith('.')) {
+          console.log('📝 Línea no terminada, buscando continuación...')
+          
+          // Buscar en líneas siguientes hasta encontrar el final del párrafo
+          for (let j = i + 1; j < lineas.length; j++) {
+            const siguienteLinea = lineas[j].trim()
+            
+            // Si la línea está vacía, parar
+            if (!siguienteLinea) {
+              console.log('📋 Línea vacía encontrada - fin del párrafo')
+              break
+            }
+            
+            // Si la línea siguiente empieza con mayúscula (nueva sección), parar
+            if (siguienteLinea.match(/^[A-ZÁÉÍÓÚÑ][a-z]/)) {
+              console.log('📋 Nueva sección detectada - fin del párrafo')
+              break
+            }
+            
+            // Agregar la línea al párrafo
+            parrafoCompleto += ' ' + siguienteLinea
+            console.log(`📎 Línea ${j + 1} agregada:`, siguienteLinea)
+            
+            // Si esta línea termina con : o . , parar
+            if (siguienteLinea.endsWith(':') || siguienteLinea.endsWith('.')) {
+              console.log('🎯 Final del párrafo encontrado')
+              break
+            }
+          }
+        }
+        
+        parte2 = parrafoCompleto
+        console.log('✅ Parte 2 encontrada (párrafo completo):', parte2)
         break
       }
     }
     
+    // MÉTODO 2: Fallback con patrón regex para capturar párrafo "Por concepto de" (multi-línea si es necesario)
     if (!parte2) {
-      console.log('❌ Parte 2 no encontrada')
+      console.log('🔍 Fallback: Buscando párrafo "Por concepto de" con regex multi-línea...')
+      const patterns = [
+        // Patrón 1: Párrafo completo hasta dos puntos (captura TODO el contenido)
+        /Por\s+concepto\s+de[\s\S]*?:/gi,
+        // Patrón 2: Párrafo completo hasta punto final (captura TODO el contenido)  
+        /Por\s+concepto\s+de[\s\S]*?\./gi,
+        // Patrón 3: Hasta final de línea (sin limitaciones artificiales)
+        /Por\s+concepto\s+de[^\n\r]*/i
+      ]
+      
+      for (const pattern of patterns) {
+        const match = text.match(pattern)
+        if (match && match[0]) {
+          parte2 = match[0].trim()
+          console.log('✅ Parte 2 encontrada (fallback):', parte2)
+          break
+        }
+      }
+      
+      if (!parte2) {
+        console.log('❌ Parte 2 no encontrada con ningún método')
+      }
     }
     
     // PARTE 3: ELIMINADA por solicitud del usuario
@@ -632,7 +724,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
       result.extractedFields.push('descripcion')
       
       console.log(`✅ Descripción generada con ${descripcionFinal.length} partes (Parte 3 eliminada)`)
-      console.log('📄 Descripción final (primeros 200 chars):', result.descripcion.substring(0, 200) + '...')
+      console.log('📄 Descripción final completa:', result.descripcion)
     } else {
       console.log('❌ No se pudo generar descripción - ninguna parte encontrada')
     }
@@ -665,7 +757,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
           if (valorNum > 0) {
             valoresEncontrados.push(valorNum)
             console.log(`✅ Valor válido agregado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
-          } else {
+            } else {
             console.log(`❌ Valor inválido (≤ 0): ${valorNum}`)
           }
         }
@@ -688,47 +780,66 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 6: EXTRACCIÓN DE IVA (Valor específico del PDF) ✅
     console.log('6️⃣ Extrayendo valor del IVA...')
     
-    // Buscar líneas que contengan "IVA" con valores monetarios
-    console.log('📋 Buscando líneas que contengan "IVA"...')
-    const ivaPatronEspecifico = /(?:^|[\s\n\r])IVA(?:\s*\([0-9]+%?\))?\s*\$?\s*([\d,\.]+)/gim
-    const ivaMatches = Array.from(text.matchAll(ivaPatronEspecifico))
-    console.log(`📊 Matches de "IVA" encontrados: ${ivaMatches.length}`)
+    // BÚSQUEDA EN LÍNEAS: Identifica líneas que contengan "IVA"
+    console.log('🔍 Búsqueda en líneas: Identifica líneas que contengan "IVA"...')
+    const ivaLines = text.split('\n').filter(line => line.includes('IVA'))
+    console.log(`📊 Líneas que contienen "IVA" encontradas: ${ivaLines.length}`)
     
+    if (ivaLines.length > 0) {
+      console.log('📋 Líneas con "IVA":')
+      ivaLines.forEach((line, index) => {
+        console.log(`  ${index + 1}. "${line.trim()}"`)
+      })
+    } else {
+      console.log('❌ No se encontraron líneas que contengan "IVA"')
+    }
+    
+    // Extraer valores numéricos de las líneas que contengan "IVA"
     let valoresIvaEncontrados: number[] = []
     
-    if (ivaMatches.length > 0) {
-      for (let i = 0; i < ivaMatches.length; i++) {
-        const match = ivaMatches[i]
-        console.log(`🔍 Match ${i+1}: "${match[0].replace(/[\r\n]/g, ' ').trim()}"`)
+    if (ivaLines.length > 0) {
+      console.log('🔍 Extrayendo valores numéricos de líneas con "IVA"...')
+      
+      ivaLines.forEach((linea, index) => {
+        console.log(`📋 Línea ${index + 1}: "${linea.trim()}"`)
         
-        if (match[1]) {
-          console.log(`💰 Valor crudo encontrado: "${match[1]}"`)
+        // Buscar todos los valores numéricos en esta línea
+        const numerosEnLinea = linea.match(/[\d,\.]+/g)
+        
+        if (numerosEnLinea && numerosEnLinea.length > 0) {
+          console.log(`🔢 Números encontrados: [${numerosEnLinea.join(', ')}]`)
           
-          // Aplicar limpieza de formato colombiano
-          const valorLimpio = cleanNumericValue(match[1])
-          const valorNum = parseFloat(valorLimpio)
-          console.log(`🧮 Después de limpiar: "${match[1]}" -> "${valorLimpio}" -> ${valorNum}`)
-          
-          // Validación: El valor debe ser > 0
-          if (valorNum > 0) { // Solo acepta valores mayores a cero
-            valoresIvaEncontrados.push(valorNum)
-            console.log(`✅ Valor IVA válido agregado: $${Math.round(valorNum).toLocaleString('es-CO')}`)
-          } else {
-            console.log(`❌ Valor inválido (≤ 0): ${valorNum}`)
-          }
+          numerosEnLinea.forEach(num => {
+            // Limpiar y validar cada número
+            const valorLimpio = cleanNumericValue(num)
+            const valorNum = parseFloat(valorLimpio)
+            
+            // VALIDACIÓN: El valor debe ser > 0 (descartar porcentajes como "19")
+            if (valorNum > 0 && valorNum !== 19) {
+              valoresIvaEncontrados.push(valorNum)
+              console.log(`✅ Valor IVA válido: "${num}" -> $${Math.round(valorNum).toLocaleString('es-CO')}`)
+            } else {
+              console.log(`❌ Descartado (porcentaje o valor cero): "${num}" -> ${valorNum}`)
+            }
+          })
+        } else {
+          console.log(`❌ No se encontraron números en esta línea`)
         }
-      }
+      })
     }
+    
+    console.log(`📊 Total de valores IVA encontrados: ${valoresIvaEncontrados.length}`)
 
-    // Selección: Si hay múltiples matches, tomar el valor más grande
+    // Selección del valor final del IVA
     let ivaFinalEncontrado: number | null = null
     
     if (valoresIvaEncontrados.length > 0) {
+      // Si hay múltiples valores, tomar el más grande
       const valorMaximoIva = Math.max(...valoresIvaEncontrados)
       ivaFinalEncontrado = Math.round(valorMaximoIva) // Número entero redondeado
       
-      console.log(`🎯 Seleccionado valor IVA más grande de ${valoresIvaEncontrados.length} encontrados:`)
-      console.log(`💸 Valores IVA encontrados: ${valoresIvaEncontrados.map(v => `$${Math.round(v).toLocaleString('es-CO')}`).join(', ')}`)
+      console.log(`🎯 Seleccionado valor IVA más grande de ${valoresIvaEncontrados.length} encontrados`)
+      console.log(`💸 Valores encontrados: ${valoresIvaEncontrados.map(v => `$${Math.round(v).toLocaleString('es-CO')}`).join(', ')}`)
       console.log(`✅ Valor IVA final: $${ivaFinalEncontrado.toLocaleString('es-CO')}`)
     } else {
       console.log('❌ No se encontraron valores de IVA válidos')
@@ -777,8 +888,8 @@ function extractDataFromText(text: string): ExtractedPDFData {
         for (let j = 0; j < matches.length; j++) {
           const match = matches[j]
           console.log(`🔍 Patrón ${i+1}, Match ${j+1}: "${match[0].replace(/[\r\n]/g, ' ').trim()}"`)
-          
-          if (match[1]) {
+        
+        if (match[1]) {
             console.log(`💰 Valor crudo encontrado: "${match[1]}"`)
             
             // Aplicar limpieza de formato colombiano
@@ -820,7 +931,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
         console.log(`✅ Valor Total Solicitud calculado (fallback): $${result.valorTotalSolicitud.toLocaleString('es-CO')}`)
       }
     }
-
+    
     // Calcular confianza basada en campos extraídos
     const fieldsCount = result.extractedFields.length
     if (fieldsCount >= 5) {

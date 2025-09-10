@@ -23,6 +23,24 @@ export interface EmpresaGrupoBolivar {
   vigente: boolean
 }
 
+// Interface para acreedores
+export interface Acreedor {
+  id: string
+  valor: string // NT-860034313-7-DAVIVIENDA S.A.
+  label: string // NT-860034313-7-DAVIVIENDA S.A.
+  orden: number | null
+  vigente: boolean
+}
+
+// Interface para conceptos
+export interface Concepto {
+  id: string
+  valor: string // Convenio de uso de red
+  label: string // Convenio de uso de red
+  orden: number | null
+  vigente: boolean
+}
+
 /**
  * FUNCIÓN ESTÁNDAR REUTILIZABLE PARA OBTENER PARÁMETROS POR GRUPO
  * 
@@ -67,6 +85,70 @@ export async function getParametrosPorGrupo(
       count: 0,
       error: error instanceof Error ? error.message : 'Error desconocido'
     }
+  }
+}
+
+/**
+ * FUNCIÓN ESPECÍFICA: OBTENER ACREEDORES AUTORIZADOS
+ * Carga acreedores desde la tabla parametros grupo ACREEDORES
+ */
+export async function getAcreedoresAutorizados(soloVigentes: boolean = true): Promise<{
+  acreedores: Acreedor[], 
+  count: number, 
+  error?: string
+}> {
+  try {
+    const { parametros, count, error } = await getParametrosPorGrupo('ACREEDORES', soloVigentes, true)
+    
+    if (error) {
+      return { acreedores: [], count: 0, error }
+    }
+
+    // Convertir parámetros a formato de acreedor
+    const acreedores: Acreedor[] = parametros.map((param) => ({
+      id: param.id,
+      valor: param.valor_dominio,
+      label: param.valor_dominio,
+      orden: param.orden,
+      vigente: param.vigente === 'S'
+    }))
+
+    return { acreedores, count, error: undefined }
+  } catch (error) {
+    console.error('Error al obtener acreedores:', error)
+    return { acreedores: [], count: 0, error: `Error al obtener acreedores: ${error}` }
+  }
+}
+
+/**
+ * FUNCIÓN ESPECÍFICA: OBTENER CONCEPTOS VÁLIDOS
+ * Carga conceptos desde la tabla parametros grupo CONCEPTOS
+ */
+export async function getConceptosValidos(soloVigentes: boolean = true): Promise<{
+  conceptos: Concepto[], 
+  count: number, 
+  error?: string
+}> {
+  try {
+    const { parametros, count, error } = await getParametrosPorGrupo('CONCEPTOS', soloVigentes, true)
+    
+    if (error) {
+      return { conceptos: [], count: 0, error }
+    }
+
+    // Convertir parámetros a formato de concepto
+    const conceptos: Concepto[] = parametros.map((param) => ({
+      id: param.id,
+      valor: param.valor_dominio,
+      label: param.valor_dominio,
+      orden: param.orden,
+      vigente: param.vigente === 'S'
+    }))
+
+    return { conceptos, count, error: undefined }
+  } catch (error) {
+    console.error('Error al obtener conceptos:', error)
+    return { conceptos: [], count: 0, error: `Error al obtener conceptos: ${error}` }
   }
 }
 
