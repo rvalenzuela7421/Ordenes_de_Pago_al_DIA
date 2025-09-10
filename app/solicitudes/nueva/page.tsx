@@ -246,12 +246,11 @@ export default function NuevaSolicitudPage() {
     console.log('✅ Aplicando datos validados al formulario')
     
     setFormData(prev => {
-          const newFormData = { ...prev }
-          
-          // ✨ USAR NUEVA ESTRUCTURA ORGANIZADA SI ESTÁ DISPONIBLE
-          if (data.newSolicitud) {
-            console.log('✨ Usando nueva estructura organizada newSolicitud')
-            const solicitud = data.newSolicitud
+      const newFormData = { ...prev }
+      
+        // ✨ USAR ESTRUCTURA UNIFICADA ExtractedPDFData
+        console.log('✨ Usando estructura unificada ExtractedPDFData')
+        const solicitud = data
             
             // 1. Fecha Cuenta de Cobro (convertir de DD-MM-YYYY a YYYY-MM-DD)
             if (solicitud.fechaCuentaCobro) {
@@ -303,83 +302,32 @@ export default function NuevaSolicitudPage() {
               // Calcular IVA y total basado en lo extraído
               if (solicitud.tieneIVA) {
                 // Si hay un valor específico de IVA extraído del PDF, usarlo
-                if (data.ivaEspecifico) {
-                  const ivaEspecifico = parseFloat(data.ivaEspecifico)
-                  newFormData.iva = Math.round(ivaEspecifico).toString()
-                  newFormData.totalSolicitud = (solicitud.valorSolicitud + ivaEspecifico).toString()
-                  console.log(`✨ Usando IVA específico del PDF: $${Math.round(ivaEspecifico)}`)
+                if (solicitud.valorIVA) {
+                  newFormData.iva = Math.round(solicitud.valorIVA).toString()
+                  console.log(`✨ Usando IVA específico del PDF: $${Math.round(solicitud.valorIVA)}`)
                 } else {
                   // Calcular IVA automáticamente
                   const { iva, total } = calcularIVAyTotal(newFormData.valorSolicitud, true)
                   newFormData.iva = iva
-                  newFormData.totalSolicitud = total
                   console.log('✨ IVA calculado automáticamente')
+                }
+                
+                // Usar total del PDF si está disponible, sino calcular
+                if (solicitud.valorTotalSolicitud) {
+                  newFormData.totalSolicitud = Math.round(solicitud.valorTotalSolicitud).toString()
+                  console.log(`✨ Total extraído del PDF: $${Math.round(solicitud.valorTotalSolicitud)}`)
+                } else {
+                  const valorIVA = parseFloat(newFormData.iva)
+                  newFormData.totalSolicitud = (solicitud.valorSolicitud + valorIVA).toString()
+                  console.log('✨ Total calculado')
                 }
               } else {
                 // Sin IVA
-                const { iva, total } = calcularIVAyTotal(newFormData.valorSolicitud, false)
-                newFormData.iva = iva
-                newFormData.totalSolicitud = total
+                newFormData.iva = '0'
+                newFormData.totalSolicitud = solicitud.valorSolicitud.toString()
                 console.log('✨ Sin IVA - total igual al valor base')
               }
             }
-            
-          } else {
-            // 🔄 USAR ESTRUCTURA LEGACY PARA COMPATIBILIDAD
-            console.log('🔄 Usando estructura legacy por compatibilidad')
-            
-            // Poblar compañía receptora si se detectó automáticamente
-            if (data.proveedor) {
-              newFormData.proveedor = data.proveedor
-              console.log('✨ Compañía Receptora auto-seleccionada (legacy):', data.proveedor)
-            }
-            
-            // Poblar acreedor si se detectó
-            if (data.acreedor) {
-              newFormData.acreedor = data.acreedor
-            }
-            
-            // Poblar concepto si se detectó
-            if (data.concepto) {
-              newFormData.concepto = data.concepto
-            }
-            
-            // Poblar descripción si se generó
-            if (data.descripcion) {
-              newFormData.descripcion = data.descripcion
-            }
-            
-            // Poblar valor si se detectó
-            if (data.valorSolicitud) {
-              const valorNum = parseFloat(data.valorSolicitud)
-              if (valorNum > 0) {
-                newFormData.valorSolicitud = Math.round(valorNum).toString()
-                
-                // Si se detectó IVA, marcarlo y usar valor específico si está disponible
-                if (data.tieneIVA) {
-                  newFormData.tieneIVA = true
-                  
-                  // Si hay un valor específico de IVA extraído del PDF, usarlo
-                  if (data.ivaEspecifico) {
-                    const ivaEspecifico = parseFloat(data.ivaEspecifico)
-                    newFormData.iva = Math.round(ivaEspecifico).toString()
-                    newFormData.totalSolicitud = (valorNum + ivaEspecifico).toString()
-                    console.log(`✨ Usando IVA específico del PDF (legacy): $${Math.round(ivaEspecifico)}`)
-                  } else {
-                    // Calcular IVA automáticamente si no se encontró valor específico
-                    const { iva, total } = calcularIVAyTotal(newFormData.valorSolicitud, true)
-                    newFormData.iva = iva
-                    newFormData.totalSolicitud = total
-                  }
-                } else {
-                  // Sin IVA - calcular total solo con valor base
-                  const { iva, total } = calcularIVAyTotal(newFormData.valorSolicitud, false)
-                  newFormData.iva = iva
-                  newFormData.totalSolicitud = total
-                }
-              }
-            }
-          }
           
           return newFormData
         })
@@ -1043,6 +991,41 @@ export default function NuevaSolicitudPage() {
                 </label>
               </div>
               
+              {/* Botón de demostración para ver la visualización */}
+              <div className="mt-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // DATOS DE PRUEBA basados en la imagen proporcionada
+                    const datosDemo: any = {
+                      fechaCuentaCobro: "23-07-2025",
+                      companiaReceptora: "NT-860002503-2-COMPAÑÍA SEGUROS BOLÍVAR S.A.",
+                      acreedor: "NT-860034313-7-DAVIVIENDA S.A.",
+                      concepto: "Reconocimiento y pago de comisiones por recaudo Vida Deudores Leasing",
+                      descripcion: `CUENTA DE COBRO No 25-1115
+
+Por concepto de reconocimiento y pago de comisiones por recaudo Vida Deudores Leasing durante el mes de Junio de 2025:`,
+                      valorSolicitud: 99598566, // Extraído de "Total $ 99,598,566"
+                      tieneIVA: true, // Extraído de "IVA (19%) $ 18,923,728"
+                      valorIVA: 18923728, // Extraído de "IVA (19%) $ 18,923,728"
+                      valorTotalSolicitud: 118522294, // Extraído de "TOTAL $ 118,522,294"
+                      success: true,
+                      confidence: "high",
+                      extractedFields: ["fechaCuentaCobro", "companiaReceptora", "acreedor", "concepto", "descripcion", "valorSolicitud", "tieneIVA", "valorIVA", "valorTotalSolicitud"]
+                    };
+                    setExtractedData(datosDemo);
+                    setShowValidationModal(true);
+                    console.log('🧪 Mostrando datos de demostración basados en la imagen proporcionada');
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+                >
+                  🧪 Ver Demo de Visualización
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Muestra cómo se ven los 9 campos extraídos en el modal de validación
+                </p>
+              </div>
+
               {/* Status messages */}
               {archivoPDF && (
                 <div className="mt-2 space-y-1">
@@ -1304,7 +1287,12 @@ export default function NuevaSolicitudPage() {
                 📋 Datos Extraídos del PDF
               </h3>
               <div className="text-sm text-gray-600 mb-6">
-                <p className="mb-2">Se extrajeron <strong>{extractedData.extractedFields.length} campos</strong> con confianza <strong>{extractedData.confidence}</strong></p>
+                <p className="mb-2">
+                  Se extrajeron <strong>{extractedData.extractedFields.length} de 9 campos</strong> con confianza <strong>{extractedData.confidence}</strong>
+                </p>
+                <p className="text-xs text-gray-500">
+                  📋 Campos definidos: Fecha, Compañía Receptora, Acreedor, Concepto, Descripción, Valor, IVA, Valor IVA, Total
+                </p>
                 <p className="text-xs text-gray-500">Por favor revise la información y confirme si es correcta</p>
               </div>
 
@@ -1312,217 +1300,172 @@ export default function NuevaSolicitudPage() {
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   
-                  {/* Nueva estructura organizada */}
-                  {extractedData.newSolicitud && (
-                    <>
-                      {extractedData.newSolicitud.fechaCuentaCobro && (
+                  {/* VISUALIZACIÓN COMPLETA DE LOS 9 CAMPOS */}
+                  <>
+                    {/* 1. FECHA DE LA CUENTA DE COBRO */}
+                    {extractedData.fechaCuentaCobro ? (
                         <div className="bg-white p-3 rounded border">
                           <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📅 Fecha Cuenta de Cobro</label>
                           <div className="text-sm text-gray-900 mt-1">
                             {(() => {
                               try {
-                                // Fecha viene en formato DD-MM-YYYY desde la API
-                                const fechaString = extractedData.newSolicitud.fechaCuentaCobro
-                                const [dia, mes, año] = fechaString.split('-')
-                                
-                                // Crear fecha local sin conversión UTC (Colombia UTC-5)
-                                const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
-                                
-                                return fecha.toLocaleDateString('es-CO', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  timeZone: 'America/Bogota' // Zona horaria explícita de Colombia
-                                })
+                                // Fecha viene en formato dd-mm-yyyy desde la API
+                                const fechaString = extractedData.fechaCuentaCobro
+                                if (fechaString && fechaString.includes('-')) {
+                                  const [dia, mes, año] = fechaString.split('-')
+                                  
+                                  // Crear fecha y formatear para mostrar
+                                  const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
+                                  
+                                  return fecha.toLocaleDateString('es-CO', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    timeZone: 'America/Bogota'
+                                  })
+                                } else {
+                                  return fechaString
+                                }
                               } catch (error) {
                                 console.error('Error formateando fecha:', error)
-                                return extractedData.newSolicitud.fechaCuentaCobro
+                                return extractedData.fechaCuentaCobro
                               }
                             })()}
                           </div>
                         </div>
-                      )}
-
-                      {extractedData.newSolicitud.companiaReceptora && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏢 Compañía Receptora</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.newSolicitud.companiaReceptora.replace('NT-', '').split('-')[1] || extractedData.newSolicitud.companiaReceptora}</div>
+                      ) : (
+                        <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">📅 Fecha Cuenta de Cobro</label>
+                          <div className="text-sm text-gray-500 mt-1 italic">No extraída</div>
                         </div>
                       )}
 
-                      {extractedData.newSolicitud.acreedor && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏛️ Acreedor</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.newSolicitud.acreedor.replace('NT-', '').split('-')[1] || extractedData.newSolicitud.acreedor}</div>
-                        </div>
-                      )}
-
-                      {extractedData.newSolicitud.concepto && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📝 Concepto</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.newSolicitud.concepto}</div>
-                        </div>
-                      )}
-
-                      {extractedData.newSolicitud.valorSolicitud && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor Solicitud</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            ${extractedData.newSolicitud.valorSolicitud.toLocaleString('es-CO')}
-                          </div>
-                        </div>
-                      )}
-
+                    {/* 2. COMPAÑÍA RECEPTORA */}
+                    {extractedData.companiaReceptora ? (
                       <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📊 IVA</label>
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏢 Compañía Receptora</label>
+                        <div className="text-sm text-gray-900 mt-1">{extractedData.companiaReceptora.replace('NT-', '').split('-')[1] || extractedData.companiaReceptora}</div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🏢 Compañía Receptora</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No extraída</div>
+                      </div>
+                    )}
+
+                    {/* 3. ACREEDOR */}
+                    {extractedData.acreedor ? (
+                      <div className="bg-white p-3 rounded border">
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏛️ Acreedor</label>
+                        <div className="text-sm text-gray-900 mt-1">{extractedData.acreedor.replace('NT-', '').split('-')[1] || extractedData.acreedor}</div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🏛️ Acreedor</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
+                      </div>
+                    )}
+
+                    {/* 4. CONCEPTO */}
+                    {extractedData.concepto ? (
+                      <div className="bg-white p-3 rounded border">
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📝 Concepto</label>
+                        <div className="text-sm text-gray-900 mt-1">{extractedData.concepto}</div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Concepto</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
+                      </div>
+                    )}
+
+                    {/* 6. VALOR SOLICITUD */}
+                    {extractedData.valorSolicitud ? (
+                      <div className="bg-white p-3 rounded border">
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor Solicitud</label>
                         <div className="text-sm text-gray-900 mt-1">
-                          {extractedData.newSolicitud.tieneIVA ? (
-                            <span className="text-green-600">✅ Sí tiene IVA</span>
-                          ) : (
-                            <span className="text-red-600">❌ No tiene IVA</span>
-                          )}
+                          ${extractedData.valorSolicitud.toLocaleString('es-CO')}
                         </div>
                       </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">💰 Valor Solicitud</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
+                      </div>
+                    )}
 
-                      {/* Mostrar valor de IVA siempre que tenga IVA */}
-                      {extractedData.newSolicitud.tieneIVA && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor IVA</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            {extractedData.newSolicitud.valorIVA ? (
-                              <>
-                                ${extractedData.newSolicitud.valorIVA.toLocaleString('es-CO')}
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Extraído específicamente del PDF
-                                </div>
-                              </>
-                            ) : extractedData.ivaEspecifico ? (
-                              <>
-                                ${parseInt(extractedData.ivaEspecifico).toLocaleString('es-CO')}
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Extraído del campo "IVA" del PDF
-                                </div>
-                              </>
-                            ) : extractedData.newSolicitud.valorSolicitud && ivaVigente ? (
-                              <>
-                                ${Math.round(extractedData.newSolicitud.valorSolicitud * ivaVigente.porcentaje).toLocaleString('es-CO')}
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Calculado automáticamente ({(ivaVigente.porcentaje * 100).toFixed(1)}%)
-                                </div>
-                              </>
-                            ) : (
-                              <span className="text-gray-500">Se calculará automáticamente</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                    {/* 7. TIENE IVA */}
+                    <div className="bg-white p-3 rounded border">
+                      <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📊 Tiene IVA</label>
+                      <div className="text-sm text-gray-900 mt-1">
+                        {extractedData.tieneIVA ? (
+                          <span className="text-green-600">✅ Sí tiene IVA</span>
+                        ) : (
+                          <span className="text-red-600">❌ No tiene IVA</span>
+                        )}
+                      </div>
+                    </div>
 
-                      {extractedData.newSolicitud.total && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🎯 Total Final</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            ${extractedData.newSolicitud.total.toLocaleString('es-CO')}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Extraído directamente del PDF
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Fallback a estructura legacy si no hay newSolicitud */}
-                  {!extractedData.newSolicitud && (
-                    <>
-                      {extractedData.proveedor && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏢 Compañía Receptora</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.proveedor.replace('NT-', '').split('-')[1] || extractedData.proveedor}</div>
-                        </div>
-                      )}
-
-                      {extractedData.acreedor && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🏛️ Acreedor</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.acreedor}</div>
-                        </div>
-                      )}
-
-                      {extractedData.concepto && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📝 Concepto</label>
-                          <div className="text-sm text-gray-900 mt-1">{extractedData.concepto}</div>
-                        </div>
-                      )}
-
-                      {extractedData.valorSolicitud && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor Solicitud</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            ${parseInt(extractedData.valorSolicitud).toLocaleString('es-CO')}
-                          </div>
-                        </div>
-                      )}
-
+                    {/* 8. VALOR IVA */}
+                    {extractedData.valorIVA ? (
                       <div className="bg-white p-3 rounded border">
-                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📊 IVA</label>
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor IVA</label>
                         <div className="text-sm text-gray-900 mt-1">
-                          {extractedData.tieneIVA ? (
-                            <span className="text-green-600">✅ Sí tiene IVA</span>
-                          ) : (
-                            <span className="text-red-600">❌ No tiene IVA</span>
-                          )}
+                          ${extractedData.valorIVA.toLocaleString('es-CO')}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Extraído específicamente del PDF
+                          </div>
                         </div>
                       </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">💰 Valor IVA</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No extraído</div>
+                      </div>
+                    )}
 
-                      {/* Mostrar valor de IVA siempre que tenga IVA (estructura legacy) */}
-                      {extractedData.tieneIVA && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">💰 Valor IVA</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            {extractedData.ivaEspecifico ? (
-                              <>
-                                ${parseInt(extractedData.ivaEspecifico).toLocaleString('es-CO')}
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Extraído del campo "IVA" del PDF
-                                </div>
-                              </>
-                            ) : extractedData.valorSolicitud && ivaVigente ? (
-                              <>
-                                ${Math.round(parseInt(extractedData.valorSolicitud) * ivaVigente.porcentaje).toLocaleString('es-CO')}
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Calculado automáticamente ({(ivaVigente.porcentaje * 100).toFixed(1)}%)
-                                </div>
-                              </>
-                            ) : (
-                              <span className="text-gray-500">Se calculará automáticamente</span>
-                            )}
-                          </div>
+                    {/* 9. VALOR TOTAL SOLICITUD */}
+                    {extractedData.valorTotalSolicitud ? (
+                      <div className="bg-white p-3 rounded border">
+                        <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🎯 Valor Total Solicitud</label>
+                        <div className="text-sm text-gray-900 mt-1">
+                          ${extractedData.valorTotalSolicitud.toLocaleString('es-CO')}
                         </div>
-                      )}
+                        <div className="text-xs text-gray-500 mt-1">
+                          Calculado automáticamente (Valor Solicitud + IVA)
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-3 rounded border border-dashed border-gray-300">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🎯 Valor Total Solicitud</label>
+                        <div className="text-sm text-gray-500 mt-1 italic">No calculado</div>
+                      </div>
+                    )}
 
-                      {/* Total si está disponible en estructura legacy */}
-                      {extractedData.total && (
-                        <div className="bg-white p-3 rounded border">
-                          <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">🎯 Total Final</label>
-                          <div className="text-sm text-gray-900 mt-1">
-                            ${parseInt(extractedData.total).toLocaleString('es-CO')}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Extraído directamente del PDF
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
+                  </>
                 </div>
 
-                {/* Descripción (ocupa toda la fila) */}
-                {(extractedData.newSolicitud?.descripcion || extractedData.descripcion) && (
-                  <div className="bg-white p-3 rounded border mt-4">
-                    <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">📋 Descripción</label>
-                    <div className="text-sm text-gray-900 mt-2 whitespace-pre-line border border-gray-200 rounded p-2 bg-gray-50 max-h-32 overflow-y-auto">
-                      {extractedData.newSolicitud?.descripcion || extractedData.descripcion}
+                {/* 5. DESCRIPCIÓN COMPLETA (ocupa toda la fila con scroll) */}
+                {extractedData.descripcion ? (
+                  <div className="bg-white p-4 rounded border mt-4 shadow-sm">
+                    <label className="text-sm font-semibold text-gray-800 uppercase tracking-wide mb-2 flex items-center">
+                      📄 Descripción Completa Extraída
+                    </label>
+                    <div className="text-sm text-gray-900 whitespace-pre-line border border-gray-200 rounded p-3 bg-gray-50 max-h-40 overflow-y-auto font-mono text-xs leading-relaxed">
+                      {extractedData.descripcion}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      ℹ️ Esta descripción fue generada automáticamente combinando la línea de cuenta de cobro, 
+                      el párrafo "Por concepto de" y la tabla de valores del PDF
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 p-4 rounded border border-dashed border-gray-300 mt-4">
+                    <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                      📄 Descripción Completa
+                    </label>
+                    <div className="text-sm text-gray-500 italic p-3">
+                      No se pudo generar la descripción completa del documento
                     </div>
                   </div>
                 )}

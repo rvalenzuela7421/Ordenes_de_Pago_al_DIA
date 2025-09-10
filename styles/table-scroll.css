@@ -1,0 +1,63 @@
+/* Estilos personalizados para scroll horizontal de tablas */
+.table-scroll-container {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E0 #F7FAFC;
+  position: relative;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #F7FAFC;
+  border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: #CBD5E0;
+  border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #A0AEC0;
+}
+
+/* Indicador visual de más contenido a la derecha */
+.table-scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 8px; /* Espacio para scrollbar */
+  width: 30px;
+  background: linear-gradient(to left, 
+    rgba(255,255,255,0.9) 0%, 
+    rgba(255,255,255,0.6) 30%, 
+    transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+/* Mostrar indicador cuando hay scroll disponible */
+.table-scroll-container.has-scroll::after {
+  opacity: 1;
+}
+
+/* Ocultar indicador en hover para mejor UX */
+.table-scroll-container:hover::after {
+  opacity: 0;
+}
+
+/* Mejora visual para el contenido de la tabla */
+.table-scroll-container table {
+  background: white;
+}
+
+/* Suavizar la transición del scroll */
+.table-scroll-container {
+  scroll-behavior: smooth;
+}
