@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getCurrentUserProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { UserProfile } from '@/lib/database.types'
 import { isValidPhone, isValidEmail, validatePassword, getInitials } from '@/lib/utils'
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [formData, setFormData] = useState({
     nombre_completo: '',
@@ -226,6 +228,18 @@ export default function ProfilePage() {
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  // Función para validar si el formulario está completo - igual que AuthForm
+  const isInfoFormValid = () => {
+    return (
+      // Email válido
+      isValidEmail(formData.email.trim()) &&
+      // Nombre completo válido (al menos 2 caracteres)
+      formData.nombre_completo.trim().length >= 2 &&
+      // Teléfono válido
+      isValidPhone(formData.telefono)
+    )
   }
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
@@ -590,12 +604,25 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Botón de guardar */}
-              <div className="flex justify-end">
+              {/* Botones de acción */}
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                >
+                  Cancelar
+                </button>
+                
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="btn-primary"
+                  disabled={saving || !isInfoFormValid()}
+                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={
+                    !isInfoFormValid() 
+                      ? 'Complete todos los campos obligatorios para habilitar el guardado'
+                      : ''
+                  }
                 >
                   {saving ? (
                     <div className="flex items-center space-x-2">
