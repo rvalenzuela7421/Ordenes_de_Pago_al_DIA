@@ -61,7 +61,7 @@ export default function UserAvatar({ user }: UserAvatarProps) {
 
   const handleProfile = () => {
     setIsOpen(false)
-    router.push('/dashboard/profile')
+    router.push('/profile')
   }
 
   return (
