@@ -87,54 +87,40 @@ export default function ProfilePage() {
         return
       }
 
-      // Convertir archivo a base64
-      const reader = new FileReader()
-      reader.onload = async () => {
-        const base64Data = reader.result as string
-        const fileData = base64Data.split(',')[1] // Remover el prefijo data:image/...;base64,
+      // Crear FormData para envío multipart/form-data
+      const formData = new FormData()
+      formData.append('avatar', file)
 
-        try {
-          const response = await fetch('/api/upload-avatar', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              fileData,
-              fileName: file.name,
-              mimeType: file.type
-            })
-          })
+      const response = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+          // No incluir Content-Type: dejamos que el browser lo configure automáticamente para multipart/form-data
+        },
+        body: formData
+      })
 
-          const result = await response.json()
+      const result = await response.json()
 
-          if (!response.ok) {
-            setErrors({ ...errors, avatar: result.error || 'Error subiendo avatar' })
-            return
-          }
-
-          // Actualizar usuario local
-          if (user) {
-            setUser({ ...user, avatar_url: result.avatar_url })
-          }
-          
-          setMessage('Avatar actualizado exitosamente')
-          
-          // Disparar evento personalizado para actualizar el avatar en toda la app
-          window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
-            detail: { avatar_url: result.avatar_url } 
-          }))
-          
-          // Limpiar mensaje después de 3 segundos
-          setTimeout(() => setMessage(''), 3000)
-
-        } catch (error) {
-          console.error('Error subiendo avatar:', error)
-          setErrors({ ...errors, avatar: 'Error de conexión al subir avatar' })
-        }
+      if (!response.ok) {
+        setErrors({ ...errors, avatar: result.error || 'Error subiendo avatar' })
+        return
       }
-      reader.readAsDataURL(file)
+
+      // Actualizar usuario local
+      if (user) {
+        setUser({ ...user, avatar_url: result.avatar_url })
+      }
+      
+      setMessage('Avatar actualizado exitosamente')
+      
+      // Disparar evento personalizado para actualizar el avatar en toda la app
+      window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
+        detail: { avatar_url: result.avatar_url } 
+      }))
+      
+      // Limpiar mensaje después de 3 segundos
+      setTimeout(() => setMessage(''), 3000)
 
     } catch (error) {
       console.error('Error en uploadAvatar:', error)
