@@ -480,7 +480,7 @@ export default function Dashboard() {
                   <p className="text-gray-600 text-xs">Solicitadas</p>
                 </div>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xl font-bold text-gray-900">
                 {loading ? '...' : `${stats.estadisticas.Solicitada?.porcentaje || 0}%`}
               </span>
             </div>
