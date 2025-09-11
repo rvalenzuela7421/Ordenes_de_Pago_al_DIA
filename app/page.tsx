@@ -1046,6 +1046,11 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="flex items-center space-x-2">
+                  {/* Indicador de registros mostrados */}
+                  <div className="text-sm text-gray-600 mr-4">
+                    Mostrando {startRecord} a {endRecord} registros de {filteredOrdenes.length}
+                  </div>
+                  
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
