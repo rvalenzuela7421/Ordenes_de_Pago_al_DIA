@@ -764,20 +764,36 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Botón de cambiar contraseña */}
-              <div className="flex justify-end">
+              {/* Botones de acción */}
+              <div className="flex justify-end items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                  </svg>
+                  Cancelar
+                </button>
+                
                 <button
                   type="submit"
                   disabled={saving || !formData.current_password || !validatePassword(formData.new_password).isValid || formData.new_password !== formData.confirm_password}
-                  className="btn-primary"
+                  className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
-                    <div className="flex items-center space-x-2">
+                    <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Cambiando...</span>
-                    </div>
+                    </>
                   ) : (
-                    'Cambiar Contraseña'
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v-2l-4.257-4.257A6 6 0 0112 5zm-6 4a2 2 0 012-2" />
+                      </svg>
+                      Cambiar Contraseña
+                    </>
                   )}
                 </button>
               </div>
