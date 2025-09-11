@@ -612,28 +612,38 @@ export default function Dashboard() {
                   Período de consulta
                 </label>
                 
-                {/* Option Group para tipo de fecha */}
-                <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                {/* Option Group para tipo de fecha - Estilo Radio Buttons */}
+                <div className="flex items-center gap-4">
                   {[
                     { value: 'fecha_solicitud', label: 'Fecha Solicitud' },
                     { value: 'fecha_op', label: 'Fecha OP' },
                     { value: 'fecha_pago', label: 'Fecha Pago' }
                   ].map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setFilters(prev => ({ 
-                        ...prev, 
-                        dateRange: { ...prev.dateRange, tipo: option.value as DateFilterType } 
-                      }))}
-                      className={`px-3 py-2 text-xs font-medium transition-colors ${
-                        filters.dateRange.tipo === option.value
-                          ? 'bg-bolivar-green text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
-                      } border-r border-gray-300 last:border-r-0`}
-                    >
-                      {option.label}
-                    </button>
+                    <label key={option.value} className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="radio"
+                          name="dateFilterType"
+                          value={option.value}
+                          checked={filters.dateRange.tipo === option.value}
+                          onChange={() => setFilters(prev => ({ 
+                            ...prev, 
+                            dateRange: { ...prev.dateRange, tipo: option.value as DateFilterType } 
+                          }))}
+                          className="sr-only"
+                        />
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          filters.dateRange.tipo === option.value
+                            ? 'border-bolivar-green bg-bolivar-green'
+                            : 'border-gray-300 bg-white'
+                        }`}>
+                          {filters.dateRange.tipo === option.value && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                      </div>
+                      <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                    </label>
                   ))}
                 </div>
                 
