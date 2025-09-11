@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [formData, setFormData] = useState({
     nombre_completo: '',
+    email: '',
     telefono: '',
     current_password: '',
     new_password: '',
@@ -36,6 +37,7 @@ export default function ProfilePage() {
         setFormData(prev => ({
           ...prev,
           nombre_completo: userProfile.nombre_completo || '',
+          email: userProfile.email || '',
           telefono: userProfile.telefono || ''
         }))
         setAvatarPreview(userProfile.avatar_url || null)
@@ -184,6 +186,12 @@ export default function ProfilePage() {
       newErrors.nombre_completo = 'El nombre completo es requerido'
     }
 
+    if (!formData.email.trim()) {
+      newErrors.email = 'El correo electrónico es requerido'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'El correo electrónico no es válido'
+    }
+
     if (formData.telefono && !isValidPhone(formData.telefono)) {
       newErrors.telefono = 'Ingresa un número de teléfono válido'
     }
@@ -224,6 +232,7 @@ export default function ProfilePage() {
 
     try {
       const { error } = await supabase.auth.updateUser({
+        email: formData.email,
         data: {
           nombre_completo: formData.nombre_completo,
           telefono: formData.telefono
@@ -436,26 +445,31 @@ export default function ProfilePage() {
           {activeTab === 'info' && (
             <form onSubmit={handleInfoSubmit} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* Email (read-only) */}
+                {/* Email (editable) */}
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Correo Electrónico
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Correo Electrónico <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="input-field bg-gray-50 text-gray-500 cursor-not-allowed"
+                    id="email"
+                    className={`input-field ${errors.email ? 'border-red-500' : ''}`}
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="tu@email.com"
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  )}
                   <p className="mt-1 text-xs text-gray-500">
-                    El correo electrónico no se puede cambiar
+                    Este campo es obligatorio
                   </p>
                 </div>
 
                 {/* Nombre Completo */}
                 <div className="sm:col-span-2">
                   <label htmlFor="nombre_completo" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Completo
+                    Nombre Completo <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -468,6 +482,9 @@ export default function ProfilePage() {
                   {errors.nombre_completo && (
                     <p className="mt-1 text-sm text-red-600">{errors.nombre_completo}</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Este campo es obligatorio
+                  </p>
                 </div>
 
                 {/* Teléfono */}
