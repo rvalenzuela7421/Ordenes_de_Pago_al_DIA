@@ -439,131 +439,135 @@ export default function Dashboard() {
 
   return (
     <div className="bg-gray-50">
-
-      {/* Tarjetas de estadísticas principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-        {/* Card Principal - Total Solicitudes */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200 col-span-1 sm:col-span-2 lg:col-span-1">
-          <div className="flex items-start justify-between mb-4">
-            <div className="bg-blue-100 p-3 rounded-2xl">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                {loading ? '...' : '100%'}
-              </div>
-              <div className="text-sm text-gray-500">
-                Del total
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <h3 className="text-4xl font-bold text-gray-900 mb-1">
-              {loading ? '...' : stats.totalOrdenes}
-            </h3>
-            <p className="text-gray-600 text-lg">Solicitudes</p>
-          </div>
-          
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Monto Solicitado:</span>
-            <span className="font-semibold text-gray-900">
-              {loading ? '...' : formatCurrency(stats.montoBase)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-gray-600">IVA:</span>
-            <span className="font-semibold text-gray-900">
-              {loading ? '...' : formatCurrency(stats.totalIva)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-sm mt-1 pt-2 border-t border-gray-100">
-            <span className="text-gray-600">Total Monto Solicitado:</span>
-            <span className="font-bold text-gray-900">
-              {loading ? '...' : formatCurrency(stats.montoTotal)}
-            </span>
-          </div>
+      {/* Stats principales - Total y Monto */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <h3 className="text-sm font-medium text-blue-700 mb-1">Total solicitudes</h3>
+          <p className="text-2xl font-bold text-blue-900">{loading ? '...' : stats.totalOrdenes}</p>
         </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <h3 className="text-sm font-medium text-green-700 mb-1">Monto Solicitado</h3>
+          <p className="text-2xl font-bold text-green-900">{loading ? '...' : formatCurrency(stats.montoBase)}</p>
+        </div>
+        
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+          <h3 className="text-sm font-medium text-orange-700 mb-1">IVA</h3>
+          <p className="text-2xl font-bold text-orange-900">{loading ? '...' : formatCurrency(stats.totalIva)}</p>
+        </div>
+        
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+          <h3 className="text-sm font-medium text-purple-700 mb-1">Total Monto Solicitado</h3>
+          <p className="text-2xl font-bold text-purple-900">{loading ? '...' : formatCurrency(stats.montoTotal)}</p>
+        </div>
+      </div>
 
-        {/* Card Solicitadas */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="bg-blue-100 p-3 rounded-2xl">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-gray-900">
+      {/* Cards compactas de estadísticas por estado */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-2">
+          {/* Card Solicitadas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-blue-100 p-2 rounded-md">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500 font-medium">
                 {loading ? '...' : `${stats.estadisticas.Solicitada?.porcentaje || 0}%`}
-              </div>
-              <div className="text-xs text-gray-500">
-                Del total
-              </div>
+              </span>
             </div>
-          </div>
-          
-          <div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-bold text-gray-900">
               {loading ? '...' : (stats.estadisticas.Solicitada?.cantidad || 0)}
             </h3>
-            <p className="text-gray-600">Solicitadas</p>
+            <p className="text-gray-600 text-xs mb-1">Solicitadas</p>
+            <p className="text-blue-600 text-xs font-medium">
+              {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
+            </p>
           </div>
-        </div>
 
-        {/* Card Aprobadas */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="bg-green-100 p-3 rounded-2xl">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-gray-900">
-                {loading ? '...' : `${stats.estadisticas.Aprobada?.porcentaje || 0}%`}
+          {/* Card Devueltas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-red-100 p-2 rounded-md">
+                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
               </div>
-              <div className="text-xs text-gray-500">
-                Del total
-              </div>
+              <span className="text-xs text-gray-500 font-medium">
+                {loading ? '...' : `${stats.estadisticas.Devuelta?.porcentaje || 0}%`}
+              </span>
             </div>
+            <h3 className="text-xl font-bold text-gray-900">
+              {loading ? '...' : (stats.estadisticas.Devuelta?.cantidad || 0)}
+            </h3>
+            <p className="text-gray-600 text-xs mb-1">Devueltas</p>
+            <p className="text-red-600 text-xs font-medium">
+              {loading ? '...' : formatCurrency(stats.estadisticas.Devuelta?.monto || 0)}
+            </p>
           </div>
-          
-          <div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">
+
+          {/* Card Generadas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-yellow-100 p-2 rounded-md">
+                <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500 font-medium">
+                {loading ? '...' : `${stats.estadisticas.Generada?.porcentaje || 0}%`}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">
+              {loading ? '...' : (stats.estadisticas.Generada?.cantidad || 0)}
+            </h3>
+            <p className="text-gray-600 text-xs mb-1">Generadas</p>
+            <p className="text-yellow-600 text-xs font-medium">
+              {loading ? '...' : formatCurrency(stats.estadisticas.Generada?.monto || 0)}
+            </p>
+          </div>
+
+          {/* Card Aprobadas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-green-100 p-2 rounded-md">
+                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500 font-medium">
+                {loading ? '...' : `${stats.estadisticas.Aprobada?.porcentaje || 0}%`}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">
               {loading ? '...' : (stats.estadisticas.Aprobada?.cantidad || 0)}
             </h3>
-            <p className="text-gray-600">Aprobadas</p>
+            <p className="text-gray-600 text-xs mb-1">Aprobadas</p>
+            <p className="text-green-600 text-xs font-medium">
+              {loading ? '...' : formatCurrency(stats.estadisticas.Aprobada?.monto || 0)}
+            </p>
           </div>
-        </div>
 
-        {/* Card Pagadas */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="bg-emerald-100 p-3 rounded-2xl">
-              <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-gray-900">
+          {/* Card Pagadas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-emerald-100 p-2 rounded-md">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-xs text-gray-500 font-medium">
                 {loading ? '...' : `${stats.estadisticas.Pagada?.porcentaje || 0}%`}
-              </div>
-              <div className="text-xs text-gray-500">
-                Del total
-              </div>
+              </span>
             </div>
-          </div>
-          
-          <div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">
+            <h3 className="text-xl font-bold text-gray-900">
               {loading ? '...' : (stats.estadisticas.Pagada?.cantidad || 0)}
             </h3>
-            <p className="text-gray-600">Pagadas</p>
+            <p className="text-gray-600 text-xs mb-1">Pagadas</p>
+            <p className="text-emerald-600 text-xs font-medium">
+              {loading ? '...' : formatCurrency(stats.estadisticas.Pagada?.monto || 0)}
+            </p>
           </div>
-        </div>
       </div>
 
 

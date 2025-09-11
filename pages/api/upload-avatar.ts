@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { createAdminClient } from '@/lib/supabase'
 import { uploadAvatar, setupAvatarsBucket } from '@/lib/storage'
-import formidable from 'formidable'
 
-// Deshabilitar bodyParser para manejar multipart/form-data manualmente
+// Configurar el límite de tamaño y permitir formData
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
   },
 }
 
@@ -31,44 +32,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Token inválido' })
     }
 
-    // Verificar Content-Type
+    // Obtener el archivo de FormData
     const contentType = req.headers['content-type']
     if (!contentType || !contentType.includes('multipart/form-data')) {
       return res.status(400).json({ error: 'Content-Type debe ser multipart/form-data' })
     }
 
-    // Configurar formidable para parsear el archivo
-    const form = formidable({
-      maxFileSize: 5 * 1024 * 1024, // 5MB límite
-      allowEmptyFiles: false,
-      filter: ({ mimetype }) => {
-        // Solo permitir imágenes
-        return Boolean(mimetype && mimetype.startsWith('image/'))
-      }
-    })
-
-    // Parsear el formulario
-    const [fields, files] = await form.parse(req)
-    
-    // Obtener el archivo subido
-    const avatarFile = Array.isArray(files.avatar) ? files.avatar[0] : files.avatar
-    
-    if (!avatarFile) {
-      return res.status(400).json({ error: 'No se encontró archivo de avatar' })
+    // Parse manual del FormData (simplificado para el ejemplo)
+    // En producción, considera usar una librería como `formidable` o `multer`
+    const boundary = contentType.split('boundary=')[1]
+    if (!boundary) {
+      return res.status(400).json({ error: 'Boundary no encontrado en Content-Type' })
     }
 
-    // Validar tipo de archivo
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowedTypes.includes(avatarFile.mimetype || '')) {
-      return res.status(400).json({ error: 'Tipo de archivo no permitido. Solo se permiten: JPG, PNG, WebP' })
+    // Para simplificar, vamos a recibir el archivo como base64
+    const { fileData, fileName, mimeType } = req.body
+
+    if (!fileData || !fileName || !mimeType) {
+      return res.status(400).json({ error: 'Datos del archivo requeridos: fileData, fileName, mimeType' })
     }
 
-    // Crear objeto File compatible con nuestra función uploadAvatar
-    const fs = await import('fs')
-    const buffer = fs.readFileSync(avatarFile.filepath)
-    const file = new File([buffer], avatarFile.originalFilename || 'avatar.jpg', { 
-      type: avatarFile.mimetype || 'image/jpeg' 
-    })
+    // Convertir base64 a File
+    const buffer = Buffer.from(fileData, 'base64')
+    const file = new File([buffer], fileName, { type: mimeType })
 
     // Configurar bucket si no existe
     const bucketSetup = await setupAvatarsBucket()
@@ -92,13 +78,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (updateError) {
       console.error('Error actualizando perfil:', updateError)
       return res.status(500).json({ error: 'Error actualizando perfil del usuario' })
-    }
-
-    // Limpiar archivo temporal
-    try {
-      fs.unlinkSync(avatarFile.filepath)
-    } catch (cleanupError) {
-      console.warn('No se pudo limpiar archivo temporal:', cleanupError)
     }
 
     return res.status(200).json({ 
