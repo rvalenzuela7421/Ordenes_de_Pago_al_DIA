@@ -35,13 +35,22 @@ export interface DashboardStats {
   }
 }
 
+type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_pago'
+
 export interface FilterState {
   dateRange: {
     from: string
     to: string
+    tipo: DateFilterType
   }
   proveedores: string[]
   estados: string[]
+  companiasReceptoras: string[]
+  conceptos: string[]
+  montoRange: {
+    min: number | null
+    max: number | null
+  }
 }
 
 // Función para obtener todas las órdenes con filtros
@@ -55,17 +64,23 @@ export async function getOrdenesPago(filters?: FilterState): Promise<OrdenPago[]
     // Aplicar filtros si existen
     if (filters) {
       // Filtro por rango de fechas - AJUSTADO PARA COLOMBIA (UTC-5)
+      // Usar el tipo de fecha seleccionado dinámicamente
+      const campoFecha = filters.dateRange.tipo || 'fecha_solicitud'
+      console.log(`🔍 Filtrado por campo de fecha: ${campoFecha}`)
+      
       if (filters.dateRange.from) {
         // Crear fecha en zona horaria de Colombia
         const fechaInicio = new Date(filters.dateRange.from + 'T00:00:00-05:00')
         const fechaDesde = fechaInicio.toISOString()
-        query = query.gte('fecha_solicitud', fechaDesde)
+        console.log(`📅 Fecha DESDE: ${filters.dateRange.from} (${fechaDesde})`)
+        query = query.gte(campoFecha, fechaDesde)
       }
       if (filters.dateRange.to) {
         // Crear fecha en zona horaria de Colombia (fin del día)
         const fechaFin = new Date(filters.dateRange.to + 'T23:59:59-05:00')
         const fechaHasta = fechaFin.toISOString()
-        query = query.lte('fecha_solicitud', fechaHasta)
+        console.log(`📅 Fecha HASTA: ${filters.dateRange.to} (${fechaHasta})`)
+        query = query.lte(campoFecha, fechaHasta)
       }
       
       // Filtro por proveedores (selección múltiple)
@@ -76,6 +91,26 @@ export async function getOrdenesPago(filters?: FilterState): Promise<OrdenPago[]
       // Filtro por estados (selección múltiple)
       if (filters.estados.length > 0) {
         query = query.in('estado', filters.estados)
+      }
+      
+      // Filtro por compañías receptoras (selección múltiple)
+      if (filters.companiasReceptoras && filters.companiasReceptoras.length > 0) {
+        query = query.in('compania_receptora', filters.companiasReceptoras)
+      }
+      
+      // Filtro por conceptos (selección múltiple)
+      if (filters.conceptos && filters.conceptos.length > 0) {
+        query = query.in('concepto', filters.conceptos)
+      }
+      
+      // Filtro por rango de montos
+      if (filters.montoRange) {
+        if (filters.montoRange.min !== null) {
+          query = query.gte('monto_solicitud', filters.montoRange.min)
+        }
+        if (filters.montoRange.max !== null) {
+          query = query.lte('monto_solicitud', filters.montoRange.max)
+        }
       }
     }
 

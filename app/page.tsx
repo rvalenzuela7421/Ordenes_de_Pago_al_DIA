@@ -122,7 +122,8 @@ export default function Dashboard() {
                         currentFilters.companiasReceptoras.length > 0 ||
                         currentFilters.conceptos.length > 0 ||
                         currentFilters.montoRange.min !== null ||
-                        currentFilters.montoRange.max !== null
+                        currentFilters.montoRange.max !== null ||
+                        currentFilters.dateRange.tipo !== 'fecha_solicitud' // Considerar cambio de tipo como filtro
 
       if (hasFilters) {
         const filteredStats = await getDashboardStats(currentFilters)
@@ -171,6 +172,10 @@ export default function Dashboard() {
     let filtered = [...allOrdenes]
 
     // Aplicar filtros de fecha - AJUSTADO PARA COLOMBIA (UTC-5)
+    if (filters.dateRange.from || filters.dateRange.to) {
+      console.log(`🔍 Frontend: Filtrando por campo '${filters.dateRange.tipo}' con rango: ${filters.dateRange.from} - ${filters.dateRange.to}`)
+    }
+    
     if (filters.dateRange.from) {
       const fechaDesde = new Date(filters.dateRange.from + 'T00:00:00-05:00')
       filtered = filtered.filter(orden => {
