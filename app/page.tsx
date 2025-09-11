@@ -685,7 +685,7 @@ export default function Dashboard() {
                     placeholder="Busque cualquier información dentro de la tabla de datos"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-[480px]"
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-[336px]"
                   />
                 </div>
               </div>
