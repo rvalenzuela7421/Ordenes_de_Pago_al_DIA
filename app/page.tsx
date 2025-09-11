@@ -480,9 +480,12 @@ export default function Dashboard() {
                   <p className="text-gray-600 text-xs">Solicitadas</p>
                 </div>
               </div>
-              <span className="text-xl font-bold text-gray-900">
-                {loading ? '...' : `${stats.estadisticas.Solicitada?.porcentaje || 0}%`}
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : `${stats.estadisticas.Solicitada?.porcentaje || 0}%`}
+                </span>
+                <p className="text-gray-600 text-xs">Del total</p>
+              </div>
             </div>
             <p className="text-blue-600 text-xs font-medium">
               {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
