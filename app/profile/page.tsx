@@ -121,6 +121,11 @@ export default function ProfilePage() {
           
           setMessage('Avatar actualizado exitosamente')
           
+          // Disparar evento personalizado para actualizar el avatar en toda la app
+          window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
+            detail: { avatar_url: result.avatar_url } 
+          }))
+          
           // Limpiar mensaje después de 3 segundos
           setTimeout(() => setMessage(''), 3000)
 
@@ -158,6 +163,11 @@ export default function ProfilePage() {
       setUser({ ...user, avatar_url: undefined })
       setAvatarPreview(null)
       setMessage('Avatar eliminado exitosamente')
+      
+      // Disparar evento personalizado para actualizar el avatar en toda la app
+      window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
+        detail: { avatar_url: null } 
+      }))
       
       setTimeout(() => setMessage(''), 3000)
 

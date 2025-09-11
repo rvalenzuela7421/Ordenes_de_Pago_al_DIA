@@ -70,6 +70,18 @@ export default function ClientLayout({
 
   const isActive = (href: string) => pathname === href
 
+  // Función para recargar el perfil del usuario
+  const reloadUserProfile = async () => {
+    if (isAuthRoute) return
+    
+    try {
+      const userProfile = await getCurrentUserProfile()
+      setCurrentUser(userProfile)
+    } catch (error) {
+      console.error('Error recargando perfil del usuario:', error)
+    }
+  }
+
   // Obtener el usuario autenticado real solo si no es ruta de auth
   useEffect(() => {
     if (isAuthRoute) {
@@ -90,6 +102,43 @@ export default function ClientLayout({
     }
 
     loadUserProfile()
+  }, [isAuthRoute])
+
+  // Escuchar cambios de ruta para recargar el perfil si viene de /profile
+  useEffect(() => {
+    // Si el usuario viene de la página de perfil, recargar el perfil
+    const previousPath = sessionStorage.getItem('previousPath')
+    if (previousPath === '/profile' && pathname !== '/profile') {
+      reloadUserProfile()
+      sessionStorage.removeItem('previousPath')
+    }
+    
+    // Guardar la ruta actual para la próxima navegación
+    sessionStorage.setItem('previousPath', pathname)
+  }, [pathname, isAuthRoute])
+
+  // También escuchar eventos de focus de la ventana (cuando el usuario regresa)
+  useEffect(() => {
+    if (isAuthRoute) return
+
+    const handleFocus = () => {
+      // Recargar perfil cuando el usuario regresa a la ventana
+      reloadUserProfile()
+    }
+
+    // Escuchar evento personalizado de actualización del perfil
+    const handleProfileUpdate = () => {
+      console.log('👤 Perfil actualizado - recargando...')
+      reloadUserProfile()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('userProfileUpdated', handleProfileUpdate)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('userProfileUpdated', handleProfileUpdate)
+    }
   }, [isAuthRoute])
 
   // Si es una ruta de autenticación, renderizar sin el layout del dashboard

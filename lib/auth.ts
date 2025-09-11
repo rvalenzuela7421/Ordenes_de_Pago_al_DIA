@@ -18,7 +18,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
         role: 'OperacionTRIB',
         nombre_completo: 'Usuario Demo Tributaria',
         telefono: '3001234567',
-        must_change_password: false
+        must_change_password: false,
+        avatar_url: undefined
       }
       
       console.log('🎭 MODO DEMO: Usuario demo encontrado:', demoUser.email)
@@ -37,13 +38,35 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       return null
     }
 
+    // Obtener datos adicionales del perfil desde la tabla profiles
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('avatar_url, telefono, nombre_completo')
+      .eq('id', user.id)
+      .single()
+
+    // Si hay error obteniendo el perfil, usar solo datos del user_metadata
+    let avatarUrl: string | undefined
+    let telefono: string | undefined
+    let nombreCompleto: string | undefined
+
+    if (!profileError && profileData) {
+      avatarUrl = profileData.avatar_url || undefined
+      telefono = profileData.telefono || user.user_metadata?.telefono
+      nombreCompleto = profileData.nombre_completo || user.user_metadata?.nombre_completo
+    } else {
+      telefono = user.user_metadata?.telefono
+      nombreCompleto = user.user_metadata?.nombre_completo
+    }
+
     return {
       id: user.id,
       email: user.email || '',
       role: (user.user_metadata?.role as UserRole) || 'ConsultaCOP',
-      telefono: user.user_metadata?.telefono,
-      nombre_completo: user.user_metadata?.nombre_completo,
-      must_change_password: user.user_metadata?.must_change_password || false
+      telefono,
+      nombre_completo: nombreCompleto,
+      must_change_password: user.user_metadata?.must_change_password || false,
+      avatar_url: avatarUrl
     }
   } catch (error) {
     console.error('Error al obtener perfil:', error)
