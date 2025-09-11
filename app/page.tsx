@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { OrdenPago, getDashboardStats, getOrdenesRecientes, formatDate, formatCurrency, getEstadoColor, getEstadoLabel } from '@/lib/dashboard-data'
-import DashboardFilters from '@/components/DashboardFilters'
 import { getCurrentUserProfile } from '@/lib/auth'
 import { UserProfile } from '@/lib/database.types'
 import '@/styles/table-scroll.css'
@@ -300,11 +299,6 @@ export default function Dashboard() {
     setCurrentPage(1)
   }, [searchText, sortState, pageSize, filters])
 
-  const handleFiltersChange = (newFilters: FilterState) => {
-    setFilters(newFilters)
-    setCurrentPage(1)
-  }
-
   const handleSort = (field: SortField) => {
     setSortState(prev => ({
       field,
@@ -445,13 +439,6 @@ export default function Dashboard() {
 
   return (
     <div className="bg-gray-50">
-      {/* Filtros compactos */}
-      <DashboardFilters
-        onFiltersChange={handleFiltersChange}
-        availableProveedores={availableProveedores}
-        availableEstados={availableEstados}
-      />
-
       {/* Stats principales - Total y Monto */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
