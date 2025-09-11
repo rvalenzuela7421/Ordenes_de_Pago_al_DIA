@@ -609,15 +609,18 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                  </svg>
                   Cancelar
                 </button>
                 
                 <button
                   type="submit"
                   disabled={saving || !isInfoFormValid()}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   title={
                     !isInfoFormValid() 
                       ? 'Complete todos los campos obligatorios para habilitar el guardado'
@@ -625,12 +628,17 @@ export default function ProfilePage() {
                   }
                 >
                   {saving ? (
-                    <div className="flex items-center space-x-2">
+                    <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Guardando...</span>
-                    </div>
+                    </>
                   ) : (
-                    'Guardar Cambios'
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Guardar Cambios
+                    </>
                   )}
                 </button>
               </div>
