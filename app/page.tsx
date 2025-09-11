@@ -15,7 +15,7 @@ interface SortState {
   direction: SortDirection
 }
 
-type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_pago'
+type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_aprobada' | 'fecha_pago'
 
 interface FilterState {
   dateRange: {
@@ -708,6 +708,7 @@ export default function Dashboard() {
                 {[
                   { value: 'fecha_solicitud', label: 'Fecha Solicitud' },
                   { value: 'fecha_op', label: 'Fecha OP' },
+                  { value: 'fecha_aprobada', label: 'Fecha Aprobada' },
                   { value: 'fecha_pago', label: 'Fecha Pago' }
                 ].map((option) => (
                   <label key={option.value} className="flex items-center cursor-pointer">

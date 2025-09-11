@@ -37,7 +37,7 @@ export interface DashboardStats {
   }
 }
 
-type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_pago'
+type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_aprobada' | 'fecha_pago'
 
 export interface FilterState {
   dateRange: {
