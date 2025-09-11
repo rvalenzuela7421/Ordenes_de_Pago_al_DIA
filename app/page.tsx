@@ -511,86 +511,182 @@ export default function Dashboard() {
 
           {/* Card Devueltas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="bg-red-100 p-2 rounded-md">
-                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start gap-3">
+                <div className="bg-red-100 p-3 rounded-md">
+                  <svg className="w-5 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {loading ? '...' : (stats.estadisticas.Devuelta?.cantidad || 0)}
+                  </h3>
+                  <p className="text-gray-600 text-xs">Devueltas</p>
+                </div>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
-                {loading ? '...' : `${stats.estadisticas.Devuelta?.porcentaje || 0}%`}
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : `${stats.estadisticas.Devuelta?.porcentaje || 0}%`}
+                </span>
+                <p className="text-gray-600 text-xs">Del total</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              {loading ? '...' : (stats.estadisticas.Devuelta?.cantidad || 0)}
-            </h3>
-            <p className="text-gray-600 text-xs mb-1">Devueltas</p>
-            <p className="text-red-600 text-xs font-medium">
-              {loading ? '...' : formatCurrency(stats.estadisticas.Devuelta?.monto || 0)}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Devuelta?.montoBase || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">IVA:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Devuelta?.iva || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Total Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs font-medium">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Devuelta?.monto || 0)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Card Generadas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="bg-yellow-100 p-2 rounded-md">
-                <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-100 p-3 rounded-md">
+                  <svg className="w-5 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {loading ? '...' : (stats.estadisticas.Generada?.cantidad || 0)}
+                  </h3>
+                  <p className="text-gray-600 text-xs">Generadas</p>
+                </div>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
-                {loading ? '...' : `${stats.estadisticas.Generada?.porcentaje || 0}%`}
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : `${stats.estadisticas.Generada?.porcentaje || 0}%`}
+                </span>
+                <p className="text-gray-600 text-xs">Del total</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              {loading ? '...' : (stats.estadisticas.Generada?.cantidad || 0)}
-            </h3>
-            <p className="text-gray-600 text-xs mb-1">Generadas</p>
-            <p className="text-yellow-600 text-xs font-medium">
-              {loading ? '...' : formatCurrency(stats.estadisticas.Generada?.monto || 0)}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Generada?.montoBase || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">IVA:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Generada?.iva || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Total Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs font-medium">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Generada?.monto || 0)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Card Aprobadas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="bg-green-100 p-2 rounded-md">
-                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start gap-3">
+                <div className="bg-green-100 p-3 rounded-md">
+                  <svg className="w-5 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {loading ? '...' : (stats.estadisticas.Aprobada?.cantidad || 0)}
+                  </h3>
+                  <p className="text-gray-600 text-xs">Aprobadas</p>
+                </div>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
-                {loading ? '...' : `${stats.estadisticas.Aprobada?.porcentaje || 0}%`}
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : `${stats.estadisticas.Aprobada?.porcentaje || 0}%`}
+                </span>
+                <p className="text-gray-600 text-xs">Del total</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              {loading ? '...' : (stats.estadisticas.Aprobada?.cantidad || 0)}
-            </h3>
-            <p className="text-gray-600 text-xs mb-1">Aprobadas</p>
-            <p className="text-green-600 text-xs font-medium">
-              {loading ? '...' : formatCurrency(stats.estadisticas.Aprobada?.monto || 0)}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Aprobada?.montoBase || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">IVA:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Aprobada?.iva || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Total Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs font-medium">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Aprobada?.monto || 0)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Card Pagadas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="bg-emerald-100 p-2 rounded-md">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
-                </svg>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start gap-3">
+                <div className="bg-emerald-100 p-3 rounded-md">
+                  <svg className="w-5 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {loading ? '...' : (stats.estadisticas.Pagada?.cantidad || 0)}
+                  </h3>
+                  <p className="text-gray-600 text-xs">Pagadas</p>
+                </div>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
-                {loading ? '...' : `${stats.estadisticas.Pagada?.porcentaje || 0}%`}
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : `${stats.estadisticas.Pagada?.porcentaje || 0}%`}
+                </span>
+                <p className="text-gray-600 text-xs">Del total</p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              {loading ? '...' : (stats.estadisticas.Pagada?.cantidad || 0)}
-            </h3>
-            <p className="text-gray-600 text-xs mb-1">Pagadas</p>
-            <p className="text-emerald-600 text-xs font-medium">
-              {loading ? '...' : formatCurrency(stats.estadisticas.Pagada?.monto || 0)}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Pagada?.montoBase || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">IVA:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Pagada?.iva || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Total Monto Solicitado:</span>
+                <span className="text-gray-600 text-xs font-medium">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Pagada?.monto || 0)}
+                </span>
+              </div>
+            </div>
           </div>
       </div>
 
