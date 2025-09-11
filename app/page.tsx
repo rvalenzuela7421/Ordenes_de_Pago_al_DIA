@@ -467,18 +467,20 @@ export default function Dashboard() {
           {/* Card Solicitadas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between mb-2">
-              <div className="bg-blue-100 p-2 rounded-md">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-2 rounded-md">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {loading ? '...' : (stats.estadisticas.Solicitada?.cantidad || 0)}
+                </h3>
               </div>
               <span className="text-xs text-gray-500 font-medium">
                 {loading ? '...' : `${stats.estadisticas.Solicitada?.porcentaje || 0}%`}
               </span>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">
-              {loading ? '...' : (stats.estadisticas.Solicitada?.cantidad || 0)}
-            </h3>
             <p className="text-gray-600 text-xs mb-1">Solicitadas</p>
             <p className="text-blue-600 text-xs font-medium">
               {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
