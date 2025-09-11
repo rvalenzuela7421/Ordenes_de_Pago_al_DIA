@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getCurrentUserProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { UserProfile } from '@/lib/database.types'
-import { isValidPhone, validatePassword } from '@/lib/utils'
+import { isValidPhone, validatePassword, getInitials } from '@/lib/utils'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -20,6 +20,8 @@ export default function ProfilePage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'info' | 'password'>('info')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
   useEffect(() => {
     loadUserProfile()
@@ -36,11 +38,132 @@ export default function ProfilePage() {
           nombre_completo: userProfile.nombre_completo || '',
           telefono: userProfile.telefono || ''
         }))
+        setAvatarPreview(userProfile.avatar_url || null)
       }
     } catch (error) {
       console.error('Error cargando perfil:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setErrors({ ...errors, avatar: 'Solo se permiten archivos JPG, PNG o WebP' })
+      return
+    }
+
+    // Validar tamaño (5MB máximo)
+    if (file.size > 5242880) {
+      setErrors({ ...errors, avatar: 'El archivo es demasiado grande. Máximo 5MB permitido' })
+      return
+    }
+
+    // Crear preview
+    const reader = new FileReader()
+    reader.onload = () => {
+      setAvatarPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Subir avatar
+    uploadAvatar(file)
+  }
+
+  const uploadAvatar = async (file: File) => {
+    setAvatarUploading(true)
+    setErrors({ ...errors, avatar: '' })
+
+    try {
+      // Obtener token de sesión
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setErrors({ ...errors, avatar: 'Sesión no válida' })
+        return
+      }
+
+      // Convertir archivo a base64
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64Data = reader.result as string
+        const fileData = base64Data.split(',')[1] // Remover el prefijo data:image/...;base64,
+
+        try {
+          const response = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              fileData,
+              fileName: file.name,
+              mimeType: file.type
+            })
+          })
+
+          const result = await response.json()
+
+          if (!response.ok) {
+            setErrors({ ...errors, avatar: result.error || 'Error subiendo avatar' })
+            return
+          }
+
+          // Actualizar usuario local
+          if (user) {
+            setUser({ ...user, avatar_url: result.avatar_url })
+          }
+          
+          setMessage('Avatar actualizado exitosamente')
+          
+          // Limpiar mensaje después de 3 segundos
+          setTimeout(() => setMessage(''), 3000)
+
+        } catch (error) {
+          console.error('Error subiendo avatar:', error)
+          setErrors({ ...errors, avatar: 'Error de conexión al subir avatar' })
+        }
+      }
+      reader.readAsDataURL(file)
+
+    } catch (error) {
+      console.error('Error en uploadAvatar:', error)
+      setErrors({ ...errors, avatar: 'Error inesperado al subir avatar' })
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  const removeAvatar = async () => {
+    if (!user) return
+
+    try {
+      // Actualizar en la base de datos
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id)
+
+      if (error) {
+        setErrors({ ...errors, avatar: 'Error eliminando avatar' })
+        return
+      }
+
+      // Actualizar estado local
+      setUser({ ...user, avatar_url: undefined })
+      setAvatarPreview(null)
+      setMessage('Avatar eliminado exitosamente')
+      
+      setTimeout(() => setMessage(''), 3000)
+
+    } catch (error) {
+      console.error('Error eliminando avatar:', error)
+      setErrors({ ...errors, avatar: 'Error inesperado al eliminar avatar' })
     }
   }
 
@@ -190,6 +313,88 @@ export default function ProfilePage() {
       )}
 
       <div className="card">
+        {/* Avatar Section */}
+        <div className="px-6 py-6 border-b border-gray-200">
+          <div className="flex items-center space-x-6">
+            {/* Avatar Display */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                {avatarPreview || user?.avatar_url ? (
+                  <img
+                    src={avatarPreview || user?.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {user?.nombre_completo ? getInitials(user.nombre_completo) : user?.email.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {avatarUploading && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+
+            {/* Avatar Controls */}
+            <div className="flex-1">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Foto de perfil</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Sube una imagen para personalizar tu perfil. Se permiten archivos JPG, PNG o WebP de hasta 5MB.
+              </p>
+              
+              <div className="flex items-center space-x-3">
+                {/* Upload Button */}
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    disabled={avatarUploading}
+                    className="sr-only"
+                  />
+                  <span className={`inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${avatarUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {avatarUploading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2"></div>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Subir foto
+                      </>
+                    )}
+                  </span>
+                </label>
+
+                {/* Remove Button */}
+                {(avatarPreview || user?.avatar_url) && !avatarUploading && (
+                  <button
+                    onClick={removeAvatar}
+                    className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar
+                  </button>
+                )}
+              </div>
+
+              {/* Avatar Error */}
+              {errors.avatar && (
+                <p className="mt-2 text-sm text-red-600">{errors.avatar}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6 pt-6">

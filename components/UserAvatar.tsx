@@ -68,11 +68,21 @@ export default function UserAvatar({ user }: UserAvatarProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-10 h-10 text-sm font-medium text-white bg-primary-600 rounded-full hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
+        className="flex items-center justify-center w-10 h-10 text-sm font-medium text-white bg-primary-600 rounded-full hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors overflow-hidden"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        {user.nombre_completo ? getInitials(user.nombre_completo) : user.email.charAt(0).toUpperCase()}
+        {user.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt="Avatar"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span>
+            {user.nombre_completo ? getInitials(user.nombre_completo) : user.email.charAt(0).toUpperCase()}
+          </span>
+        )}
       </button>
 
       {isOpen && (

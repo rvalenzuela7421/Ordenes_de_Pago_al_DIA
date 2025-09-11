@@ -93,6 +93,7 @@ export interface UserProfile {
   telefono?: string
   nombre_completo?: string
   must_change_password?: boolean
+  avatar_url?: string
 }
 
 export interface OrdenPago {
