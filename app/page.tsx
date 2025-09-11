@@ -796,7 +796,7 @@ export default function Dashboard() {
                   setSearchText('')
                   setCurrentPage(1)
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap"
                 title="Limpiar todos los filtros y búsqueda"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
