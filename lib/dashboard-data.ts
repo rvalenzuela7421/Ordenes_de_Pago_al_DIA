@@ -30,6 +30,8 @@ export interface DashboardStats {
     [key: string]: {
       cantidad: number
       monto: number
+      montoBase: number
+      iva: number
       porcentaje: number
     }
   }
@@ -139,7 +141,7 @@ export async function getDashboardStats(filters?: FilterState): Promise<Dashboar
     const totalIva = ordenes.reduce((sum, orden) => sum + orden.iva, 0)
     
     // Calcular estadísticas por estado
-    const estadisticas: { [key: string]: { cantidad: number; monto: number; porcentaje: number } } = {}
+    const estadisticas: { [key: string]: { cantidad: number; monto: number; montoBase: number; iva: number; porcentaje: number } } = {}
     
     // Inicializar todos los estados posibles
     const estadosPosibles = ['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada']
@@ -148,6 +150,8 @@ export async function getDashboardStats(filters?: FilterState): Promise<Dashboar
       estadisticas[estado] = {
         cantidad: 0,
         monto: 0,
+        montoBase: 0,
+        iva: 0,
         porcentaje: 0
       }
     })
@@ -158,6 +162,8 @@ export async function getDashboardStats(filters?: FilterState): Promise<Dashboar
       if (estadisticas[estado]) {
         estadisticas[estado].cantidad += 1
         estadisticas[estado].monto += orden.total_solicitud
+        estadisticas[estado].montoBase += orden.monto_solicitud
+        estadisticas[estado].iva += orden.iva
       }
     })
     

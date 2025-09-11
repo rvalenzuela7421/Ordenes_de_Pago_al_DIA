@@ -491,13 +491,13 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 text-xs">Solicitado:</span>
                 <span className="text-gray-600 text-xs">
-                  {loading ? '...' : formatCurrency((stats.estadisticas.Solicitada?.monto || 0) * 0.84)}
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.montoBase || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 text-xs">IVA:</span>
                 <span className="text-gray-600 text-xs">
-                  {loading ? '...' : formatCurrency((stats.estadisticas.Solicitada?.monto || 0) * 0.16)}
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.iva || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
