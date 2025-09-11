@@ -681,27 +681,6 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              
-              {/* Controles de paginación */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
-                >
-                  <option value={10}>10</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={0}>Todos</option>
-                </select>
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  {filteredOrdenes.length > 0 ? (
-                    `${startRecord}-${endRecord} de ${filteredOrdenes.length}`
-                  ) : (
-                    'Sin resultados'
-                  )}
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -1085,6 +1064,23 @@ export default function Dashboard() {
                   >
                     Siguiente
                   </button>
+                  
+                  {/* Controles de paginación movidos desde la parte superior */}
+                  <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
+                    >
+                      <option value={10}>10</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                      <option value={0}>Todos</option>
+                    </select>
+                    <span className="text-sm text-gray-600 whitespace-nowrap">
+                      por página
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
