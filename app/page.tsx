@@ -582,10 +582,94 @@ export default function Dashboard() {
       {/* Tabla optimizada con controles integrados */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200 bg-gray-50/50">
-          {/* Controles de búsqueda y filtros alineados a la izquierda */}
+          {/* Controles organizados: Filtros izquierda, Búsqueda y paginación derecha */}
           <div className="flex justify-between items-start gap-6">
-            {/* Panel izquierdo: Búsqueda y filtros de período */}
-            <div className="flex flex-col gap-4">
+            {/* Panel izquierdo: Solo filtros de período */}
+            <div className="flex items-center gap-4">
+              {/* Período de consulta */}
+              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Período de consulta
+              </label>
+              
+              {/* Option Group para tipo de fecha - Estilo Radio Buttons */}
+              <div className="flex items-center gap-4">
+                {[
+                  { value: 'fecha_solicitud', label: 'Fecha Solicitud' },
+                  { value: 'fecha_op', label: 'Fecha OP' },
+                  { value: 'fecha_pago', label: 'Fecha Pago' }
+                ].map((option) => (
+                  <label key={option.value} className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="dateFilterType"
+                        value={option.value}
+                        checked={filters.dateRange.tipo === option.value}
+                        onChange={() => setFilters(prev => ({ 
+                          ...prev, 
+                          dateRange: { ...prev.dateRange, tipo: option.value as DateFilterType } 
+                        }))}
+                        className="sr-only"
+                      />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        filters.dateRange.tipo === option.value
+                          ? 'border-bolivar-green bg-bolivar-green'
+                          : 'border-gray-300 bg-white'
+                      }`}>
+                        {filters.dateRange.tipo === option.value && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                        )}
+                      </div>
+                    </div>
+                    <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {/* Campos de fecha Desde y Hasta */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <label className="text-sm text-gray-600 whitespace-nowrap">Desde</label>
+                  <input
+                    type="date"
+                    value={filters.dateRange.from}
+                    onChange={(e) => setFilters(prev => ({ 
+                      ...prev, 
+                      dateRange: { ...prev.dateRange, from: e.target.value } 
+                    }))}
+                    className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className="text-sm text-gray-600 whitespace-nowrap">Hasta</label>
+                  <input
+                    type="date"
+                    value={filters.dateRange.to}
+                    onChange={(e) => setFilters(prev => ({ 
+                      ...prev, 
+                      dateRange: { ...prev.dateRange, to: e.target.value } 
+                    }))}
+                    className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
+                  />
+                </div>
+                {/* Botón limpiar fechas */}
+                {(filters.dateRange.from || filters.dateRange.to) && (
+                  <button
+                    onClick={() => setFilters(prev => ({ 
+                      ...prev, 
+                      dateRange: { ...prev.dateRange, from: '', to: '' } 
+                    }))}
+                    className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100"
+                    title="Limpiar fechas"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Panel derecho: Búsqueda y controles de paginación */}
+            <div className="flex items-center gap-4">
               {/* Campo de búsqueda */}
               <div className="flex items-center gap-3">
                 <label htmlFor="search-field" className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -606,109 +690,26 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              {/* Período de consulta */}
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                  Período de consulta
-                </label>
-                
-                {/* Option Group para tipo de fecha - Estilo Radio Buttons */}
-                <div className="flex items-center gap-4">
-                  {[
-                    { value: 'fecha_solicitud', label: 'Fecha Solicitud' },
-                    { value: 'fecha_op', label: 'Fecha OP' },
-                    { value: 'fecha_pago', label: 'Fecha Pago' }
-                  ].map((option) => (
-                    <label key={option.value} className="flex items-center cursor-pointer">
-                      <div className="relative">
-                        <input
-                          type="radio"
-                          name="dateFilterType"
-                          value={option.value}
-                          checked={filters.dateRange.tipo === option.value}
-                          onChange={() => setFilters(prev => ({ 
-                            ...prev, 
-                            dateRange: { ...prev.dateRange, tipo: option.value as DateFilterType } 
-                          }))}
-                          className="sr-only"
-                        />
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          filters.dateRange.tipo === option.value
-                            ? 'border-bolivar-green bg-bolivar-green'
-                            : 'border-gray-300 bg-white'
-                        }`}>
-                          {filters.dateRange.tipo === option.value && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                      </div>
-                      <span className="ml-2 text-sm text-gray-700">{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-                
-                {/* Campos de fecha Desde y Hasta */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <label className="text-sm text-gray-600 whitespace-nowrap">Desde</label>
-                    <input
-                      type="date"
-                      value={filters.dateRange.from}
-                      onChange={(e) => setFilters(prev => ({ 
-                        ...prev, 
-                        dateRange: { ...prev.dateRange, from: e.target.value } 
-                      }))}
-                      className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <label className="text-sm text-gray-600 whitespace-nowrap">Hasta</label>
-                    <input
-                      type="date"
-                      value={filters.dateRange.to}
-                      onChange={(e) => setFilters(prev => ({ 
-                        ...prev, 
-                        dateRange: { ...prev.dateRange, to: e.target.value } 
-                      }))}
-                      className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
-                    />
-                  </div>
-                  {/* Botón limpiar fechas */}
-                  {(filters.dateRange.from || filters.dateRange.to) && (
-                    <button
-                      onClick={() => setFilters(prev => ({ 
-                        ...prev, 
-                        dateRange: { ...prev.dateRange, from: '', to: '' } 
-                      }))}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100"
-                      title="Limpiar fechas"
-                    >
-                      ✕
-                    </button>
+              {/* Controles de paginación */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
+                >
+                  <option value={10}>10</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={0}>Todos</option>
+                </select>
+                <span className="text-sm text-gray-600 whitespace-nowrap">
+                  {filteredOrdenes.length > 0 ? (
+                    `${startRecord}-${endRecord} de ${filteredOrdenes.length}`
+                  ) : (
+                    'Sin resultados'
                   )}
-                </div>
+                </span>
               </div>
-            </div>
-            
-            {/* Controles de paginación alineados a la derecha */}
-            <div className="flex items-center gap-2">
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
-              >
-                <option value={10}>10</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={0}>Todos</option>
-              </select>
-              <span className="text-sm text-gray-600 whitespace-nowrap">
-                {filteredOrdenes.length > 0 ? (
-                  `${startRecord}-${endRecord} de ${filteredOrdenes.length}`
-                ) : (
-                  'Sin resultados'
-                )}
-              </span>
             </div>
           </div>
         </div>
