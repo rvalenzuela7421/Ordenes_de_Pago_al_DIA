@@ -596,7 +596,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Botones de acción */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-end items-center gap-4">
                 <button
                   type="button"
                   onClick={() => router.back()}
