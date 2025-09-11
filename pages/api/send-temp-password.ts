@@ -99,7 +99,7 @@ async function sendTempPasswordEmail(email: string, tempPassword: string, userNa
     <html>
       <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #3b82f6; color: white; padding: 20px; text-align: center;">
-          <h1>Centro de Órdenes de Pago <b style="color: black;">ALD</b><b style="color: #FFD046;">IA</b> - COP</h1>
+          <h1>Mis Pagos <b style="color: black;">ALD</b><b style="color: #FFD046;">IA</b> - COP</h1>
         </div>
         
         <div style="padding: 20px;">

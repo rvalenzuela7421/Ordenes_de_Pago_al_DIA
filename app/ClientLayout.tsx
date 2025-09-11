@@ -105,7 +105,7 @@ export default function ClientLayout({
         
         {/* Header con navegación horizontal */}
         <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               
               {/* Logo y título */}
@@ -133,7 +133,7 @@ export default function ClientLayout({
                 
                 <div className="hidden sm:block">
                   <span className="text-xl font-bold text-bolivar-green">
-                    Centro de Órdenes de Pago{' '}
+                    Mis Pagos{' '}
                     <span className="font-bold text-black">ALD</span>
                     <span className="font-bold text-bolivar-yellow">IA</span>
                   </span>
@@ -258,8 +258,8 @@ export default function ClientLayout({
           )}
         </header>
 
-        {/* Main content area - usa todo el ancho */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Main content area - usa todo el ancho de pantalla */}
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
           {children}
         </main>
       </div>

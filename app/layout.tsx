@@ -5,8 +5,8 @@ import ClientLayout from './ClientLayout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Centro de Órdenes de Pago ALDIA - COP',
-  description: 'Sistema de automatización para el flujo del Centro de Órdenes de Pago ALDIA',
+  title: 'Mis Pagos ALDIA - COP',
+  description: 'Sistema de automatización para el flujo de Mis Pagos ALDIA',
   keywords: ['COP', 'órdenes de pago', 'automatización', 'pagaduría'],
   authors: [{ name: 'Sistema COP' }],
 }
