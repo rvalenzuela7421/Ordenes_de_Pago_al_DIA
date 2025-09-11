@@ -16,13 +16,22 @@ interface SortState {
   direction: SortDirection
 }
 
+type DateFilterType = 'fecha_solicitud' | 'fecha_op' | 'fecha_pago'
+
 interface FilterState {
   dateRange: {
     from: string
     to: string
+    tipo: DateFilterType
   }
   proveedores: string[]
   estados: string[]
+  companiasReceptoras: string[]
+  conceptos: string[]
+  montoRange: {
+    min: number | null
+    max: number | null
+  }
 }
 
 export default function Dashboard() {
@@ -39,6 +48,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [availableProveedores, setAvailableProveedores] = useState<string[]>([])
   const [availableEstados, setAvailableEstados] = useState<string[]>([])
+  const [availableCompanias, setAvailableCompanias] = useState<string[]>([])
+  const [availableConceptos, setAvailableConceptos] = useState<string[]>([])
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   
   // Estados para funcionalidades avanzadas
@@ -47,9 +58,12 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [filters, setFilters] = useState<FilterState>({
-    dateRange: { from: '', to: '' },
+    dateRange: { from: '', to: '', tipo: 'fecha_solicitud' },
     proveedores: [],
-    estados: []
+    estados: [],
+    companiasReceptoras: [],
+    conceptos: [],
+    montoRange: { min: null, max: null }
   })
 
   // Función para detectar scroll horizontal
@@ -82,9 +96,13 @@ export default function Dashboard() {
       // Extraer valores únicos para filtros
       const uniqueProveedores = Array.from(new Set(ordenesData.map((orden: OrdenPago) => orden.proveedor))).sort()
       const uniqueEstados = Array.from(new Set(ordenesData.map((orden: OrdenPago) => orden.estado))).sort()
+      const uniqueCompanias = Array.from(new Set(ordenesData.map((orden: OrdenPago) => orden.compania_receptora).filter(Boolean))).sort()
+      const uniqueConceptos = Array.from(new Set(ordenesData.map((orden: OrdenPago) => orden.concepto))).sort()
       
       setAvailableProveedores(uniqueProveedores as string[])
       setAvailableEstados(uniqueEstados as string[])
+      setAvailableCompanias(uniqueCompanias as string[])
+      setAvailableConceptos(uniqueConceptos as string[])
       
     } catch (error) {
       console.error('Error loading dashboard data:', error)
@@ -100,7 +118,11 @@ export default function Dashboard() {
       const hasFilters = currentFilters.dateRange.from || 
                         currentFilters.dateRange.to || 
                         currentFilters.proveedores.length > 0 || 
-                        currentFilters.estados.length > 0
+                        currentFilters.estados.length > 0 ||
+                        currentFilters.companiasReceptoras.length > 0 ||
+                        currentFilters.conceptos.length > 0 ||
+                        currentFilters.montoRange.min !== null ||
+                        currentFilters.montoRange.max !== null
 
       if (hasFilters) {
         const filteredStats = await getDashboardStats(currentFilters)
@@ -151,15 +173,17 @@ export default function Dashboard() {
     // Aplicar filtros de fecha - AJUSTADO PARA COLOMBIA (UTC-5)
     if (filters.dateRange.from) {
       const fechaDesde = new Date(filters.dateRange.from + 'T00:00:00-05:00')
-      filtered = filtered.filter(orden => 
-        new Date(orden.fecha_solicitud) >= fechaDesde
-      )
+      filtered = filtered.filter(orden => {
+        const fechaOrden = new Date(orden[filters.dateRange.tipo])
+        return fechaOrden >= fechaDesde
+      })
     }
     if (filters.dateRange.to) {
       const fechaHasta = new Date(filters.dateRange.to + 'T23:59:59-05:00')
-      filtered = filtered.filter(orden => 
-        new Date(orden.fecha_solicitud) <= fechaHasta
-      )
+      filtered = filtered.filter(orden => {
+        const fechaOrden = new Date(orden[filters.dateRange.tipo])
+        return fechaOrden <= fechaHasta
+      })
     }
 
     // Aplicar filtros de proveedores
@@ -174,6 +198,30 @@ export default function Dashboard() {
       filtered = filtered.filter(orden => 
         filters.estados.includes(orden.estado)
       )
+    }
+
+    // Aplicar filtros de compañías receptoras
+    if (filters.companiasReceptoras.length > 0) {
+      filtered = filtered.filter(orden => 
+        orden.compania_receptora && filters.companiasReceptoras.includes(orden.compania_receptora)
+      )
+    }
+
+    // Aplicar filtros de conceptos
+    if (filters.conceptos.length > 0) {
+      filtered = filtered.filter(orden => 
+        filters.conceptos.includes(orden.concepto)
+      )
+    }
+
+    // Aplicar filtros de rango de montos
+    if (filters.montoRange.min !== null || filters.montoRange.max !== null) {
+      filtered = filtered.filter(orden => {
+        const monto = orden.monto_solicitud
+        const minOk = filters.montoRange.min === null || monto >= filters.montoRange.min
+        const maxOk = filters.montoRange.max === null || monto <= filters.montoRange.max
+        return minOk && maxOk
+      })
     }
 
     // Aplicar búsqueda
@@ -274,6 +322,102 @@ export default function Dashboard() {
       <svg className="w-3 h-3 text-bolivar-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
       </svg>
+    )
+  }
+
+  // Componente de filtro multiselección
+  const MultiSelectFilter = ({ 
+    options, 
+    selectedValues, 
+    onChange, 
+    placeholder,
+    maxDisplay = 2 
+  }: {
+    options: string[]
+    selectedValues: string[]
+    onChange: (values: string[]) => void
+    placeholder: string
+    maxDisplay?: number
+  }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    
+    // Cerrar dropdown al hacer click fuera
+    useEffect(() => {
+      const handleClickOutside = () => {
+        setIsOpen(false)
+      }
+      
+      if (isOpen) {
+        document.addEventListener('click', handleClickOutside)
+        return () => document.removeEventListener('click', handleClickOutside)
+      }
+    }, [isOpen])
+    
+    const handleToggle = (value: string) => {
+      const newValues = selectedValues.includes(value) 
+        ? selectedValues.filter(v => v !== value)
+        : [...selectedValues, value]
+      onChange(newValues)
+    }
+
+    const displayText = selectedValues.length === 0 
+      ? placeholder
+      : selectedValues.length <= maxDisplay
+        ? selectedValues.join(', ')
+        : `${selectedValues.slice(0, maxDisplay).join(', ')} +${selectedValues.length - maxDisplay}`
+
+    return (
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsOpen(!isOpen)
+          }}
+          className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-600 min-w-[100px] max-w-[150px]"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+          </svg>
+          <span className="truncate">{displayText}</span>
+          <svg className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px] max-h-[200px] overflow-y-auto">
+            <div className="p-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700">Filtrar por:</span>
+                {selectedValues.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange([])
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+              <div className="space-y-1">
+                {options.map(option => (
+                  <label key={option} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedValues.includes(option)}
+                      onChange={() => handleToggle(option)}
+                      className="rounded border-gray-300 text-bolivar-green focus:ring-bolivar-green"
+                    />
+                    <span className="text-xs text-gray-700 truncate">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -438,73 +582,123 @@ export default function Dashboard() {
       {/* Tabla optimizada con controles integrados */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200 bg-gray-50/50">
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-            {/* Título y acciones rápidas */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 text-bolivar-green mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                Listado de Solicitudes
-                {filters.dateRange.from || filters.dateRange.to || filters.proveedores.length > 0 || filters.estados.length > 0 ? ' (Filtradas)' : ''}
-              </h2>
-              
-              {/* Acciones rápidas integradas */}
-              <div className="flex gap-2">
-                {/* Botón Nueva Solicitud - Solo visible para perfil OperacionTRIB */}
-                {currentUser?.role === 'OperacionTRIB' && (
-                  <Link href="/solicitudes/nueva" className="inline-flex items-center px-3 py-1.5 bg-bolivar-green text-white rounded-md text-sm hover:bg-bolivar-green-700 transition-colors">
-                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Nueva Solicitud de OP
-                  </Link>
-                )}
-                <Link href="/reportes" className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 transition-colors">
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          {/* Controles de búsqueda y filtros alineados a la izquierda */}
+          <div className="flex justify-between items-start gap-6">
+            {/* Panel izquierdo: Búsqueda y filtros de período */}
+            <div className="flex flex-col gap-4">
+              {/* Campo de búsqueda */}
+              <div className="flex items-center gap-3">
+                <label htmlFor="search-field" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Buscar
+                </label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Reportes
-                </Link>
+                  <input
+                    id="search-field"
+                    type="text"
+                    placeholder="Busque cualquier información dentro de la tabla de datos"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-[480px]"
+                  />
+                </div>
+              </div>
+              
+              {/* Período de consulta */}
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Período de consulta
+                </label>
+                
+                {/* Option Group para tipo de fecha */}
+                <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                  {[
+                    { value: 'fecha_solicitud', label: 'Fecha Solicitud' },
+                    { value: 'fecha_op', label: 'Fecha OP' },
+                    { value: 'fecha_pago', label: 'Fecha Pago' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, tipo: option.value as DateFilterType } 
+                      }))}
+                      className={`px-3 py-2 text-xs font-medium transition-colors ${
+                        filters.dateRange.tipo === option.value
+                          ? 'bg-bolivar-green text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      } border-r border-gray-300 last:border-r-0`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Campos de fecha Desde y Hasta */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <label className="text-sm text-gray-600 whitespace-nowrap">Desde</label>
+                    <input
+                      type="date"
+                      value={filters.dateRange.from}
+                      onChange={(e) => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, from: e.target.value } 
+                      }))}
+                      className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <label className="text-sm text-gray-600 whitespace-nowrap">Hasta</label>
+                    <input
+                      type="date"
+                      value={filters.dateRange.to}
+                      onChange={(e) => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, to: e.target.value } 
+                      }))}
+                      className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-36"
+                    />
+                  </div>
+                  {/* Botón limpiar fechas */}
+                  {(filters.dateRange.from || filters.dateRange.to) && (
+                    <button
+                      onClick={() => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, from: '', to: '' } 
+                      }))}
+                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100"
+                      title="Limpiar fechas"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             
-            {/* Controles de búsqueda y paginación */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Campo de búsqueda */}
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green w-48"
-                />
-              </div>
-              
-              {/* Selector de registros por página y contador */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
-                >
-                  <option value={10}>10</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={0}>Todos</option>
-                </select>
-                <span className="text-sm text-gray-600 whitespace-nowrap">
-                  {filteredOrdenes.length > 0 ? (
-                    `${startRecord}-${endRecord} de ${filteredOrdenes.length}`
-                  ) : (
-                    'Sin resultados'
-                  )}
-                </span>
-              </div>
+            {/* Controles de paginación alineados a la derecha */}
+            <div className="flex items-center gap-2">
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
+              >
+                <option value={10}>10</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={0}>Todos</option>
+              </select>
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                {filteredOrdenes.length > 0 ? (
+                  `${startRecord}-${endRecord} de ${filteredOrdenes.length}`
+                ) : (
+                  'Sin resultados'
+                )}
+              </span>
             </div>
           </div>
         </div>
@@ -524,12 +718,12 @@ export default function Dashboard() {
               <p className="text-gray-400 text-sm mt-1">Intenta ajustar los filtros o crear una nueva orden</p>
             </div>
           ) : (
-            <table className="w-full text-sm" style={{minWidth: '1400px'}}>
+            <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th 
                     onClick={() => handleSort('fecha_solicitud')}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[120px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -541,7 +735,7 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('numero_solicitud')}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[110px]"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[150px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">No.Solicitud</div>
@@ -549,38 +743,71 @@ export default function Dashboard() {
                     </div>
                   </th>
                   <th 
-                    onClick={() => handleSort('compania_receptora')}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[140px]"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-[200px]"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="capitalize">
-                        <div>Compañía</div>
-                        <div>Receptora</div>
+                    <div className="space-y-2">
+                      <div 
+                        onClick={() => handleSort('compania_receptora')}
+                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                      >
+                        <div className="capitalize">
+                          <div>Compañía</div>
+                          <div>Receptora</div>
+                        </div>
+                        {getSortIcon('compania_receptora')}
                       </div>
-                      {getSortIcon('compania_receptora')}
+                      <MultiSelectFilter
+                        options={availableCompanias}
+                        selectedValues={filters.companiasReceptoras}
+                        onChange={(values) => setFilters(prev => ({ ...prev, companiasReceptoras: values }))}
+                        placeholder="Filtrar..."
+                        maxDisplay={1}
+                      />
                     </div>
                   </th>
                   <th 
-                    onClick={() => handleSort('proveedor')}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[130px]"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-[180px]"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="capitalize">Proveedor</div>
-                      {getSortIcon('proveedor')}
+                    <div className="space-y-2">
+                      <div 
+                        onClick={() => handleSort('proveedor')}
+                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                      >
+                        <div className="capitalize">Proveedor</div>
+                        {getSortIcon('proveedor')}
+                      </div>
+                      <MultiSelectFilter
+                        options={availableProveedores}
+                        selectedValues={filters.proveedores}
+                        onChange={(values) => setFilters(prev => ({ ...prev, proveedores: values }))}
+                        placeholder="Filtrar..."
+                        maxDisplay={1}
+                      />
                     </div>
                   </th>
                   <th 
-                    onClick={() => handleSort('concepto')}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[160px]"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-[220px]"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="capitalize">Concepto</div>
-                      {getSortIcon('concepto')}
+                    <div className="space-y-2">
+                      <div 
+                        onClick={() => handleSort('concepto')}
+                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                      >
+                        <div className="capitalize">Concepto</div>
+                        {getSortIcon('concepto')}
+                      </div>
+                      <MultiSelectFilter
+                        options={availableConceptos}
+                        selectedValues={filters.conceptos}
+                        onChange={(values) => setFilters(prev => ({ ...prev, conceptos: values }))}
+                        placeholder="Filtrar..."
+                        maxDisplay={1}
+                      />
                     </div>
                   </th>
                   <th 
                     onClick={() => handleSort('monto_solicitud')}
-                    className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
+                    className="px-4 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[140px]"
                   >
                     <div className="flex items-center justify-between">
                       <div className="capitalize">
@@ -657,12 +884,23 @@ export default function Dashboard() {
                     </div>
                   </th>
                   <th 
-                    onClick={() => handleSort('estado')}
-                    className="px-3 py-3 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
+                    className="px-3 py-3 text-center text-xs font-medium text-gray-500 min-w-[130px]"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="capitalize">Estado</div>
-                      {getSortIcon('estado')}
+                    <div className="space-y-2">
+                      <div 
+                        onClick={() => handleSort('estado')}
+                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                      >
+                        <div className="capitalize">Estado</div>
+                        {getSortIcon('estado')}
+                      </div>
+                      <MultiSelectFilter
+                        options={availableEstados}
+                        selectedValues={filters.estados}
+                        onChange={(values) => setFilters(prev => ({ ...prev, estados: values }))}
+                        placeholder="Filtrar..."
+                        maxDisplay={1}
+                      />
                     </div>
                   </th>
                   <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 min-w-[90px]">
