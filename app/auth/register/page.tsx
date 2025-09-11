@@ -42,7 +42,8 @@ export default function RegisterPage() {
             Crear Cuenta
           </h3>
           <p className="mt-2 text-sm text-bolivar-gray">
-            Regístrate en el Centro de Órdenes de Pago
+            Regístrate en el Centro de Órdenes de Pago{' '}
+            <span className="font-bold text-black">ALD</span><span className="font-bold text-bolivar-yellow">IA</span>
           </p>
         </div>
 

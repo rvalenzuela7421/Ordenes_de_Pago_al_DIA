@@ -1,8 +1,8 @@
 # 🏢 Órdenes de Pago al DIA
 
-**Centro de Órdenes de Pago - Prototipo Funcional**
+**Centro de Órdenes de Pago ALDIA - Prototipo Funcional**
 
-Una aplicación web moderna para automatizar el flujo del Centro de Órdenes de Pago (COP) de Seguros Bolívar.
+Una aplicación web moderna para automatizar el flujo del Centro de Órdenes de Pago ALDIA (COP) de Seguros Bolívar.
 
 ## 🎨 **Identidad Visual**
 

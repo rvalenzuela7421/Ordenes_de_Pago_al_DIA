@@ -38,7 +38,8 @@ export default function LoginPage() {
             Iniciar Sesión
           </h3>
           <p className="mt-2 text-sm text-bolivar-gray">
-            Centro de Órdenes de Pago
+            Centro de Órdenes de Pago{' '}
+            <span className="font-bold text-black">ALD</span><span className="font-bold text-bolivar-yellow">IA</span>
           </p>
         </div>
 

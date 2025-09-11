@@ -89,7 +89,8 @@ export default function UnauthorizedPage() {
             Si crees que esto es un error, contacta al administrador del sistema.
           </p>
           <div className="border-t border-gray-200 pt-4">
-            <p className="font-medium">Centro de Órdenes de Pago - COP</p>
+            <p className="font-medium">Centro de Órdenes de Pago{' '}
+              <span className="font-bold text-black">ALD</span><span className="font-bold text-bolivar-yellow">IA</span> - COP</p>
             <p>Sistema de Automatización de Procesos</p>
           </div>
         </div>
