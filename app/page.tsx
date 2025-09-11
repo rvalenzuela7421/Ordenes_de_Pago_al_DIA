@@ -487,9 +487,26 @@ export default function Dashboard() {
                 <p className="text-gray-600 text-xs">Del total</p>
               </div>
             </div>
-            <p className="text-blue-600 text-xs font-medium">
-              {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Solicitado:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency((stats.estadisticas.Solicitada?.monto || 0) * 0.84)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">IVA:</span>
+                <span className="text-gray-600 text-xs">
+                  {loading ? '...' : formatCurrency((stats.estadisticas.Solicitada?.monto || 0) * 0.16)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-xs">Total Solicitado:</span>
+                <span className="text-gray-600 text-xs font-medium">
+                  {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Card Devueltas */}
