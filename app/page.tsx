@@ -827,7 +827,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('fecha_solicitud')}
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[120px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Fecha</div>
                         <div>Solicitud</div>
@@ -839,7 +839,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('numero_solicitud')}
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[150px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">No.Solicitud</div>
                       {getSortIcon('numero_solicitud')}
                     </div>
@@ -850,7 +850,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       <div 
                         onClick={() => handleSort('compania_receptora')}
-                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                       >
                         <div className="capitalize">
                           <div>Compañía</div>
@@ -873,7 +873,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       <div 
                         onClick={() => handleSort('proveedor')}
-                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                       >
                         <div className="capitalize">Proveedor</div>
                         {getSortIcon('proveedor')}
@@ -893,7 +893,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       <div 
                         onClick={() => handleSort('concepto')}
-                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                       >
                         <div className="capitalize">Concepto</div>
                         {getSortIcon('concepto')}
@@ -911,7 +911,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('monto_solicitud')}
                     className="px-4 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[140px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Monto</div>
                         <div>Solicitud</div>
@@ -923,7 +923,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('iva')}
                     className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[80px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">Iva</div>
                       {getSortIcon('iva')}
                     </div>
@@ -932,7 +932,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('total_solicitud')}
                     className="px-3 py-3 text-right text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Total</div>
                         <div>Solicitud</div>
@@ -944,7 +944,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('fecha_op')}
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Fecha</div>
                         <div>Op</div>
@@ -956,7 +956,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('numero_op')}
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[100px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">No.Op</div>
                       {getSortIcon('numero_op')}
                     </div>
@@ -965,7 +965,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('fecha_aprobada')}
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Fecha</div>
                         <div>Aprobada</div>
@@ -977,7 +977,7 @@ export default function Dashboard() {
                     onClick={() => handleSort('fecha_pago')}
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px]"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="capitalize">
                         <div>Fecha</div>
                         <div>Pago</div>
@@ -991,7 +991,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                       <div 
                         onClick={() => handleSort('estado')}
-                        className="flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                       >
                         <div className="capitalize">Estado</div>
                         {getSortIcon('estado')}
