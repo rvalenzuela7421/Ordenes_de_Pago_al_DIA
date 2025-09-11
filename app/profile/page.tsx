@@ -516,9 +516,6 @@ export default function ProfilePage() {
                   {formData.email && !errors.email && isValidEmail(formData.email) && (
                     <p className="mt-1 text-sm text-green-600">✓ Correo electrónico válido</p>
                   )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Este campo es obligatorio
-                  </p>
                 </div>
 
                 {/* Nombre Completo */}
@@ -548,9 +545,6 @@ export default function ProfilePage() {
                   {formData.nombre_completo.trim().length >= 2 && !errors.nombre_completo && (
                     <p className="mt-1 text-sm text-green-600">✓ Nombre válido</p>
                   )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Este campo es obligatorio
-                  </p>
                 </div>
 
                 {/* Teléfono / Celular */}
@@ -582,9 +576,6 @@ export default function ProfilePage() {
                     <p className="mt-1 text-sm text-green-600">✓ Teléfono válido</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">Solo números, 10 dígitos (ej: 3001234567)</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Este campo es obligatorio
-                  </p>
                 </div>
 
                 {/* Rol (read-only) */}
