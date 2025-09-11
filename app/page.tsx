@@ -489,7 +489,7 @@ export default function Dashboard() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-xs">Solicitado:</span>
+                <span className="text-gray-600 text-xs">Monto Solicitado:</span>
                 <span className="text-gray-600 text-xs">
                   {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.montoBase || 0)}
                 </span>
@@ -501,7 +501,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-xs">Total Solicitado:</span>
+                <span className="text-gray-600 text-xs">Total Monto Solicitado:</span>
                 <span className="text-gray-600 text-xs font-medium">
                   {loading ? '...' : formatCurrency(stats.estadisticas.Solicitada?.monto || 0)}
                 </span>
