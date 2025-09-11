@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { getCurrentUserProfile } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { UserProfile } from '@/lib/database.types'
-import { isValidPhone, validatePassword, getInitials } from '@/lib/utils'
+import { isValidPhone, isValidEmail, validatePassword, getInitials } from '@/lib/utils'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -182,18 +182,25 @@ export default function ProfilePage() {
   const validateInfoForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.nombre_completo.trim()) {
-      newErrors.nombre_completo = 'El nombre completo es requerido'
-    }
-
+    // Validar email (obligatorio y formato) - igual que AuthForm
     if (!formData.email.trim()) {
-      newErrors.email = 'El correo electrónico es requerido'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'El correo electrónico no es válido'
+      newErrors.email = 'El correo electrónico es obligatorio'
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = 'Ingresa un correo electrónico válido (ejemplo: usuario@dominio.com)'
     }
 
-    if (formData.telefono && !isValidPhone(formData.telefono)) {
-      newErrors.telefono = 'Ingresa un número de teléfono válido'
+    // Validar nombre completo - igual que AuthForm
+    if (!formData.nombre_completo.trim()) {
+      newErrors.nombre_completo = 'El nombre completo es obligatorio'
+    } else if (formData.nombre_completo.trim().length < 2) {
+      newErrors.nombre_completo = 'El nombre debe tener al menos 2 caracteres'
+    }
+
+    // Validar teléfono - igual que AuthForm (obligatorio)
+    if (!formData.telefono.trim()) {
+      newErrors.telefono = 'El teléfono es obligatorio'
+    } else if (!isValidPhone(formData.telefono)) {
+      newErrors.telefono = 'Ingresa un número de teléfono válido (10 dígitos, ej: 3001234567)'
     }
 
     setErrors(newErrors)
@@ -231,6 +238,7 @@ export default function ProfilePage() {
     setMessage('')
 
     try {
+      // Actualizar email en auth
       const { error } = await supabase.auth.updateUser({
         email: formData.email,
         data: {
@@ -241,6 +249,19 @@ export default function ProfilePage() {
 
       if (error) {
         throw new Error(error.message)
+      }
+
+      // También actualizar la tabla profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          nombre_completo: formData.nombre_completo,
+          telefono: formData.telefono
+        })
+        .eq('id', user?.id)
+
+      if (profileError) {
+        throw new Error(profileError.message)
       }
 
       setMessage('Información actualizada exitosamente')
@@ -443,7 +464,16 @@ export default function ProfilePage() {
         {/* Tab Content */}
         <div className="px-6 py-6">
           {activeTab === 'info' && (
-            <form onSubmit={handleInfoSubmit} className="space-y-6">
+            <>
+              {/* Información de campos obligatorios */}
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Todos los campos marcados con <span className="text-red-500">*</span> son obligatorios.
+                  El botón "Guardar Cambios" se habilitará cuando todos los campos estén correctamente diligenciados.
+                </p>
+              </div>
+
+              <form onSubmit={handleInfoSubmit} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Email (editable) */}
                 <div className="sm:col-span-2">
@@ -453,13 +483,24 @@ export default function ProfilePage() {
                   <input
                     type="email"
                     id="email"
-                    className={`input-field ${errors.email ? 'border-red-500' : ''}`}
+                    className={`input-field ${
+                      errors.email ? 'border-red-500 bg-red-50' : 
+                      formData.email && isValidEmail(formData.email) ? 'border-green-500 bg-green-50' : ''
+                    }`}
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="tu@email.com"
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setFormData(prev => ({ ...prev, email: value }))
+                      // Limpiar error cuando empiece a escribir
+                      if (errors.email && value.length > 0) {
+                        setErrors(prev => ({ ...prev, email: '' }))
+                      }
+                    }}
+                    placeholder="correo@ejemplo.com"
                   />
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                  {formData.email && !errors.email && isValidEmail(formData.email) && (
+                    <p className="mt-1 text-sm text-green-600">✓ Correo electrónico válido</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     Este campo es obligatorio
@@ -474,35 +515,62 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     id="nombre_completo"
-                    className={`input-field ${errors.nombre_completo ? 'border-red-500' : ''}`}
+                    className={`input-field ${
+                      errors.nombre_completo ? 'border-red-500 bg-red-50' : 
+                      formData.nombre_completo.trim().length >= 2 ? 'border-green-500 bg-green-50' : ''
+                    }`}
                     value={formData.nombre_completo}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nombre_completo: e.target.value }))}
-                    placeholder="Ingresa tu nombre completo"
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setFormData(prev => ({ ...prev, nombre_completo: value }))
+                      // Limpiar error cuando empiece a escribir
+                      if (errors.nombre_completo && value.trim().length > 0) {
+                        setErrors(prev => ({ ...prev, nombre_completo: '' }))
+                      }
+                    }}
+                    placeholder="Juan Pérez González"
                   />
-                  {errors.nombre_completo && (
-                    <p className="mt-1 text-sm text-red-600">{errors.nombre_completo}</p>
+                  {errors.nombre_completo && <p className="mt-1 text-sm text-red-600">{errors.nombre_completo}</p>}
+                  {formData.nombre_completo.trim().length >= 2 && !errors.nombre_completo && (
+                    <p className="mt-1 text-sm text-green-600">✓ Nombre válido</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     Este campo es obligatorio
                   </p>
                 </div>
 
-                {/* Teléfono */}
+                {/* Teléfono / Celular */}
                 <div>
                   <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono
+                    Teléfono / Celular <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     id="telefono"
-                    className={`input-field ${errors.telefono ? 'border-red-500' : ''}`}
+                    className={`input-field ${
+                      errors.telefono ? 'border-red-500 bg-red-50' : 
+                      formData.telefono && isValidPhone(formData.telefono) ? 'border-green-500 bg-green-50' : ''
+                    }`}
                     value={formData.telefono}
-                    onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '') // Solo números
+                      setFormData(prev => ({ ...prev, telefono: value }))
+                      // Limpiar error cuando empiece a escribir
+                      if (errors.telefono && value.length > 0) {
+                        setErrors(prev => ({ ...prev, telefono: '' }))
+                      }
+                    }}
                     placeholder="3001234567"
+                    maxLength={10}
                   />
-                  {errors.telefono && (
-                    <p className="mt-1 text-sm text-red-600">{errors.telefono}</p>
+                  {errors.telefono && <p className="mt-1 text-sm text-red-600">{errors.telefono}</p>}
+                  {formData.telefono && isValidPhone(formData.telefono) && !errors.telefono && (
+                    <p className="mt-1 text-sm text-green-600">✓ Teléfono válido</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Solo números, 10 dígitos (ej: 3001234567)</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Este campo es obligatorio
+                  </p>
                 </div>
 
                 {/* Rol (read-only) */}
@@ -540,6 +608,7 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+            </>
           )}
 
           {activeTab === 'password' && (
