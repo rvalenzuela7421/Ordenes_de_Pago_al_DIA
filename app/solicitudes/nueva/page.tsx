@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { 
   getEmpresasGrupoBolivar, type EmpresaGrupoBolivar, 
@@ -35,6 +35,14 @@ interface IVAVigente {
 }
 
 export default function NuevaSolicitudPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Información del tipo de solicitud seleccionado
+  const [tipoSolicitud, setTipoSolicitud] = useState<string>('')
+  const [tipoSolicitudId, setTipoSolicitudId] = useState<string>('')
+  const [nombreParametroTipo, setNombreParametroTipo] = useState<string>('')
+  
   const [empresasGrupoBolivar, setEmpresasGrupoBolivar] = useState<EmpresaGrupoBolivar[]>([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [acreedores, setAcreedores] = useState<Acreedor[]>([])
@@ -72,7 +80,33 @@ export default function NuevaSolicitudPage() {
   const [pendingPDFFile, setPendingPDFFile] = useState<File | null>(null)
   // Modal de validación eliminado - los datos se aplican automáticamente
   const [extractedData, setExtractedData] = useState<any>(null)
-  const router = useRouter()
+
+  // Leer parámetros del tipo de solicitud de la URL
+  useEffect(() => {
+    if (!searchParams) return
+    
+    const tipo = searchParams.get('tipo')
+    const tipoId = searchParams.get('tipoId')
+    const nombreParam = searchParams.get('nombreParametro')
+    
+    if (tipo) {
+      setTipoSolicitud(tipo)
+      console.log('📋 Tipo de solicitud recibido:', tipo)
+    }
+    if (tipoId) {
+      setTipoSolicitudId(tipoId)
+    }
+    if (nombreParam) {
+      setNombreParametroTipo(nombreParam)
+    }
+    
+    // Si no hay tipo de solicitud, redirigir a la página de selección
+    if (!tipo) {
+      console.warn('⚠️ No se recibió tipo de solicitud, redirigiendo...')
+      router.push('/solicitudes')
+      return
+    }
+  }, [searchParams, router])
 
   // Cargar datos al montar el componente
   useEffect(() => {
@@ -714,6 +748,14 @@ export default function NuevaSolicitudPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Nueva Solicitud de OP</h1>
+            {tipoSolicitud && (
+              <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-bolivar-green text-white">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {tipoSolicitud}
+              </div>
+            )}
             <p className="mt-1 text-sm text-gray-500">
               Registrar solicitud de generación de Orden de Pago - Área Tributaria
             </p>
