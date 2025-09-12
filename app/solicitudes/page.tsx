@@ -54,7 +54,7 @@ export default function TipoSolicitudPage() {
     const params = new URLSearchParams({
       tipo: tipoSeleccionado,
       tipoId: tipoCompleto?.id?.toString() || '',
-      nombreParametro: tipoCompleto?.nombre_parametro || ''
+      descripcionGrupo: tipoCompleto?.descripcion_grupo || ''
     })
     
     router.push(`/solicitudes/nueva?${params.toString()}`)

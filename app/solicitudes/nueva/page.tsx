@@ -41,7 +41,7 @@ export default function NuevaSolicitudPage() {
   // Información del tipo de solicitud seleccionado
   const [tipoSolicitud, setTipoSolicitud] = useState<string>('')
   const [tipoSolicitudId, setTipoSolicitudId] = useState<string>('')
-  const [nombreParametroTipo, setNombreParametroTipo] = useState<string>('')
+  const [descripcionGrupoTipo, setDescripcionGrupoTipo] = useState<string>('')
   
   const [empresasGrupoBolivar, setEmpresasGrupoBolivar] = useState<EmpresaGrupoBolivar[]>([])
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
@@ -87,7 +87,7 @@ export default function NuevaSolicitudPage() {
     
     const tipo = searchParams.get('tipo')
     const tipoId = searchParams.get('tipoId')
-    const nombreParam = searchParams.get('nombreParametro')
+    const descripcionParam = searchParams.get('descripcionGrupo')
     
     if (tipo) {
       setTipoSolicitud(tipo)
@@ -96,8 +96,8 @@ export default function NuevaSolicitudPage() {
     if (tipoId) {
       setTipoSolicitudId(tipoId)
     }
-    if (nombreParam) {
-      setNombreParametroTipo(nombreParam)
+    if (descripcionParam) {
+      setDescripcionGrupoTipo(descripcionParam)
     }
     
     // Si no hay tipo de solicitud, redirigir a la página de selección
