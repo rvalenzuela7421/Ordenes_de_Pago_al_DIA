@@ -53,16 +53,13 @@ export default function TipoSolicitudPage() {
   }
 
   const handleAceptar = () => {
-    if (!tipoSeleccionado) {
-      setError('Debe seleccionar un tipo de solicitud para continuar.')
+    // Validaciones de respaldo (el botón ya debería estar deshabilitado)
+    if (!tipoSeleccionado || tipoSeleccionado !== 'Pago de Comisiones Bancarias') {
       return
     }
     
-    // Verificar si el tipo seleccionado está disponible
-    if (tipoSeleccionado !== 'Pago de Comisiones Bancarias') {
-      setError('Esta funcionalidad está en proceso de construcción. Por el momento, solo está disponible "Pago de Comisiones Bancarias".')
-      return
-    }
+    // Limpiar errores previos
+    setError(null)
     
     // Buscar el tipo completo para pasar toda la información
     const tipoCompleto = Array.isArray(tiposSolicitud) 
@@ -169,9 +166,15 @@ export default function TipoSolicitudPage() {
             <button
               type="button"
               onClick={handleAceptar}
-              disabled={!tipoSeleccionado}
+              disabled={!tipoSeleccionado || tipoSeleccionado !== 'Pago de Comisiones Bancarias'}
               className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={!tipoSeleccionado ? 'Seleccione un tipo de solicitud para continuar' : ''}
+              title={
+                !tipoSeleccionado 
+                  ? 'Seleccione un tipo de solicitud para continuar' 
+                  : tipoSeleccionado !== 'Pago de Comisiones Bancarias'
+                  ? 'Esta funcionalidad está en proceso de construcción'
+                  : 'Continuar al formulario de solicitud'
+              }
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
