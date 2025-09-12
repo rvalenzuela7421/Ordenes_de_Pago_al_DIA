@@ -25,13 +25,24 @@ export default function TipoSolicitudPage() {
       setError(null)
       console.log('🔄 Cargando tipos de solicitud...')
       
-      const tipos = await getParametrosPorGrupo('TIPO_SOLICITUD_PAGO')
-      console.log('✅ Tipos de solicitud cargados:', tipos)
+      const { parametros, count, error } = await getParametrosPorGrupo('TIPO_SOLICITUD_PAGO')
+      console.log('✅ Tipos de solicitud cargados:', { parametros, count })
       
-      setTiposSolicitud(tipos)
+      if (error) {
+        throw new Error(error)
+      }
+      
+      // Asegurar que parametros es un array
+      const tiposArray = Array.isArray(parametros) ? parametros : []
+      setTiposSolicitud(tiposArray)
+      
+      if (tiposArray.length === 0) {
+        setError('No se encontraron tipos de solicitud. Por favor, ejecute el script SQL para crearlos.')
+      }
     } catch (error) {
       console.error('❌ Error cargando tipos de solicitud:', error)
       setError('Error al cargar los tipos de solicitud. Por favor, intente nuevamente.')
+      setTiposSolicitud([]) // Asegurar que siempre sea un array
     } finally {
       setLoading(false)
     }
@@ -48,7 +59,9 @@ export default function TipoSolicitudPage() {
     }
     
     // Buscar el tipo completo para pasar toda la información
-    const tipoCompleto = tiposSolicitud.find(t => t.valor_dominio === tipoSeleccionado)
+    const tipoCompleto = Array.isArray(tiposSolicitud) 
+      ? tiposSolicitud.find(t => t.valor_dominio === tipoSeleccionado)
+      : null
     
     // Navegar a Nueva Solicitud con el tipo seleccionado como parámetro
     const params = new URLSearchParams({
@@ -131,8 +144,13 @@ export default function TipoSolicitudPage() {
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bolivar-green focus:border-bolivar-green"
             >
-              <option value="">Seleccione un tipo de solicitud...</option>
-              {tiposSolicitud.map((tipo) => (
+              <option value="">
+                {Array.isArray(tiposSolicitud) && tiposSolicitud.length > 0 
+                  ? "Seleccione un tipo de solicitud..." 
+                  : "No hay tipos disponibles - Ejecute el script SQL"
+                }
+              </option>
+              {Array.isArray(tiposSolicitud) && tiposSolicitud.map((tipo) => (
                 <option key={tipo.id} value={tipo.valor_dominio}>
                   {tipo.valor_dominio}
                 </option>
