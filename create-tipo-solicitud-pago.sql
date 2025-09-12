@@ -13,25 +13,25 @@ WHERE nombre_grupo = 'TIPO_SOLICITUD_PAGO';
 -- Insertar tipos de solicitud de pago en orden específico
 INSERT INTO public.parametros (
     nombre_grupo, 
-    nombre_parametro, 
+    descripcion_grupo, 
     valor_dominio, 
     vigente, 
     orden
 ) VALUES 
 -- 1. Pago de Arriendos
-('TIPO_SOLICITUD_PAGO', 'PAGO_ARRIENDOS', 'Pago de Arriendos', 'S', 1),
+('TIPO_SOLICITUD_PAGO', 'Tipos de solicitud de pago disponibles en el sistema', 'Pago de Arriendos', 'S', 1),
 
 -- 2. Pago de Comisiones Bancarias  
-('TIPO_SOLICITUD_PAGO', 'PAGO_COMISIONES_BANCARIAS', 'Pago de Comisiones Bancarias', 'S', 2),
+('TIPO_SOLICITUD_PAGO', 'Tipos de solicitud de pago disponibles en el sistema', 'Pago de Comisiones Bancarias', 'S', 2),
 
 -- 3. Pago de Divisas
-('TIPO_SOLICITUD_PAGO', 'PAGO_DIVISAS', 'Pago de Divisas', 'S', 3),
+('TIPO_SOLICITUD_PAGO', 'Tipos de solicitud de pago disponibles en el sistema', 'Pago de Divisas', 'S', 3),
 
 -- 4. Pago de Impuestos
-('TIPO_SOLICITUD_PAGO', 'PAGO_IMPUESTOS', 'Pago de Impuestos', 'S', 4),
+('TIPO_SOLICITUD_PAGO', 'Tipos de solicitud de pago disponibles en el sistema', 'Pago de Impuestos', 'S', 4),
 
 -- 5. Pago de Servicios Públicos
-('TIPO_SOLICITUD_PAGO', 'PAGO_SERVICIOS_PUBLICOS', 'Pago de Servicios Públicos', 'S', 5);
+('TIPO_SOLICITUD_PAGO', 'Tipos de solicitud de pago disponibles en el sistema', 'Pago de Servicios Públicos', 'S', 5);
 
 -- Verificar inserción exitosa
 SELECT 'DESPUÉS DE INSERTAR' as momento, COUNT(*) as total_parametros 
@@ -42,7 +42,7 @@ WHERE nombre_grupo = 'TIPO_SOLICITUD_PAGO';
 SELECT 
     id,
     nombre_grupo,
-    nombre_parametro,
+    descripcion_grupo,
     valor_dominio,
     vigente,
     orden,
