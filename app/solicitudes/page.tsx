@@ -58,6 +58,12 @@ export default function TipoSolicitudPage() {
       return
     }
     
+    // Verificar si el tipo seleccionado está disponible
+    if (tipoSeleccionado !== 'Pago de Comisiones Bancarias') {
+      setError('Esta funcionalidad está en proceso de construcción. Por el momento, solo está disponible "Pago de Comisiones Bancarias".')
+      return
+    }
+    
     // Buscar el tipo completo para pasar toda la información
     const tipoCompleto = Array.isArray(tiposSolicitud) 
       ? tiposSolicitud.find(t => t.valor_dominio === tipoSeleccionado)
@@ -135,12 +141,15 @@ export default function TipoSolicitudPage() {
               </option>
               {Array.isArray(tiposSolicitud) && tiposSolicitud.map((tipo) => (
                 <option key={tipo.id} value={tipo.valor_dominio}>
-                  {tipo.valor_dominio}
+                  {tipo.valor_dominio === 'Pago de Comisiones Bancarias' 
+                    ? `✅ ${tipo.valor_dominio}` 
+                    : `🚧 ${tipo.valor_dominio} (En construcción)`
+                  }
                 </option>
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              Seleccione el tipo que mejor describe su solicitud de pago
+              ✅ = Disponible • 🚧 = En construcción (próximamente)
             </p>
           </div>
 
@@ -173,19 +182,40 @@ export default function TipoSolicitudPage() {
 
           {/* Información adicional */}
           {tipoSeleccionado && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className={`mt-6 p-4 rounded-lg border ${
+              tipoSeleccionado === 'Pago de Comisiones Bancarias' 
+                ? 'bg-blue-50 border-blue-200' 
+                : 'bg-orange-50 border-orange-200'
+            }`}>
               <div className="flex items-start">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
+                  {tipoSeleccionado === 'Pago de Comisiones Bancarias' ? (
+                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-blue-700">
+                  <p className={`text-sm ${
+                    tipoSeleccionado === 'Pago de Comisiones Bancarias' 
+                      ? 'text-blue-700' 
+                      : 'text-orange-700'
+                  }`}>
                     <span className="font-medium">Tipo seleccionado:</span> {tipoSeleccionado}
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Al hacer clic en "Continuar" podrá acceder al formulario de solicitud
+                  <p className={`text-xs mt-1 ${
+                    tipoSeleccionado === 'Pago de Comisiones Bancarias' 
+                      ? 'text-blue-600' 
+                      : 'text-orange-600'
+                  }`}>
+                    {tipoSeleccionado === 'Pago de Comisiones Bancarias' 
+                      ? 'Al hacer clic en "Continuar" podrá acceder al formulario de solicitud'
+                      : '⚠️ Esta funcionalidad está en proceso de construcción. Próximamente estará disponible.'
+                    }
                   </p>
                 </div>
               </div>
