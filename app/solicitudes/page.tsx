@@ -182,9 +182,9 @@ export default function TipoSolicitudPage() {
               title={!tipoSeleccionado ? 'Seleccione un tipo de solicitud para continuar' : ''}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-              Aceptar
+              Continuar
             </button>
           </div>
 
@@ -202,7 +202,7 @@ export default function TipoSolicitudPage() {
                     <span className="font-medium">Tipo seleccionado:</span> {tipoSeleccionado}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
-                    Al hacer clic en "Aceptar" podrá continuar con el formulario de solicitud
+                    Al hacer clic en "Continuar" podrá acceder al formulario de solicitud
                   </p>
                 </div>
               </div>

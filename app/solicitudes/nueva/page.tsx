@@ -1263,27 +1263,35 @@ export default function NuevaSolicitudPage() {
         <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
           <Link
             href="/dashboard"
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-bolivar-green transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
             Cancelar
           </Link>
           <button
             type="submit"
             disabled={loading || uploadingFiles || !isFormComplete()}
-            className="px-6 py-2 bg-bolivar-green text-white rounded-md hover:bg-bolivar-green-700 focus:ring-2 focus:ring-offset-2 focus:ring-bolivar-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploadingFiles ? (
-              <div className="flex items-center space-x-2">
+              <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <span>Subiendo archivos...</span>
-              </div>
+              </>
             ) : loading ? (
-              <div className="flex items-center space-x-2">
+              <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <span>Creando solicitud...</span>
-              </div>
+              </>
             ) : (
-              'Crear Solicitud'
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Crear Solicitud
+              </>
             )}
           </button>
         </div>
@@ -1321,14 +1329,20 @@ export default function NuevaSolicitudPage() {
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => setShowConfirmation(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:ring-2 focus:ring-gray-500 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                   Cancelar
                 </button>
                 <button
                   onClick={confirmSubmit}
-                  className="px-4 py-2 bg-bolivar-green text-white rounded-md hover:bg-bolivar-green-700 focus:ring-2 focus:ring-bolivar-green transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   Confirmar
                 </button>
               </div>
@@ -1365,8 +1379,11 @@ export default function NuevaSolicitudPage() {
               <div className="flex justify-center">
                 <button
                   onClick={handleSuccessConfirm}
-                  className="px-6 py-2 bg-bolivar-green text-white rounded-md hover:bg-bolivar-green-700 focus:ring-2 focus:ring-bolivar-green transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                   Continuar
                 </button>
               </div>
@@ -1403,14 +1420,20 @@ export default function NuevaSolicitudPage() {
               <div className="flex justify-center space-x-3">
                 <button
                   onClick={handleDeclinePDFExtraction}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                   No, solo cargar archivo
                 </button>
                 <button
                   onClick={handleConfirmPDFExtraction}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                   Sí, extraer datos
                 </button>
               </div>
