@@ -61,21 +61,6 @@ SELECT
 FROM public.parametros 
 WHERE nombre_grupo = 'TIPO_SOLICITUD_PAGO';
 
--- Log de auditoría
-INSERT INTO public.audit_log (
-    tabla_afectada,
-    accion,
-    descripcion,
-    usuario,
-    timestamp
-) VALUES (
-    'parametros',
-    'INSERT',
-    'Creación de 5 tipos de solicitud de pago: Arriendos, Comisiones Bancarias, Divisas, Impuestos, Servicios Públicos',
-    'sistema',
-    NOW()
-) ON CONFLICT DO NOTHING;
-
 -- Mensaje final
 SELECT '✅ TIPOS DE SOLICITUD DE PAGO CREADOS EXITOSAMENTE' as status,
        'Los 5 tipos están disponibles para usar en Nueva Solicitud' as mensaje;
