@@ -75,7 +75,7 @@ export default function TipoSolicitudPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center pt-20 md:pt-32">
+      <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-20 md:pt-32">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-bolivar-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando tipos de solicitud...</p>
@@ -85,7 +85,7 @@ export default function TipoSolicitudPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center pt-20 md:pt-32 p-4">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-20 md:pt-32 p-4">
         <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
           {/* Título */}
           <div className="text-center mb-8">
