@@ -78,7 +78,7 @@ export default function TipoSolicitudPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-20 md:pt-32">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-bolivar-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando tipos de solicitud...</p>
@@ -88,7 +88,7 @@ export default function TipoSolicitudPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center pt-20 md:pt-32 p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
           {/* Título */}
           <div className="text-center mb-8">
@@ -183,47 +183,6 @@ export default function TipoSolicitudPage() {
             </button>
           </div>
 
-          {/* Información adicional */}
-          {tipoSeleccionado && (
-            <div className={`mt-6 p-4 rounded-lg border ${
-              tipoSeleccionado === 'Pago de Comisiones Bancarias' 
-                ? 'bg-blue-50 border-blue-200' 
-                : 'bg-orange-50 border-orange-200'
-            }`}>
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  {tipoSeleccionado === 'Pago de Comisiones Bancarias' ? (
-                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className={`text-sm ${
-                    tipoSeleccionado === 'Pago de Comisiones Bancarias' 
-                      ? 'text-blue-700' 
-                      : 'text-orange-700'
-                  }`}>
-                    <span className="font-medium">Tipo seleccionado:</span> {tipoSeleccionado}
-                  </p>
-                  <p className={`text-xs mt-1 ${
-                    tipoSeleccionado === 'Pago de Comisiones Bancarias' 
-                      ? 'text-blue-600' 
-                      : 'text-orange-600'
-                  }`}>
-                    {tipoSeleccionado === 'Pago de Comisiones Bancarias' 
-                      ? 'Al hacer clic en "Continuar" podrá acceder al formulario de solicitud'
-                      : '⚠️ Esta funcionalidad está en proceso de construcción. Próximamente estará disponible.'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
     </div>
   )
