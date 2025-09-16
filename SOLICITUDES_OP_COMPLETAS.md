@@ -5,7 +5,7 @@
 ### ✅ Formulario de Nueva Solicitud de OP
 
 **Ubicación:** `/dashboard/solicitudes/nueva`
-**Perfil autorizado:** OperacionTRIB únicamente
+**Perfil autorizado:** OperacionBSEG únicamente
 
 #### 🔹 Campos Principales:
 1. **Acreedor** - Lista desplegable con valor por defecto: `NT-860034313-DAVIVIENDA S.A.`
@@ -148,7 +148,7 @@ Para gestión de archivos adjuntos:
 ## 🔐 Seguridad y Permisos
 
 ### ✅ Control de Acceso:
-- Solo usuarios con perfil `OperacionTRIB` pueden crear solicitudes
+- Solo usuarios con perfil `OperacionBSEG` pueden crear solicitudes
 - Políticas RLS (Row Level Security) implementadas
 - Validaciones tanto frontend como backend
 - Auditoría completa de acciones
@@ -165,7 +165,7 @@ Para gestión de archivos adjuntos:
 ## 🚀 Flujo de Trabajo
 
 ### Proceso Completo:
-1. **Usuario ingresa** al dashboard con perfil OperacionTRIB
+1. **Usuario ingresa** al dashboard con perfil OperacionBSEG
 2. **Hace clic** en "Nueva Solicitud de OP"
 3. **Completa formulario:**
    - Selecciona acreedor (valor por defecto)
@@ -195,7 +195,7 @@ Para gestión de archivos adjuntos:
 - No afecta funcionalidades existentes
 
 ### ✅ Botón de Acceso:
-- Visible solo para perfil OperacionTRIB
+- Visible solo para perfil OperacionBSEG
 - Ubicado en el dashboard principal
 - Estilo coherente con el diseño actual
 

@@ -38,7 +38,7 @@ Aplicación diseñada con la identidad corporativa oficial de **Seguros Bolívar
 - ✅ Acciones rápidas
 
 ### 👥 **Gestión de Perfiles**
-- ✅ Roles diferenciados: AdminCOP, ConsultaCOP, OperacionCOP, OperacionTRIB
+- ✅ Roles diferenciados: AdminCOP, ConsultaCOP, OperacionCOP, OperacionBSEG
 - ✅ Permisos por rol
 - ✅ Protección de rutas
 

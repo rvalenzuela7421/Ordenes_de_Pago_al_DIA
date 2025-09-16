@@ -30,7 +30,7 @@ CREATE TABLE user_profiles (
   id uuid REFERENCES auth.users ON DELETE CASCADE,
   nombre_completo text,
   telefono text,
-  role text CHECK (role IN ('AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionTRIB')),
+  role text CHECK (role IN ('AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionBSEG')),
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   PRIMARY KEY (id)

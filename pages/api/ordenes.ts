@@ -41,7 +41,7 @@ async function handleGetOrdenes(req: NextApiRequest, res: NextApiResponse) {
       .order('fecha_creacion', { ascending: false })
 
     // Filtrar por usuario si no es admin o operador COP
-    if (userRole === 'OperacionTRIB') {
+    if (userRole === 'OperacionBSEG') {
       query = query.eq('user_id', user.id)
     }
 

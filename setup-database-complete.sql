@@ -39,9 +39,9 @@ CREATE INDEX IF NOT EXISTS idx_solicitudes_op_created_by ON public.solicitudes_o
 ALTER TABLE public.solicitudes_op ENABLE ROW LEVEL SECURITY;
 
 -- 4. POLÍTICAS RLS para solicitudes_op
--- OperacionTRIB puede crear solicitudes
-CREATE POLICY "OperacionTRIB puede crear solicitudes" ON public.solicitudes_op
-    FOR INSERT WITH CHECK (auth.uid() = created_by AND (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'OperacionTRIB');
+-- OperacionBSEG puede crear solicitudes
+CREATE POLICY "OperacionBSEG puede crear solicitudes" ON public.solicitudes_op
+    FOR INSERT WITH CHECK (auth.uid() = created_by AND (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'OperacionBSEG');
 
 -- Usuarios pueden ver sus propias solicitudes
 CREATE POLICY "Usuarios pueden ver sus propias solicitudes" ON public.solicitudes_op

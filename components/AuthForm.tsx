@@ -607,7 +607,7 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
               >
                 <option value="ConsultaCOP">Consulta COP</option>
                 <option value="OperacionCOP">Operación COP</option>
-                <option value="OperacionTRIB">Operación TRIB</option>
+                <option value="OperacionBSEG">Operación BSEG</option>
                 <option value="AdminCOP">Admin COP</option>
               </select>
               <p className="mt-1 text-xs text-gray-500">Selecciona tu rol en el sistema</p>

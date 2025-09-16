@@ -90,24 +90,24 @@ USING (
         (auth.jwt() ->> 'role' = 'OperacionCOP') OR
         -- ConsultaCOP puede ver todas (solo lectura)
         (auth.jwt() ->> 'role' = 'ConsultaCOP') OR
-        -- OperacionTRIB puede ver todas las de tributaria
-        (auth.jwt() ->> 'role' = 'OperacionTRIB')
+        -- OperacionBSEG puede ver todas las de BSEG
+        (auth.jwt() ->> 'role' = 'OperacionBSEG')
     )
 );
 
 -- Política para crear solicitudes
--- Solo OperacionTRIB puede crear solicitudes
-CREATE POLICY "Solo OperacionTRIB puede crear solicitudes" 
+-- Solo OperacionBSEG puede crear solicitudes
+CREATE POLICY "Solo OperacionBSEG puede crear solicitudes" 
 ON public.solicitudes_op FOR INSERT 
 WITH CHECK (
     auth.role() = 'authenticated' AND 
-    auth.jwt() ->> 'role' = 'OperacionTRIB' AND
+    auth.jwt() ->> 'role' = 'OperacionBSEG' AND
     created_by = auth.uid()
 );
 
 -- Política para actualizar solicitudes
 -- AdminCOP y OperacionCOP pueden actualizar cualquier solicitud
--- OperacionTRIB puede actualizar solo si está en estado 'solicitada' o 'devuelta'
+-- OperacionBSEG puede actualizar solo si está en estado 'solicitada' o 'devuelta'
 CREATE POLICY "Actualizar solicitudes según rol y estado" 
 ON public.solicitudes_op FOR UPDATE 
 USING (
@@ -116,8 +116,8 @@ USING (
         (auth.jwt() ->> 'role' = 'AdminCOP') OR
         -- OperacionCOP puede actualizar todas
         (auth.jwt() ->> 'role' = 'OperacionCOP') OR
-        -- OperacionTRIB puede actualizar solo sus solicitudes en ciertos estados
-        (auth.jwt() ->> 'role' = 'OperacionTRIB' AND 
+        -- OperacionBSEG puede actualizar solo sus solicitudes en ciertos estados
+        (auth.jwt() ->> 'role' = 'OperacionBSEG' AND 
          created_by = auth.uid() AND 
          estado IN ('solicitada', 'devuelta'))
     )
@@ -173,8 +173,8 @@ USING (
             (auth.jwt() ->> 'role' = 'OperacionCOP') OR
             -- ConsultaCOP puede ver todos
             (auth.jwt() ->> 'role' = 'ConsultaCOP') OR
-            -- OperacionTRIB puede ver todos de tributaria
-            (auth.jwt() ->> 'role' = 'OperacionTRIB')
+            -- OperacionBSEG puede ver todos de BSEG
+            (auth.jwt() ->> 'role' = 'OperacionBSEG')
         )
     )
 );
@@ -263,7 +263,7 @@ INSERT INTO public.solicitudes_op (
     false,
     'solicitada',
     '{"area": "tributaria", "tipo": "solicitud_op"}',
-    (SELECT id FROM public.profiles WHERE role = 'OperacionTRIB' LIMIT 1)
+    (SELECT id FROM public.profiles WHERE role = 'OperacionBSEG' LIMIT 1)
 ),
 (
     'SOL-2024-000002',
@@ -276,7 +276,7 @@ INSERT INTO public.solicitudes_op (
     true,
     'en_revision',
     '{"area": "tributaria", "tipo": "solicitud_op"}',
-    (SELECT id FROM public.profiles WHERE role = 'OperacionTRIB' LIMIT 1)
+    (SELECT id FROM public.profiles WHERE role = 'OperacionBSEG' LIMIT 1)
 );
 
 -- ============================================

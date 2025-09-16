@@ -84,7 +84,7 @@ export interface Database {
 }
 
 // Tipos de perfiles de usuario
-export type UserRole = 'AdminCOP' | 'ConsultaCOP' | 'OperacionCOP' | 'OperacionTRIB'
+export type UserRole = 'AdminCOP' | 'ConsultaCOP' | 'OperacionCOP' | 'OperacionBSEG'
 
 export interface UserProfile {
   id: string

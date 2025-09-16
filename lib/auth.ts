@@ -15,8 +15,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       const demoUser: UserProfile = {
         id: 'demo-user-current-session',
         email: 'usuario.demo@cop.com',
-        role: 'OperacionTRIB',
-        nombre_completo: 'Usuario Demo Tributaria',
+        role: 'OperacionBSEG',
+        nombre_completo: 'Usuario Demo BSEG',
         telefono: '3001234567',
         must_change_password: false,
         avatar_url: undefined
@@ -103,7 +103,7 @@ export function checkPermissions(userRole: UserRole) {
       canEdit: false,
       canDelete: false
     },
-    OperacionTRIB: {
+    OperacionBSEG: {
       canViewAll: false,
       canApprove: false,
       canCreate: true,

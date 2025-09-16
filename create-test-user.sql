@@ -133,13 +133,13 @@ INSERT INTO auth.users (
     '{"nombre_completo": "Consultor COP", "telefono": "3009876543", "role": "ConsultaCOP"}',
     FALSE, NOW(), NOW()
 ),
--- Usuario OperacionTRIB
+-- Usuario OperacionBSEG
 (
     gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
     'tributario@cop.segurosbolivar.com', crypt('COP123456!', gen_salt('bf')), NOW(),
     NULL, NOW(), '', '', '', NULL, NOW(),
     '{"provider": "email", "providers": ["email"]}',
-    '{"nombre_completo": "Operador Tributario", "telefono": "3005432167", "role": "OperacionTRIB"}',
+    '{"nombre_completo": "Operador BSEG", "telefono": "3005432167", "role": "OperacionBSEG"}',
     FALSE, NOW(), NOW()
 )
 ON CONFLICT (email) DO NOTHING;
@@ -199,10 +199,10 @@ ORDER BY p.role, p.email;
    🔑 Password: COP123456!
    👤 Rol: ConsultaCOP (solo consultar)
 
-4. OPERADOR TRIBUTARIO
+4. OPERADOR BSEG
    📧 Email: tributario@cop.segurosbolivar.com
    🔑 Password: COP123456!  
-   👤 Rol: OperacionTRIB (crear órdenes)
+   👤 Rol: OperacionBSEG (crear órdenes)
 
 ⚠️ IMPORTANTE: Usa cualquiera de estas credenciales para probar el login.
 */

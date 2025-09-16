@@ -148,7 +148,7 @@ export default function ClientLayout({
 
   // Para todas las demás rutas, usar el layout completo del dashboard
   return (
-    <ProtectedRoute allowedRoles={['AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionTRIB']}>
+    <ProtectedRoute allowedRoles={['AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionBSEG']}>
       {/* Dashboard con navegación horizontal */}
       <div className="min-h-screen bg-gray-50">
         

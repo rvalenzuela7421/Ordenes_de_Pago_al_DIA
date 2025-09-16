@@ -276,7 +276,7 @@ INSERT INTO public.solicitudes_op (
     'Convenio de uso de red',
     1000000,
     true,
-    (SELECT id FROM public.profiles WHERE role = 'OperacionTRIB' LIMIT 1)
+    (SELECT id FROM public.profiles WHERE role = 'OperacionBSEG' LIMIT 1)
 );
 -- Debería calcular automáticamente IVA al 19% = $190,000
 */

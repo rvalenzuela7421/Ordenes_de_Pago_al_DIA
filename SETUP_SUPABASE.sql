@@ -8,7 +8,7 @@ CREATE TABLE user_profiles (
   id uuid REFERENCES auth.users ON DELETE CASCADE,
   nombre_completo text NOT NULL,
   telefono text,
-  role text CHECK (role IN ('AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionTRIB')) DEFAULT 'ConsultaCOP',
+  role text CHECK (role IN ('AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionBSEG')) DEFAULT 'ConsultaCOP',
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   PRIMARY KEY (id)

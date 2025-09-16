@@ -254,7 +254,7 @@ INSERT INTO public.solicitudes_op (
     true,
     'IVA 19%',
     'Ejemplo con IVA calculado automáticamente',
-    (SELECT id FROM public.profiles WHERE role = 'OperacionTRIB' LIMIT 1)
+    (SELECT id FROM public.profiles WHERE role = 'OperacionBSEG' LIMIT 1)
 );
 -- El trigger calculará automáticamente:
 -- iva = 190000.00

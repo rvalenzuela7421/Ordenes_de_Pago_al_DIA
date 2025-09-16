@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({
   children,
-  allowedRoles = ['AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionTRIB'],
+  allowedRoles = ['AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionBSEG'],
   redirectTo = '/auth/login'
 }: ProtectedRouteProps) {
   const [user, setUser] = useState<UserProfile | null>(null)

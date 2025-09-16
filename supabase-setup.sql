@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE NOT NULL,
     nombre_completo TEXT,
     telefono TEXT,
-    role TEXT NOT NULL DEFAULT 'ConsultaCOP' CHECK (role IN ('AdminCOP', 'OperacionCOP', 'ConsultaCOP', 'OperacionTRIB')),
+    role TEXT NOT NULL DEFAULT 'ConsultaCOP' CHECK (role IN ('AdminCOP', 'OperacionCOP', 'ConsultaCOP', 'OperacionBSEG')),
     must_change_password BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -153,7 +153,7 @@ CREATE POLICY "Ver órdenes según rol" ON public.ordenes_pago
             WHERE p.id = auth.uid() 
             AND (
                 p.role IN ('AdminCOP', 'OperacionCOP', 'ConsultaCOP') -- COP puede ver todas
-                OR (p.role = 'OperacionTRIB' AND creado_por = auth.uid()) -- TRIB solo las suyas
+                OR (p.role = 'OperacionBSEG' AND creado_por = auth.uid()) -- BSEG solo las suyas
             )
         )
     );
@@ -164,7 +164,7 @@ CREATE POLICY "Crear órdenes según rol" ON public.ordenes_pago
         EXISTS (
             SELECT 1 FROM public.profiles 
             WHERE id = auth.uid() 
-            AND role IN ('AdminCOP', 'OperacionCOP', 'OperacionTRIB')
+            AND role IN ('AdminCOP', 'OperacionCOP', 'OperacionBSEG')
         )
     );
 
