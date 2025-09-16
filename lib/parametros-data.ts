@@ -6,6 +6,7 @@ export interface Parametro {
   nombre_grupo: string
   descripcion_grupo: string
   valor_dominio: string
+  descripcion_detalle?: string  // Nuevo campo opcional de 500 caracteres
   orden: number | null
   vigente: string
   created_at: string
