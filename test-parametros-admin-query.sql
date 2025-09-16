@@ -1,7 +1,7 @@
 -- =====================================================
 -- SCRIPT DE PRUEBA: Consultas para Módulo de Administración
 -- DESCRIPCIÓN: Verificar ordenamiento y funcionalidad para gestión de parámetros
--- ORDEN REQUERIDO: nombre_grupo, valor_dominio, orden
+-- ORDEN REQUERIDO: nombre_grupo, orden, valor_dominio
 -- =====================================================
 
 -- 1. CONSULTA PRINCIPAL: Todos los parámetros ordenados para administración
@@ -9,16 +9,16 @@
 SELECT 
     '🔍 CONSULTA PRINCIPAL - TODOS LOS PARÁMETROS' as consulta,
     nombre_grupo,
-    valor_dominio,
     orden,
+    valor_dominio,
     vigente,
     descripcion_grupo,
     created_at::date as fecha_creacion
 FROM public.parametros
 ORDER BY 
     nombre_grupo ASC,
-    valor_dominio ASC,
-    orden ASC;
+    orden ASC,
+    valor_dominio ASC;
 
 -- 2. ESTADÍSTICAS POR GRUPO
 -- =====================================================
@@ -65,8 +65,8 @@ WHERE
     valor_dominio ILIKE '%BOLIVAR%'
 ORDER BY 
     nombre_grupo ASC,
-    valor_dominio ASC,
-    orden ASC;
+    orden ASC,
+    valor_dominio ASC;
 
 -- 5. SOLO PARÁMETROS VIGENTES
 -- =====================================================

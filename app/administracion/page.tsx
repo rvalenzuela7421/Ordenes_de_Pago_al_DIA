@@ -278,10 +278,10 @@ export default function AdministracionPage() {
                         Grupo
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valor Dominio
+                        Orden
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Orden
+                        Valor Dominio
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Estado
@@ -297,11 +297,11 @@ export default function AdministracionPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {parametro.nombre_grupo}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={parametro.valor_dominio}>
-                          {parametro.valor_dominio}
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {parametro.orden || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={parametro.valor_dominio}>
+                          {parametro.valor_dominio}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`

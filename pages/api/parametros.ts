@@ -113,11 +113,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Aplicar ordenamiento específico
     if (modoAdministracion) {
-      // Ordenamiento para módulo de administración: grupo, valor_dominio, orden
+      // Ordenamiento para módulo de administración: grupo, orden, valor_dominio
       query = query
         .order('nombre_grupo', { ascending: true })
-        .order('valor_dominio', { ascending: true })
         .order('orden', { ascending: true })
+        .order('valor_dominio', { ascending: true })
     } else if (ordenarPorOrden) {
       query = query.order('orden', { ascending: true })
     } else {

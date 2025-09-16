@@ -340,7 +340,7 @@ export async function getIVAVigente(): Promise<{ iva: number, error?: string }> 
 /**
  * FUNCIÓN PARA MÓDULO DE ADMINISTRACIÓN: OBTENER TODOS LOS PARÁMETROS
  * Para la gestión completa de parámetros del sistema
- * Ordenamiento: nombre_grupo, valor_dominio, orden
+ * Ordenamiento: nombre_grupo, orden, valor_dominio
  */
 export async function getTodosLosParametros(
   incluirNoVigentes: boolean = true,
