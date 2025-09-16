@@ -123,6 +123,22 @@ export default function AdministracionPage() {
     }
   }, [debouncedSearchText])
 
+  // Escuchar tecla ESC para cerrar modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && selectedTooltip) {
+        setSelectedTooltip(null)
+      }
+    }
+
+    if (selectedTooltip) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [selectedTooltip])
+
   // Limpiar filtros
   const handleLimpiar = () => {
     setSearchText('')
