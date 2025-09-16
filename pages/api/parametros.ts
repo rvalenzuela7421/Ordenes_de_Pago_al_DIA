@@ -47,12 +47,12 @@ export interface Parametro {
  * 
  * POST Body (crear parámetro):
  *   {
- *     "nombre_grupo": "ESTADOS_SOLICITUD",
- *     "descripcion_grupo": "Estados permitidos para solicitudes",
- *     "valor_dominio": "En Proceso",
- *     "regla": "Validar documentos antes de aprobar",
- *     "orden": 3,
- *     "vigente": "S"
+ *     "nombre_grupo": "ESTADOS_SOLICITUD",        // OBLIGATORIO
+ *     "descripcion_grupo": "Estados permitidos para solicitudes",  // OBLIGATORIO
+ *     "valor_dominio": "En Proceso",              // OBLIGATORIO
+ *     "regla": "Validar documentos antes de aprobar",              // Opcional
+ *     "orden": 3,                                 // Opcional
+ *     "vigente": "S"                              // Opcional (default: S)
  *   }
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -267,6 +267,13 @@ async function handleCreateParametro(req: NextApiRequest, res: NextApiResponse) 
       })
     }
 
+    if (!descripcion_grupo?.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'La descripción del grupo es obligatoria' 
+      })
+    }
+
     if (!valor_dominio?.trim()) {
       return res.status(400).json({ 
         success: false, 
@@ -277,7 +284,7 @@ async function handleCreateParametro(req: NextApiRequest, res: NextApiResponse) 
     // Preparar datos para inserción
     const parametroData = {
       nombre_grupo: nombre_grupo.trim(),
-      descripcion_grupo: descripcion_grupo?.trim() || null,
+      descripcion_grupo: descripcion_grupo.trim(),
       valor_dominio: valor_dominio.trim(),
       regla: regla?.trim() || null,
       orden: orden ? parseInt(orden.toString()) : 0,

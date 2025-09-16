@@ -159,6 +159,7 @@ export default function AdministracionPage() {
   const isParametroFormComplete = () => {
     // Verificar campos obligatorios
     if (!nuevoParametro.nombre_grupo.trim()) return false
+    if (!nuevoParametro.descripcion_grupo.trim()) return false
     if (!nuevoParametro.valor_dominio.trim()) return false
     
     return true
@@ -173,6 +174,9 @@ export default function AdministracionPage() {
       if (!nuevoParametro.nombre_grupo.trim()) {
         throw new Error('El nombre del grupo es obligatorio')
       }
+      if (!nuevoParametro.descripcion_grupo.trim()) {
+        throw new Error('La descripción del grupo es obligatoria')
+      }
       if (!nuevoParametro.valor_dominio.trim()) {
         throw new Error('El valor dominio es obligatorio')
       }
@@ -182,7 +186,7 @@ export default function AdministracionPage() {
         ...nuevoParametro,
         orden: nuevoParametro.orden ? parseInt(nuevoParametro.orden) : 0,
         nombre_grupo: nuevoParametro.nombre_grupo.trim(),
-        descripcion_grupo: nuevoParametro.descripcion_grupo.trim() || null,
+        descripcion_grupo: nuevoParametro.descripcion_grupo.trim(),
         valor_dominio: nuevoParametro.valor_dominio.trim(),
         regla: nuevoParametro.regla.trim() || null,
         vigente: 'S' // Siempre crear como Vigente
@@ -581,7 +585,7 @@ export default function AdministracionPage() {
                   {/* Descripción del Grupo */}
                   <div>
                     <label htmlFor="descripcion_grupo" className="block text-sm font-medium text-gray-700 mb-1">
-                      Descripción del Grupo
+                      Descripción del Grupo <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -590,6 +594,7 @@ export default function AdministracionPage() {
                       onChange={(e) => handleNuevoParametroChange('descripcion_grupo', e.target.value)}
                       placeholder="ej: Estados permitidos para las solicitudes de pago"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                      required
                     />
                   </div>
 
