@@ -277,16 +277,16 @@ export default function AdministracionPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Grupo
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Orden
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Valor Dominio
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha Creación
                       </th>
                     </tr>
@@ -297,13 +297,13 @@ export default function AdministracionPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {parametro.nombre_grupo}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
                           {parametro.orden || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={parametro.valor_dominio}>
                           {parametro.valor_dominio}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`
                             inline-flex px-2 py-1 text-xs font-semibold rounded-full
                             ${parametro.vigente === 'S' 
@@ -314,8 +314,12 @@ export default function AdministracionPage() {
                             {parametro.vigente === 'S' ? 'Vigente' : 'No vigente'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(parametro.created_at).toLocaleDateString('es-ES')}
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                          {new Date(parametro.created_at).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }).replace(/-/g, '/')}
                         </td>
                       </tr>
                     ))}
