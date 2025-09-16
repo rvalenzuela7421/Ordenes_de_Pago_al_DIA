@@ -43,6 +43,12 @@ export default function AdministracionPage() {
   // Estados para tooltip de contenido completo
   const [selectedTooltip, setSelectedTooltip] = useState<{id: string, field: string, content: string} | null>(null)
 
+  // Estados para edición inline
+  const [editingField, setEditingField] = useState<{id: string, field: string} | null>(null)
+  const [editingValues, setEditingValues] = useState<{[key: string]: any}>({})
+  const [savingFields, setSavingFields] = useState<{[key: string]: boolean}>({})
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({})
+
   // Cargar parámetros
   const loadParametros = async () => {
     try {
@@ -242,6 +248,223 @@ export default function AdministracionPage() {
     } finally {
       setCreandoParametro(false)
     }
+  }
+
+  // Funciones para edición inline
+  const startEditing = (parametroId: string, field: string, currentValue: any) => {
+    const key = `${parametroId}-${field}`
+    setEditingField({ id: parametroId, field })
+    setEditingValues(prev => ({
+      ...prev,
+      [key]: currentValue || ''
+    }))
+    // Limpiar errores previos
+    setFieldErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[key]
+      return newErrors
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingField(null)
+    setEditingValues({})
+    setFieldErrors({})
+  }
+
+  const updateField = async (parametroId: string, field: string, newValue: any) => {
+    const key = `${parametroId}-${field}`
+    
+    try {
+      setSavingFields(prev => ({ ...prev, [key]: true }))
+      setFieldErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[key]
+        return newErrors
+      })
+
+      // Preparar el objeto de actualización
+      const updateData = {
+        id: parametroId,
+        [field]: newValue
+      }
+
+      console.log(`📝 Actualizando ${field} del parámetro ${parametroId}:`, newValue)
+
+      const response = await fetch('/api/parametros', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const resultado = await response.json()
+      console.log('✅ Campo actualizado exitosamente:', resultado)
+
+      // Actualizar el parámetro en el estado local
+      setParametros(prev => prev.map(param => 
+        param.id === parametroId 
+          ? { ...param, [field]: resultado.parametro[field] }
+          : param
+      ))
+
+      // Limpiar estado de edición
+      setEditingField(null)
+      setEditingValues(prev => {
+        const newValues = { ...prev }
+        delete newValues[key]
+        return newValues
+      })
+
+    } catch (error) {
+      console.error(`❌ Error actualizando ${field}:`, error)
+      setFieldErrors(prev => ({
+        ...prev,
+        [key]: error instanceof Error ? error.message : 'Error al actualizar'
+      }))
+    } finally {
+      setSavingFields(prev => {
+        const newSaving = { ...prev }
+        delete newSaving[key]
+        return newSaving
+      })
+    }
+  }
+
+  const handleFieldChange = (parametroId: string, field: string, value: any) => {
+    const key = `${parametroId}-${field}`
+    setEditingValues(prev => ({
+      ...prev,
+      [key]: value
+    }))
+  }
+
+  const handleFieldBlur = (parametroId: string, field: string) => {
+    const key = `${parametroId}-${field}`
+    const newValue = editingValues[key]
+    
+    // Solo actualizar si el valor cambió
+    const originalParam = parametros.find(p => p.id === parametroId)
+    const originalValue = originalParam?.[field as keyof Parametro]
+    
+    if (newValue !== originalValue) {
+      updateField(parametroId, field, newValue)
+    } else {
+      // Si no cambió, cancelar edición
+      cancelEditing()
+    }
+  }
+
+  const handleFieldKeyDown = (e: React.KeyboardEvent, parametroId: string, field: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleFieldBlur(parametroId, field)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      cancelEditing()
+    }
+  }
+
+  // Función helper para renderizar campos editables
+  const renderEditableField = (parametro: Parametro, field: string, value: any, className = '') => {
+    const key = `${parametro.id}-${field}`
+    const isEditing = editingField?.id === parametro.id && editingField?.field === field
+    const isSaving = savingFields[key]
+    const hasError = fieldErrors[key]
+    
+    if (isEditing) {
+      // Determinar el tipo de input según el campo
+      if (field === 'orden') {
+        return (
+          <div className="relative">
+            <input
+              type="number"
+              value={editingValues[key] || ''}
+              onChange={(e) => handleFieldChange(parametro.id, field, e.target.value)}
+              onBlur={() => handleFieldBlur(parametro.id, field)}
+              onKeyDown={(e) => handleFieldKeyDown(e, parametro.id, field)}
+              className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent ${
+                hasError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              autoFocus
+              min="0"
+              step="1"
+            />
+            {isSaving && (
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-bolivar-green"></div>
+              </div>
+            )}
+          </div>
+        )
+      } else if (field === 'regla' || field === 'descripcion_grupo') {
+        return (
+          <div className="relative">
+            <textarea
+              value={editingValues[key] || ''}
+              onChange={(e) => handleFieldChange(parametro.id, field, e.target.value)}
+              onBlur={() => handleFieldBlur(parametro.id, field)}
+              onKeyDown={(e) => handleFieldKeyDown(e, parametro.id, field)}
+              className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent resize-none ${
+                hasError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              autoFocus
+              rows={2}
+              maxLength={field === 'regla' ? 500 : 255}
+            />
+            {isSaving && (
+              <div className="absolute right-1 top-1">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-bolivar-green"></div>
+              </div>
+            )}
+          </div>
+        )
+      } else {
+        return (
+          <div className="relative">
+            <input
+              type="text"
+              value={editingValues[key] || ''}
+              onChange={(e) => handleFieldChange(parametro.id, field, e.target.value)}
+              onBlur={() => handleFieldBlur(parametro.id, field)}
+              onKeyDown={(e) => handleFieldKeyDown(e, parametro.id, field)}
+              className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent ${
+                hasError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              autoFocus
+              maxLength={255}
+            />
+            {isSaving && (
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-bolivar-green"></div>
+              </div>
+            )}
+          </div>
+        )
+      }
+    }
+
+    // Modo de solo lectura - hacer clic para editar
+    return (
+      <div
+        className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors duration-150 ${className}`}
+        onClick={() => startEditing(parametro.id, field, value)}
+        title={`Click para editar ${field}`}
+      >
+        <div className="truncate">
+          {value || '-'}
+        </div>
+        {hasError && (
+          <div className="text-xs text-red-600 mt-1">{hasError}</div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -467,25 +690,17 @@ export default function AdministracionPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {parametros.map((parametro) => (
                       <tr key={parametro.id} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-4 py-4 text-sm font-medium text-gray-900 w-32 truncate" title={parametro.nombre_grupo}>
-                          {parametro.nombre_grupo}
+                        <td className="px-2 py-2 text-sm font-medium text-gray-900 w-32">
+                          {renderEditableField(parametro, 'nombre_grupo', parametro.nombre_grupo, 'font-medium')}
                         </td>
-                        <td className="px-3 py-4 text-sm text-gray-700 w-48">
-                          <div className="truncate cursor-pointer hover:text-bolivar-green transition-colors" 
-                               title={parametro.descripcion_grupo}
-                               onClick={() => setSelectedTooltip({
-                                 id: parametro.id, 
-                                 field: 'descripcion_grupo', 
-                                 content: parametro.descripcion_grupo || ''
-                               })}>
-                            {parametro.descripcion_grupo || '-'}
-                          </div>
+                        <td className="px-2 py-2 text-sm text-gray-700 w-48">
+                          {renderEditableField(parametro, 'descripcion_grupo', parametro.descripcion_grupo)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-600 w-20">
-                          {parametro.orden || '-'}
+                        <td className="px-2 py-2 whitespace-nowrap text-center text-sm text-gray-600 w-20">
+                          {renderEditableField(parametro, 'orden', parametro.orden)}
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-700 w-36 truncate" title={parametro.valor_dominio}>
-                          {parametro.valor_dominio}
+                        <td className="px-2 py-2 text-sm text-gray-700 w-36">
+                          {renderEditableField(parametro, 'valor_dominio', parametro.valor_dominio)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-center w-24">
                           <span className={`
@@ -505,16 +720,8 @@ export default function AdministracionPage() {
                             year: 'numeric'
                           }).replace(/-/g, '/')}
                         </td>
-                        <td className="px-3 py-4 text-sm text-gray-700 w-44">
-                          <div className="truncate cursor-pointer hover:text-bolivar-green transition-colors" 
-                               title={parametro.regla || ''}
-                               onClick={() => parametro.regla && setSelectedTooltip({
-                                 id: parametro.id, 
-                                 field: 'regla', 
-                                 content: parametro.regla
-                               })}>
-                            {parametro.regla || '-'}
-                          </div>
+                        <td className="px-2 py-2 text-sm text-gray-700 w-44">
+                          {renderEditableField(parametro, 'regla', parametro.regla)}
                         </td>
                       </tr>
                     ))}

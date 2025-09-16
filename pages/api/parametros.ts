@@ -28,6 +28,7 @@ export interface Parametro {
  * Endpoints: 
  * - GET /api/parametros: Obtener parámetros
  * - POST /api/parametros: Crear nuevo parámetro
+ * - PUT /api/parametros: Actualizar parámetro existente
  * 
  * GET Query Parameters:
  *   - grupo: string (opcional) - Filtra por nombre_grupo
@@ -54,12 +55,25 @@ export interface Parametro {
  *     "orden": 3,                                 // Opcional
  *     "vigente": "S"                              // Opcional (default: S)
  *   }
+ * 
+ * PUT Body (actualizar parámetro):
+ *   {
+ *     "id": "123e4567-e89b-12d3-a456-426614174000", // OBLIGATORIO
+ *     "nombre_grupo": "ESTADOS_SOLICITUD",        // Opcional - solo si cambia
+ *     "descripcion_grupo": "Estados permitidos",  // Opcional - solo si cambia
+ *     "valor_dominio": "En Proceso",              // Opcional - solo si cambia
+ *     "regla": "Nueva regla de validación",      // Opcional - solo si cambia
+ *     "orden": 5,                                 // Opcional - solo si cambia
+ *     "vigente": "N"                              // Opcional - solo si cambia
+ *   }
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     return handleGetParametros(req, res)
   } else if (req.method === 'POST') {
     return handleCreateParametro(req, res)
+  } else if (req.method === 'PUT') {
+    return handleUpdateParametro(req, res)
   } else {
     return res.status(405).json({ error: 'Método no permitido' })
   }
@@ -339,6 +353,156 @@ async function handleCreateParametro(req: NextApiRequest, res: NextApiResponse) 
       success: false, 
       error: 'Error interno del servidor',
       details: error instanceof Error ? error.message : 'Error desconocido'
+    })
+  }
+}
+
+// Función para manejar PUT (actualizar parámetro existente)
+async function handleUpdateParametro(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const {
+      id,
+      nombre_grupo,
+      descripcion_grupo,
+      valor_dominio,
+      regla,
+      orden,
+      vigente
+    } = req.body
+
+    // Validaciones básicas
+    if (!id) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'El ID del parámetro es obligatorio' 
+      })
+    }
+
+    // Verificar que el parámetro existe
+    const { data: existingParam, error: existingError } = await supabase
+      .from('parametros')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (existingError || !existingParam) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Parámetro no encontrado' 
+      })
+    }
+
+    // Preparar datos para actualización - solo incluir campos que han cambiado
+    const updateData: any = {}
+
+    if (nombre_grupo !== undefined && nombre_grupo?.trim() !== existingParam.nombre_grupo) {
+      if (!nombre_grupo?.trim()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'El nombre del grupo no puede estar vacío' 
+        })
+      }
+      updateData.nombre_grupo = nombre_grupo.trim()
+    }
+
+    if (descripcion_grupo !== undefined && descripcion_grupo?.trim() !== existingParam.descripcion_grupo) {
+      if (!descripcion_grupo?.trim()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'La descripción del grupo no puede estar vacía' 
+        })
+      }
+      updateData.descripcion_grupo = descripcion_grupo.trim()
+    }
+
+    if (valor_dominio !== undefined && valor_dominio?.trim() !== existingParam.valor_dominio) {
+      if (!valor_dominio?.trim()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'El nombre del dominio no puede estar vacío' 
+        })
+      }
+      updateData.valor_dominio = valor_dominio.trim()
+    }
+
+    if (regla !== undefined && (regla?.trim() || '') !== (existingParam.regla || '')) {
+      updateData.regla = regla?.trim() || null
+    }
+
+    if (orden !== undefined) {
+      const newOrden = orden ? parseInt(orden.toString()) : 0
+      if (newOrden !== existingParam.orden) {
+        updateData.orden = newOrden
+      }
+    }
+
+    if (vigente !== undefined && vigente !== existingParam.vigente) {
+      updateData.vigente = vigente === 'N' ? 'N' : 'S'
+    }
+
+    // Si no hay cambios, devolver éxito sin hacer nada
+    if (Object.keys(updateData).length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'No hay cambios que guardar',
+        parametro: existingParam 
+      })
+    }
+
+    // Verificar unicidad si se está cambiando nombre_grupo o valor_dominio
+    if (updateData.nombre_grupo || updateData.valor_dominio) {
+      const checkGrupo = updateData.nombre_grupo || existingParam.nombre_grupo
+      const checkDominio = updateData.valor_dominio || existingParam.valor_dominio
+
+      const { data: duplicateCheck } = await supabase
+        .from('parametros')
+        .select('id')
+        .eq('nombre_grupo', checkGrupo)
+        .eq('valor_dominio', checkDominio)
+        .neq('id', id)
+        .single()
+
+      if (duplicateCheck) {
+        return res.status(409).json({ 
+          success: false, 
+          error: `Ya existe un parámetro con el grupo "${checkGrupo}" y dominio "${checkDominio}"` 
+        })
+      }
+    }
+
+    console.log(`📝 Actualizando parámetro ${id}:`, updateData)
+
+    // Realizar la actualización
+    const { data: updatedData, error: updateError } = await supabase
+      .from('parametros')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('❌ Error al actualizar parámetro:', updateError)
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Error al actualizar el parámetro en la base de datos',
+        details: updateError.message 
+      })
+    }
+
+    console.log('✅ Parámetro actualizado exitosamente:', updatedData)
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Parámetro actualizado exitosamente',
+      parametro: updatedData 
+    })
+
+  } catch (error) {
+    console.error('❌ Error interno al actualizar parámetro:', error)
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Error interno del servidor',
+      details: error instanceof Error ? error.message : 'Error desconocido' 
     })
   }
 }
