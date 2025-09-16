@@ -723,8 +723,8 @@ export default function AdministracionPage() {
 
         {/* Modal para mostrar contenido completo */}
         {selectedTooltip && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onClick={() => setSelectedTooltip(null)}>
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedTooltip(null)}>
+            <div className="relative max-h-[80vh] overflow-y-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white" onClick={(e) => e.stopPropagation()}>
               <div className="mt-3">
                 {/* Header del modal */}
                 <div className="flex items-center justify-between mb-4">
