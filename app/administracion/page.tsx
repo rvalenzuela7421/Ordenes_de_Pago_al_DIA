@@ -599,10 +599,19 @@ export default function AdministracionPage() {
                 </div>
 
                 {/* Mensaje informativo */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-                  <p className="text-sm text-blue-700">
-                    <strong>Nota:</strong> Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios.
-                  </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-green-700">
+                        <strong>Nota:</strong> Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Formulario */}

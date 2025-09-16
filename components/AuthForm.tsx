@@ -364,12 +364,12 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
 
                 {/* Información adicional para registro */}
                 {mode === 'register' && !message.includes('🎭') && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
                     <div className="flex items-start space-x-2">
-                      <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                       </svg>
-                      <div className="text-blue-800 text-xs">
+                      <div className="text-green-700 text-xs">
                         <p className="font-medium mb-1">¿Qué sigue?</p>
                         <ul className="list-disc list-inside space-y-1">
                           <li>Revisa tu bandeja de entrada de correo</li>
@@ -399,15 +399,15 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
                 {mode === 'login' && (errors.general.toLowerCase().includes('credenciales') || 
                   errors.general.toLowerCase().includes('usuario no') || 
                   errors.general.toLowerCase().includes('email no')) && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-2 mt-2">
+                  <div className="bg-green-50 border border-green-200 rounded-md p-2 mt-2">
                     <div className="flex items-start space-x-1">
-                      <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                       </svg>
-                      <div className="text-blue-800 text-xs">
+                      <div className="text-green-700 text-xs">
                         <p className="font-medium mb-1">¿Necesitas ayuda?</p>
-                        <p>• Si no tienes cuenta, <a href="/auth/register" className="text-blue-600 underline hover:text-blue-800">regístrate aquí</a></p>
-                        <p>• Si olvidaste tu contraseña, <a href="/auth/reset-password" className="text-blue-600 underline hover:text-blue-800">recupérala aquí</a></p>
+                        <p>• Si no tienes cuenta, <a href="/auth/register" className="text-green-600 underline hover:text-green-800">regístrate aquí</a></p>
+                        <p>• Si olvidaste tu contraseña, <a href="/auth/reset-password" className="text-green-600 underline hover:text-green-800">recupérala aquí</a></p>
                         <p>• Contacta al administrador si el problema persiste</p>
                       </div>
                     </div>
@@ -617,22 +617,31 @@ export default function AuthForm({ mode, onSuccess, onError }: AuthFormProps) {
 
         {/* Información de campos obligatorios */}
         {mode === 'register' && (
-          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Nota:</strong> Todos los campos marcados con <span className="text-red-500">*</span> son obligatorios.
-              El botón "Registrarse" se habilitará cuando todos los campos estén correctamente diligenciados.
-            </p>
+          <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-700">
+                  <strong>Nota:</strong> Todos los campos marcados con <span className="text-red-500">*</span> son obligatorios.
+                  El botón "Registrarse" se habilitará cuando todos los campos estén correctamente diligenciados.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Indicador de validación para login */}
         {mode === 'login' && !isFormValid() && (formData.email || formData.password) && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
             <div className="flex items-start space-x-2">
-              <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
               </svg>
-              <div className="text-sm text-yellow-800">
+              <div className="text-sm text-green-700">
                 <p className="font-medium mb-1">Para habilitar el botón de login:</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
                   {!isValidEmail(formData.email.trim()) && (
