@@ -23,10 +23,13 @@ export interface Parametro {
 // Sin datos fallback - la aplicación debe usar solo datos reales de la BD
 
 /**
- * API ESTÁNDAR REUTILIZABLE PARA OBTENER PARÁMETROS
+ * API ESTÁNDAR REUTILIZABLE PARA GESTIONAR PARÁMETROS
  * 
- * Endpoint: GET /api/parametros
- * Query Parameters:
+ * Endpoints: 
+ * - GET /api/parametros: Obtener parámetros
+ * - POST /api/parametros: Crear nuevo parámetro
+ * 
+ * GET Query Parameters:
  *   - grupo: string (opcional) - Filtra por nombre_grupo
  *   - vigente: string (opcional) - Filtra por vigente ('S' o 'N')
  *   - orden: boolean (opcional) - Si ordena por campo orden
@@ -36,16 +39,34 @@ export interface Parametro {
  *   - search: string (opcional) - Búsqueda en nombre_grupo o valor_dominio
  *   - stats: boolean (opcional) - Solo obtener datos para estadísticas
  * 
- * Ejemplos de uso:
+ * Ejemplos de uso GET:
  *   GET /api/parametros?grupo=GRUPO_BOLIVAR
  *   GET /api/parametros?grupo=ESTADOS_SOLICITUD&vigente=S
  *   GET /api/parametros?orderBy=admin&page=1&pageSize=50
  *   GET /api/parametros?stats=true
+ * 
+ * POST Body (crear parámetro):
+ *   {
+ *     "nombre_grupo": "ESTADOS_SOLICITUD",
+ *     "descripcion_grupo": "Estados permitidos para solicitudes",
+ *     "valor_dominio": "En Proceso",
+ *     "regla": "Validar documentos antes de aprobar",
+ *     "orden": 3,
+ *     "vigente": "S"
+ *   }
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
+  if (req.method === 'GET') {
+    return handleGetParametros(req, res)
+  } else if (req.method === 'POST') {
+    return handleCreateParametro(req, res)
+  } else {
     return res.status(405).json({ error: 'Método no permitido' })
   }
+}
+
+// Función para manejar GET (lógica existente)
+async function handleGetParametros(req: NextApiRequest, res: NextApiResponse) {
 
   // Obtener parámetros de query
   const { 
@@ -222,6 +243,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       currentPage: paginaActual,
       totalPages: 0,
       grupo: grupo || 'TODOS'
+    })
+  }
+}
+
+// Función para manejar POST (crear nuevo parámetro)
+async function handleCreateParametro(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const {
+      nombre_grupo,
+      descripcion_grupo,
+      valor_dominio,
+      regla,
+      orden,
+      vigente
+    } = req.body
+
+    // Validaciones básicas
+    if (!nombre_grupo?.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'El nombre del grupo es obligatorio' 
+      })
+    }
+
+    if (!valor_dominio?.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'El valor dominio es obligatorio' 
+      })
+    }
+
+    // Preparar datos para inserción
+    const parametroData = {
+      nombre_grupo: nombre_grupo.trim(),
+      descripcion_grupo: descripcion_grupo?.trim() || null,
+      valor_dominio: valor_dominio.trim(),
+      regla: regla?.trim() || null,
+      orden: orden ? parseInt(orden.toString()) : 0,
+      vigente: vigente === 'N' ? 'N' : 'S' // Default a 'S'
+    }
+
+    console.log('🆕 Creando parámetro:', parametroData)
+
+    // Verificar si ya existe el parámetro
+    const existingCheck = await supabase
+      .from('parametros')
+      .select('id')
+      .eq('nombre_grupo', parametroData.nombre_grupo)
+      .eq('valor_dominio', parametroData.valor_dominio)
+      .single()
+
+    if (existingCheck.data) {
+      return res.status(409).json({ 
+        success: false, 
+        error: `Ya existe un parámetro con el grupo "${parametroData.nombre_grupo}" y valor "${parametroData.valor_dominio}"` 
+      })
+    }
+
+    // Insertar nuevo parámetro
+    const { data, error } = await supabase
+      .from('parametros')
+      .insert([parametroData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Error insertando parámetro:', error)
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Error al crear el parámetro en la base de datos',
+        details: error.message
+      })
+    }
+
+    console.log('✅ Parámetro creado exitosamente:', data)
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'Parámetro creado exitosamente',
+      parametro: data
+    })
+
+  } catch (error) {
+    console.error('💥 Error inesperado al crear parámetro:', error)
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Error interno del servidor',
+      details: error instanceof Error ? error.message : 'Error desconocido'
     })
   }
 }
