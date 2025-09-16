@@ -215,7 +215,7 @@ export default function AdministracionPage() {
             {/* Búsqueda */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <label htmlFor="search" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Buscar parámetros:
+                Buscar
               </label>
               <div className="relative flex-1">
                 <input
@@ -223,7 +223,7 @@ export default function AdministracionPage() {
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Busque por grupo o valor..."
+                  placeholder="Busque cualquier información dentro de la tabla de datos"
                   autoComplete="off"
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
                 />
@@ -254,8 +254,11 @@ export default function AdministracionPage() {
               <button
                 type="button"
                 onClick={handleLimpiar}
-                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
                 Limpiar
               </button>
             </div>
