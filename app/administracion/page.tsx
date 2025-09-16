@@ -37,8 +37,7 @@ export default function AdministracionPage() {
     descripcion_grupo: '',
     valor_dominio: '',
     regla: '',
-    orden: '',
-    vigente: 'S'
+    orden: ''
   })
 
   // Cargar parámetros
@@ -152,9 +151,17 @@ export default function AdministracionPage() {
       descripcion_grupo: '',
       valor_dominio: '',
       regla: '',
-      orden: '',
-      vigente: 'S'
+      orden: ''
     })
+  }
+
+  // Función para verificar si todos los campos obligatorios están completos
+  const isParametroFormComplete = () => {
+    // Verificar campos obligatorios
+    if (!nuevoParametro.nombre_grupo.trim()) return false
+    if (!nuevoParametro.valor_dominio.trim()) return false
+    
+    return true
   }
 
   // Crear nuevo parámetro
@@ -177,7 +184,8 @@ export default function AdministracionPage() {
         nombre_grupo: nuevoParametro.nombre_grupo.trim(),
         descripcion_grupo: nuevoParametro.descripcion_grupo.trim() || null,
         valor_dominio: nuevoParametro.valor_dominio.trim(),
-        regla: nuevoParametro.regla.trim() || null
+        regla: nuevoParametro.regla.trim() || null,
+        vigente: 'S' // Siempre crear como Vigente
       }
 
       console.log('🆕 Creando parámetro:', parametroData)
@@ -545,6 +553,13 @@ export default function AdministracionPage() {
                   </button>
                 </div>
 
+                {/* Mensaje informativo */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                  <p className="text-sm text-blue-700">
+                    <strong>Nota:</strong> Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios.
+                  </p>
+                </div>
+
                 {/* Formulario */}
                 <form onSubmit={(e) => { e.preventDefault(); handleCrearParametro() }} className="space-y-4">
                   {/* Nombre del Grupo */}
@@ -578,10 +593,10 @@ export default function AdministracionPage() {
                     />
                   </div>
 
-                  {/* Valor Dominio */}
+                  {/* Nombre del Dominio */}
                   <div>
                     <label htmlFor="valor_dominio" className="block text-sm font-medium text-gray-700 mb-1">
-                      Valor Dominio <span className="text-red-500">*</span>
+                      Nombre del Dominio <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -613,43 +628,24 @@ export default function AdministracionPage() {
                     </div>
                   </div>
 
-                  {/* Fila con Orden y Estado */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Orden */}
-                    <div>
-                      <label htmlFor="orden" className="block text-sm font-medium text-gray-700 mb-1">
-                        Orden
-                      </label>
-                      <input
-                        type="number"
-                        id="orden"
-                        value={nuevoParametro.orden}
-                        onChange={(e) => handleNuevoParametroChange('orden', e.target.value)}
-                        placeholder="1, 2, 3..."
-                        min="0"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                      />
-                    </div>
-
-                    {/* Estado */}
-                    <div>
-                      <label htmlFor="vigente" className="block text-sm font-medium text-gray-700 mb-1">
-                        Estado
-                      </label>
-                      <select
-                        id="vigente"
-                        value={nuevoParametro.vigente}
-                        onChange={(e) => handleNuevoParametroChange('vigente', e.target.value)}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                      >
-                        <option value="S">Vigente</option>
-                        <option value="N">No vigente</option>
-                      </select>
-                    </div>
+                  {/* Orden */}
+                  <div>
+                    <label htmlFor="orden" className="block text-sm font-medium text-gray-700 mb-1">
+                      Orden
+                    </label>
+                    <input
+                      type="number"
+                      id="orden"
+                      value={nuevoParametro.orden}
+                      onChange={(e) => handleNuevoParametroChange('orden', e.target.value)}
+                      placeholder="1, 2, 3..."
+                      min="0"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                    />
                   </div>
 
                   {/* Botones */}
-                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                  <div className="flex justify-center space-x-3 pt-6 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={() => {
@@ -657,19 +653,22 @@ export default function AdministracionPage() {
                         limpiarFormularioParametro()
                       }}
                       disabled={creandoParametro}
-                      className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      disabled={creandoParametro}
-                      className="flex items-center gap-2 px-4 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={creandoParametro || !isParametroFormComplete()}
+                      className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {creandoParametro ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Creando...
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Creando parámetro...</span>
                         </>
                       ) : (
                         <>
