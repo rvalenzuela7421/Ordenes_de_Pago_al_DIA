@@ -780,31 +780,91 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 6: EXTRACCIÓN DE IVA (Valor específico del PDF) ✅
     console.log('6️⃣ Extrayendo valor del IVA...')
     
-    // LÓGICA SIMPLIFICADA: Buscar líneas que contengan "IVA" y tomar el valor al final
-    console.log('🔍 Buscando líneas que contengan "IVA" y extrayendo valor al final...')
+    // LÓGICA EXPANDIDA: Buscar líneas con términos relacionados a IVA/impuestos
+    console.log('🔍 Buscando líneas que contengan términos relacionados a IVA/impuestos...')
     
-    const ivaLines = text.split('\n').filter(line => line.includes('IVA'))
-    console.log(`📊 Líneas que contienen "IVA" encontradas: ${ivaLines.length}`)
+    // Términos de búsqueda expandidos
+    const terminosIVA = ['IVA', 'iva', 'Iva', 'I.V.A', 'impuesto', 'gravado', '19%', 'tax', 'VAT']
+    console.log(`📋 Términos de búsqueda: ${terminosIVA.join(', ')}`)
+    
+    // Buscar líneas con cualquier término relacionado
+    let ivaLines: string[] = []
+    const todasLasLineas = text.split('\n')
+    console.log(`📄 Total de líneas en documento: ${todasLasLineas.length}`)
+    
+    todasLasLineas.forEach((linea, index) => {
+      const lineaLowerCase = linea.toLowerCase()
+      const contieneTermino = terminosIVA.some(termino => 
+        lineaLowerCase.includes(termino.toLowerCase())
+      )
+      
+      if (contieneTermino) {
+        ivaLines.push(linea)
+        console.log(`📍 Línea ${index + 1} contiene término IVA: "${linea.trim()}"`)
+      }
+    })
+    
+    console.log(`📊 Líneas con términos IVA/impuestos encontradas: ${ivaLines.length}`)
+    
+    // 🚨 DIAGNÓSTICO ADICIONAL si no se encuentran líneas
+    if (ivaLines.length === 0) {
+      console.log('🔍 === DIAGNÓSTICO: NO SE ENCONTRARON TÉRMINOS IVA ===')
+      console.log('📄 Primeras 20 líneas del documento:')
+      todasLasLineas.slice(0, 20).forEach((linea, index) => {
+        console.log(`    ${(index + 1).toString().padStart(2, '0')}: "${linea.trim()}"`)
+      })
+      
+      console.log('🔍 Buscando números que podrían ser IVA (formato monetario):')
+      todasLasLineas.forEach((linea, index) => {
+        // Buscar patrones de dinero que podrían ser IVA
+        const patronesDinero = [
+          /\$\s*([\d,\.]+)/g,     // $ 24.585
+          /([\d,\.]+)\s*pesos/gi,  // 24.585 pesos
+          /([\d,\.]{4,})/g        // Cualquier número grande
+        ]
+        
+        patronesDinero.forEach(patron => {
+          const matches = Array.from(linea.matchAll(patron))
+          if (matches.length > 0) {
+            matches.forEach(match => {
+              const valor = cleanNumericValue(match[1])
+              const valorNum = parseFloat(valor)
+              if (valorNum > 10000 && valorNum < 100000000) { // Rango razonable para IVA
+                console.log(`    💰 Línea ${index + 1} - Posible valor monetario: "${match[0]}" (${valorNum})`)
+                console.log(`       Contexto: "${linea.trim()}"`)
+              }
+            })
+          }
+        })
+      })
+      console.log('=============================================')
+    }
     
     let valoresIvaEncontrados: number[] = []
     
     if (ivaLines.length > 0) {
-      console.log('📋 Líneas con "IVA" y extracción del valor al final:')
+      console.log('📋 Líneas con términos IVA/impuestos y extracción de valores:')
       
       ivaLines.forEach((linea, index) => {
         console.log(`  ${index + 1}. "${linea.trim()}"`)
         
         // MÚLTIPLES PATRONES para capturar diferentes formatos de IVA
         const patronesIVA = [
-          // Patrón 1: IVA seguido de $ y número (ej: "IVA $ 18,923,728")
-          /IVA[^$]*\$\s*([\d,\.]+)/i,
-          // Patrón 2: IVA con porcentaje y $ (ej: "IVA (19%) $ 18,923,728")
-          /IVA\s*\([0-9]+%?\)\s*\$?\s*([\d,\.]+)/i,
-          // Patrón 3: IVA seguido directamente de número (ej: "IVA 18,923,728")
-          /IVA[^0-9]*?([\d,\.]+)/i,
-          // Patrón 4: Cualquier número significativo después de IVA
-          /IVA.*?([\d,\.]{4,})/i,
-          // Patrón 5: El último número grande de la línea
+          // Patrones originales mejorados
+          /IVA[^$]*\$\s*([\d,\.]+)/i,                    // IVA $ 18,923,728
+          /IVA\s*\([0-9]+%?\)\s*\$?\s*([\d,\.]+)/i,      // IVA (19%) $ 18,923,728
+          /IVA[^0-9]*?([\d,\.]+)/i,                      // IVA 18,923,728
+          /IVA.*?([\d,\.]{4,})/i,                        // Cualquier número después de IVA
+          
+          // Nuevos patrones para más formatos
+          /(?:impuesto|gravado|tax|vat).*?\$?\s*([\d,\.]+)/i,  // impuesto $ 24.585
+          /19%.*?\$?\s*([\d,\.]+)/i,                     // 19% $ 24.585
+          /\$?\s*([\d,\.]+)\s*(?:IVA|iva|impuesto)/i,    // $ 24.585 IVA
+          /([\d,\.]+)\s*(?:IVA|iva|impuesto)/i,          // 24.585 IVA (sin $)
+          /valor.*?iva.*?\$?\s*([\d,\.]+)/i,             // Valor IVA $ 24.585
+          /total.*?iva.*?\$?\s*([\d,\.]+)/i,             // Total IVA $ 24.585
+          
+          // Patrón final: cualquier número grande en la línea
           /([\d,\.]{4,})(?![0-9])/g
         ]
         
