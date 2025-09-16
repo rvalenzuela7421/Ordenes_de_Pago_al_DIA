@@ -754,7 +754,7 @@ export default function NuevaSolicitudPage() {
             </svg>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Nueva Solicitud de OP</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Nueva Solicitud de Orden de Pago</h1>
             {tipoSolicitud && (
               <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-bolivar-green text-white">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -763,9 +763,6 @@ export default function NuevaSolicitudPage() {
                 {tipoSolicitud}
               </div>
             )}
-            <p className="mt-1 text-sm text-gray-500">
-              Registrar solicitud de generación de Orden de Pago - Área Tributaria
-            </p>
           </div>
         </div>
       </div>
