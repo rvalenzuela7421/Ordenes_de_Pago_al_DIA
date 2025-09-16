@@ -40,6 +40,9 @@ export default function AdministracionPage() {
     orden: ''
   })
 
+  // Estados para tooltip de contenido completo
+  const [selectedTooltip, setSelectedTooltip] = useState<{id: string, field: string, content: string} | null>(null)
+
   // Cargar parámetros
   const loadParametros = async () => {
     try {
@@ -418,26 +421,29 @@ export default function AdministracionPage() {
           ) : (
             <>
               {/* Tabla */}
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-hidden">
+                <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                         Grupo
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                        Descripción del Grupo
+                      </th>
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                         Orden
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valor Dominio
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">
+                        Nombre del Dominio
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                         Estado
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha Creación
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                        Fecha de Creación
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
                         Regla
                       </th>
                     </tr>
@@ -445,16 +451,27 @@ export default function AdministracionPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {parametros.map((parametro) => (
                       <tr key={parametro.id} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900 w-32 truncate" title={parametro.nombre_grupo}>
                           {parametro.nombre_grupo}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                        <td className="px-3 py-4 text-sm text-gray-700 w-48">
+                          <div className="truncate cursor-pointer hover:text-bolivar-green transition-colors" 
+                               title={parametro.descripcion_grupo}
+                               onClick={() => setSelectedTooltip({
+                                 id: parametro.id, 
+                                 field: 'descripcion_grupo', 
+                                 content: parametro.descripcion_grupo || ''
+                               })}>
+                            {parametro.descripcion_grupo || '-'}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-600 w-20">
                           {parametro.orden || '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={parametro.valor_dominio}>
+                        <td className="px-4 py-4 text-sm text-gray-700 w-36 truncate" title={parametro.valor_dominio}>
                           {parametro.valor_dominio}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-3 py-4 whitespace-nowrap text-center w-24">
                           <span className={`
                             inline-flex px-2 py-1 text-xs font-semibold rounded-full
                             ${parametro.vigente === 'S' 
@@ -465,15 +482,23 @@ export default function AdministracionPage() {
                             {parametro.vigente === 'S' ? 'Vigente' : 'No vigente'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                        <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-600 w-28">
                           {new Date(parametro.created_at).toLocaleDateString('es-ES', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric'
                           }).replace(/-/g, '/')}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-md truncate" title={parametro.regla || ''}>
-                          {parametro.regla || '-'}
+                        <td className="px-3 py-4 text-sm text-gray-700 w-44">
+                          <div className="truncate cursor-pointer hover:text-bolivar-green transition-colors" 
+                               title={parametro.regla || ''}
+                               onClick={() => parametro.regla && setSelectedTooltip({
+                                 id: parametro.id, 
+                                 field: 'regla', 
+                                 content: parametro.regla
+                               })}>
+                            {parametro.regla || '-'}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -691,6 +716,53 @@ export default function AdministracionPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para mostrar contenido completo */}
+        {selectedTooltip && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onClick={() => setSelectedTooltip(null)}>
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-3">
+                {/* Header del modal */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-bolivar-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {selectedTooltip.field === 'descripcion_grupo' ? 'Descripción del Grupo' : 'Regla'}
+                  </h3>
+                  <button
+                    onClick={() => setSelectedTooltip(null)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors duration-150"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Contenido */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {selectedTooltip.content}
+                  </p>
+                </div>
+
+                {/* Botón cerrar */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setSelectedTooltip(null)}
+                    className="flex items-center gap-2 px-4 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Cerrar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
