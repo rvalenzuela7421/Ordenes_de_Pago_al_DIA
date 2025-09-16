@@ -79,17 +79,20 @@ export default function TipoSolicitudPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-bolivar-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando tipos de solicitud...</p>
+        <div className="w-full max-w-md mx-auto px-4">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-bolivar-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando tipos de solicitud...</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full max-w-md mx-auto px-4">
+        <div className="bg-white rounded-lg shadow-md p-8 w-full">
           {/* Título */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -184,6 +187,7 @@ export default function TipoSolicitudPage() {
           </div>
 
         </div>
+      </div>
     </div>
   )
 }
