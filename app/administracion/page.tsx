@@ -380,7 +380,30 @@ export default function AdministracionPage() {
     
     if (isEditing) {
       // Determinar el tipo de input según el campo
-      if (field === 'orden') {
+      if (field === 'vigente') {
+        return (
+          <div className="relative">
+            <select
+              value={editingValues[key] || ''}
+              onChange={(e) => handleFieldChange(parametro.id, field, e.target.value)}
+              onBlur={() => handleFieldBlur(parametro.id, field)}
+              onKeyDown={(e) => handleFieldKeyDown(e, parametro.id, field)}
+              className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent ${
+                hasError ? 'border-red-300 bg-red-50' : 'border-gray-300'
+              }`}
+              autoFocus
+            >
+              <option value="S">Activo</option>
+              <option value="N">Inactivo</option>
+            </select>
+            {isSaving && (
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-bolivar-green"></div>
+              </div>
+            )}
+          </div>
+        )
+      } else if (field === 'orden') {
         return (
           <div className="relative">
             <input
@@ -451,6 +474,29 @@ export default function AdministracionPage() {
     }
 
     // Modo de solo lectura - hacer clic para editar
+    if (field === 'vigente') {
+      return (
+        <div
+          className="cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors duration-150"
+          onClick={() => startEditing(parametro.id, field, value)}
+          title="Click para cambiar estado"
+        >
+          <span className={`
+            inline-flex px-2 py-1 text-xs font-semibold rounded-full
+            ${value === 'S' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-500'
+            }
+          `}>
+            {value === 'S' ? 'Activo' : 'Inactivo'}
+          </span>
+          {hasError && (
+            <div className="text-xs text-red-600 mt-1">{hasError}</div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <div
         className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors duration-150 ${className}`}
@@ -679,9 +725,6 @@ export default function AdministracionPage() {
                       <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 w-24">
                         Estado
                       </th>
-                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 w-28">
-                        Fecha de Creación
-                      </th>
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-44">
                         Regla
                       </th>
@@ -691,7 +734,9 @@ export default function AdministracionPage() {
                     {parametros.map((parametro) => (
                       <tr key={parametro.id} className="hover:bg-gray-50 transition-colors duration-150">
                         <td className="px-2 py-2 text-sm font-medium text-gray-900 w-32">
-                          {renderEditableField(parametro, 'nombre_grupo', parametro.nombre_grupo, 'font-medium')}
+                          <div className="px-2 py-1 font-medium truncate" title={parametro.nombre_grupo}>
+                            {parametro.nombre_grupo}
+                          </div>
                         </td>
                         <td className="px-2 py-2 text-sm text-gray-700 w-48">
                           {renderEditableField(parametro, 'descripcion_grupo', parametro.descripcion_grupo)}
@@ -702,23 +747,8 @@ export default function AdministracionPage() {
                         <td className="px-2 py-2 text-sm text-gray-700 w-36">
                           {renderEditableField(parametro, 'valor_dominio', parametro.valor_dominio)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-center w-24">
-                          <span className={`
-                            inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                            ${parametro.vigente === 'S' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-600'
-                            }
-                          `}>
-                            {parametro.vigente === 'S' ? 'Vigente' : 'No vigente'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-600 w-28">
-                          {new Date(parametro.created_at).toLocaleDateString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          }).replace(/-/g, '/')}
+                        <td className="px-2 py-2 whitespace-nowrap text-center w-24">
+                          {renderEditableField(parametro, 'vigente', parametro.vigente)}
                         </td>
                         <td className="px-2 py-2 text-sm text-gray-700 w-44">
                           {renderEditableField(parametro, 'regla', parametro.regla)}

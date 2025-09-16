@@ -395,14 +395,12 @@ async function handleUpdateParametro(req: NextApiRequest, res: NextApiResponse) 
     // Preparar datos para actualización - solo incluir campos que han cambiado
     const updateData: any = {}
 
+    // El nombre del grupo no se puede actualizar
     if (nombre_grupo !== undefined && nombre_grupo?.trim() !== existingParam.nombre_grupo) {
-      if (!nombre_grupo?.trim()) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'El nombre del grupo no puede estar vacío' 
-        })
-      }
-      updateData.nombre_grupo = nombre_grupo.trim()
+      return res.status(400).json({ 
+        success: false, 
+        error: 'El nombre del grupo no se puede modificar' 
+      })
     }
 
     if (descripcion_grupo !== undefined && descripcion_grupo?.trim() !== existingParam.descripcion_grupo) {
@@ -449,10 +447,10 @@ async function handleUpdateParametro(req: NextApiRequest, res: NextApiResponse) 
       })
     }
 
-    // Verificar unicidad si se está cambiando nombre_grupo o valor_dominio
-    if (updateData.nombre_grupo || updateData.valor_dominio) {
-      const checkGrupo = updateData.nombre_grupo || existingParam.nombre_grupo
-      const checkDominio = updateData.valor_dominio || existingParam.valor_dominio
+    // Verificar unicidad si se está cambiando valor_dominio
+    if (updateData.valor_dominio) {
+      const checkGrupo = existingParam.nombre_grupo
+      const checkDominio = updateData.valor_dominio
 
       const { data: duplicateCheck } = await supabase
         .from('parametros')
