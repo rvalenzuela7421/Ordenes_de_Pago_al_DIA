@@ -337,6 +337,147 @@ export async function getIVAVigente(): Promise<{ iva: number, error?: string }> 
   }
 }
 
+/**
+ * FUNCIÓN PARA MÓDULO DE ADMINISTRACIÓN: OBTENER TODOS LOS PARÁMETROS
+ * Para la gestión completa de parámetros del sistema
+ * Ordenamiento: nombre_grupo, valor_dominio, orden
+ */
+export async function getTodosLosParametros(
+  incluirNoVigentes: boolean = true,
+  searchText: string = '',
+  page: number = 1,
+  pageSize: number = 50
+): Promise<{
+  parametros: Parametro[], 
+  totalCount: number,
+  currentPage: number,
+  totalPages: number,
+  grupos: string[],
+  error?: string
+}> {
+  try {
+    // Construir parámetros de query
+    const queryParams = new URLSearchParams()
+    
+    // Sin filtro de grupo específico para obtener todos
+    if (!incluirNoVigentes) {
+      queryParams.append('vigente', 'S')
+    }
+    
+    // Agregar parámetros de paginación y búsqueda
+    queryParams.append('page', page.toString())
+    queryParams.append('pageSize', pageSize.toString())
+    queryParams.append('orderBy', 'admin') // Indicador especial para ordenamiento de administración
+    
+    if (searchText.trim()) {
+      queryParams.append('search', searchText.trim())
+    }
+
+    const response = await fetch(`/api/parametros?${queryParams}`)
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Error al obtener parámetros')
+    }
+
+    // Obtener lista única de grupos para filtros
+    const gruposUnicos = [...new Set(data.parametros.map((p: Parametro) => p.nombre_grupo))].sort()
+
+    return {
+      parametros: data.parametros,
+      totalCount: data.totalCount || data.count,
+      currentPage: page,
+      totalPages: Math.ceil((data.totalCount || data.count) / pageSize),
+      grupos: gruposUnicos,
+      error: undefined
+    }
+
+  } catch (error) {
+    console.error('Error al obtener todos los parámetros:', error)
+    return {
+      parametros: [],
+      totalCount: 0,
+      currentPage: page,
+      totalPages: 0,
+      grupos: [],
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }
+  }
+}
+
+/**
+ * FUNCIÓN AUXILIAR: OBTENER ESTADÍSTICAS DE PARÁMETROS
+ * Para mostrar resumen en el módulo de administración
+ */
+export async function getEstadisticasParametros(): Promise<{
+  totalParametros: number,
+  parametrosVigentes: number,
+  parametrosNoVigentes: number,
+  totalGrupos: number,
+  gruposPorEstadistica: { grupo: string, total: number, vigentes: number }[],
+  error?: string
+}> {
+  try {
+    // Obtener todos los parámetros sin paginación para estadísticas
+    const queryParams = new URLSearchParams()
+    queryParams.append('stats', 'true') // Indicador para obtener estadísticas
+
+    const response = await fetch(`/api/parametros?${queryParams}`)
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Error al obtener estadísticas')
+    }
+
+    const parametros: Parametro[] = data.parametros
+    
+    // Calcular estadísticas
+    const totalParametros = parametros.length
+    const parametrosVigentes = parametros.filter(p => p.vigente === 'S').length
+    const parametrosNoVigentes = totalParametros - parametrosVigentes
+    
+    // Agrupar por nombre_grupo
+    const grupoStats = parametros.reduce((acc, param) => {
+      if (!acc[param.nombre_grupo]) {
+        acc[param.nombre_grupo] = { total: 0, vigentes: 0 }
+      }
+      acc[param.nombre_grupo].total++
+      if (param.vigente === 'S') {
+        acc[param.nombre_grupo].vigentes++
+      }
+      return acc
+    }, {} as Record<string, { total: number, vigentes: number }>)
+
+    const gruposPorEstadistica = Object.entries(grupoStats)
+      .map(([grupo, stats]) => ({
+        grupo,
+        total: stats.total,
+        vigentes: stats.vigentes
+      }))
+      .sort((a, b) => a.grupo.localeCompare(b.grupo))
+
+    return {
+      totalParametros,
+      parametrosVigentes,
+      parametrosNoVigentes,
+      totalGrupos: gruposPorEstadistica.length,
+      gruposPorEstadistica,
+      error: undefined
+    }
+
+  } catch (error) {
+    console.error('Error al obtener estadísticas de parámetros:', error)
+    return {
+      totalParametros: 0,
+      parametrosVigentes: 0,
+      parametrosNoVigentes: 0,
+      totalGrupos: 0,
+      gruposPorEstadistica: [],
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }
+  }
+}
+
 // Exportar tipos para uso en otros archivos
 export type { Parametro, EmpresaGrupoBolivar }
 

@@ -29,11 +29,17 @@ export interface Parametro {
  *   - grupo: string (opcional) - Filtra por nombre_grupo
  *   - vigente: string (opcional) - Filtra por vigente ('S' o 'N')
  *   - orden: boolean (opcional) - Si ordena por campo orden
+ *   - orderBy: string (opcional) - Tipo de ordenamiento ('admin' para módulo administración)
+ *   - page: number (opcional) - Página para paginación
+ *   - pageSize: number (opcional) - Tamaño de página
+ *   - search: string (opcional) - Búsqueda en nombre_grupo o valor_dominio
+ *   - stats: boolean (opcional) - Solo obtener datos para estadísticas
  * 
  * Ejemplos de uso:
  *   GET /api/parametros?grupo=GRUPO_BOLIVAR
  *   GET /api/parametros?grupo=ESTADOS_SOLICITUD&vigente=S
- *   GET /api/parametros?grupo=PRIORIDADES&orden=true
+ *   GET /api/parametros?orderBy=admin&page=1&pageSize=50
+ *   GET /api/parametros?stats=true
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -41,16 +47,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Obtener parámetros de query
-  const { grupo, vigente, orden } = req.query
+  const { 
+    grupo, 
+    vigente, 
+    orden, 
+    orderBy, 
+    page, 
+    pageSize, 
+    search, 
+    stats 
+  } = req.query
+  
   const ordenarPorOrden = orden === 'true'
+  const modoAdministracion = orderBy === 'admin'
+  const obtenerEstadisticas = stats === 'true'
+  const paginaActual = parseInt(page as string) || 1
+  const tamañoPagina = parseInt(pageSize as string) || 50
+  const textoBusqueda = search as string || ''
 
   // Solo usar datos reales de la base de datos - sin modo demo
 
   try {
-    // Construir query base
+    // Para estadísticas, obtener todos los datos sin filtros adicionales
+    if (obtenerEstadisticas) {
+      const { data: parametrosData, error } = await supabase
+        .from('parametros')
+        .select('*')
+        .order('nombre_grupo', { ascending: true })
+
+      if (error) {
+        console.error('❌ Error al obtener estadísticas:', error)
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Error al conectar con la base de datos',
+          parametros: [], 
+          count: 0
+        })
+      }
+
+      return res.status(200).json({ 
+        success: true, 
+        parametros: parametrosData, 
+        count: parametrosData.length
+      })
+    }
+
+    // Construir query base con conteo para paginación
     let query = supabase
       .from('parametros')
-      .select('*')
+      .select('*', { count: 'exact' })
 
     // Aplicar filtros
     if (grupo && typeof grupo === 'string') {
@@ -61,14 +106,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       query = query.eq('vigente', vigente.toUpperCase())
     }
 
-    // Aplicar ordenamiento
-    if (ordenarPorOrden) {
+    // Aplicar búsqueda por texto (en nombre_grupo y valor_dominio)
+    if (textoBusqueda) {
+      query = query.or(`nombre_grupo.ilike.%${textoBusqueda}%,valor_dominio.ilike.%${textoBusqueda}%`)
+    }
+
+    // Aplicar ordenamiento específico
+    if (modoAdministracion) {
+      // Ordenamiento para módulo de administración: grupo, valor_dominio, orden
+      query = query
+        .order('nombre_grupo', { ascending: true })
+        .order('valor_dominio', { ascending: true })
+        .order('orden', { ascending: true })
+    } else if (ordenarPorOrden) {
       query = query.order('orden', { ascending: true })
     } else {
       query = query.order('valor_dominio', { ascending: true })
     }
 
-    const { data: parametrosData, error } = await query
+    // Aplicar paginación
+    if (paginaActual > 1) {
+      const offsetValue = (paginaActual - 1) * tamañoPagina
+      query = query.range(offsetValue, offsetValue + tamañoPagina - 1)
+    } else {
+      query = query.range(0, tamañoPagina - 1)
+    }
+
+    const { data: parametrosData, error, count } = await query
 
     if (error) {
       console.error('❌ Error al obtener parámetros:', error)
@@ -77,29 +141,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         error: 'Error al conectar con la base de datos',
         parametros: [], 
         count: 0,
+        totalCount: 0,
+        currentPage: paginaActual,
+        totalPages: 0,
         grupo: grupo || 'TODOS'
       })
     }
 
+    const totalCount = count || 0
+    const totalPages = Math.ceil(totalCount / tamañoPagina)
+
     if (!parametrosData || parametrosData.length === 0) {
-      console.warn('⚠️ No se encontraron parámetros para el grupo:', grupo || 'TODOS')
+      const filtrosAplicados = []
+      if (grupo) filtrosAplicados.push(`grupo: ${grupo}`)
+      if (vigente) filtrosAplicados.push(`vigente: ${vigente}`)
+      if (textoBusqueda) filtrosAplicados.push(`búsqueda: "${textoBusqueda}"`)
+      
+      const mensajeFiltros = filtrosAplicados.length > 0 
+        ? ` con filtros [${filtrosAplicados.join(', ')}]`
+        : ''
+      
+      console.warn(`⚠️ No se encontraron parámetros${mensajeFiltros}`)
       
       return res.status(200).json({ 
         success: true, 
         parametros: [], 
         count: 0,
-        warning: `No se encontraron parámetros para el grupo: ${grupo || 'TODOS'}`,
+        totalCount: 0,
+        currentPage: paginaActual,
+        totalPages: 0,
+        warning: `No se encontraron parámetros${mensajeFiltros}`,
         grupo: grupo || 'TODOS'
       })
     }
 
-    console.log(`✅ Parámetros obtenidos (grupo: ${grupo || 'TODOS'}):`, parametrosData.length)
+    // Log con información de paginación y filtros
+    const infoConsulta = []
+    if (grupo) infoConsulta.push(`grupo: ${grupo}`)
+    if (modoAdministracion) infoConsulta.push('modo: administración')
+    if (textoBusqueda) infoConsulta.push(`búsqueda: "${textoBusqueda}"`)
+    if (paginaActual > 1) infoConsulta.push(`página: ${paginaActual}/${totalPages}`)
+    
+    const infoAdicional = infoConsulta.length > 0 ? ` (${infoConsulta.join(', ')})` : ''
+    console.log(`✅ Parámetros obtenidos${infoAdicional}:`, parametrosData.length, 'de', totalCount, 'total')
     
     return res.status(200).json({ 
       success: true, 
       parametros: parametrosData, 
       count: parametrosData.length,
-      grupo: grupo || 'TODOS'
+      totalCount: totalCount,
+      currentPage: paginaActual,
+      totalPages: totalPages,
+      grupo: grupo || 'TODOS',
+      // Información adicional para debug
+      hasNextPage: paginaActual < totalPages,
+      hasPreviousPage: paginaActual > 1,
+      searchTerm: textoBusqueda || null,
+      orderBy: modoAdministracion ? 'administración' : (ordenarPorOrden ? 'orden' : 'valor_dominio')
     })
 
   } catch (error) {
@@ -110,6 +208,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       error: 'Error interno del servidor',
       parametros: [], 
       count: 0,
+      totalCount: 0,
+      currentPage: paginaActual,
+      totalPages: 0,
       grupo: grupo || 'TODOS'
     })
   }
