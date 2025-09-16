@@ -1401,8 +1401,8 @@ export default function NuevaSolicitudPage() {
 
       {/* Modal de confirmación de extracción de PDF */}
       {showPDFExtractionDialog && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
                 <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1415,14 +1415,6 @@ export default function NuevaSolicitudPage() {
               <div className="text-sm text-gray-600 mb-6 space-y-2">
                 <p>Se ha cargado la cuenta de cobro en PDF.</p>
                 <p><strong>¿Desea extraer automáticamente la información del documento para llenar los campos del formulario?</strong></p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                  <p className="text-xs text-blue-700">
-                    ✨ <strong>Si selecciona "Sí":</strong> Se extraerán automáticamente campos como acreedor, concepto, descripción, valor e IVA.
-                  </p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    📄 <strong>Si selecciona "No":</strong> Solo se cargará el archivo PDF sin extraer datos.
-                  </p>
-                </div>
               </div>
               <div className="flex justify-center space-x-3">
                 <button
