@@ -321,14 +321,14 @@ export default function AdministracionPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Valor Dominio
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Regla
-                      </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha Creación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Regla
                       </th>
                     </tr>
                   </thead>
@@ -343,9 +343,6 @@ export default function AdministracionPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={parametro.valor_dominio}>
                           {parametro.valor_dominio}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-md truncate" title={parametro.regla || ''}>
-                          {parametro.regla || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`
@@ -364,6 +361,9 @@ export default function AdministracionPage() {
                             month: '2-digit',
                             year: 'numeric'
                           }).replace(/-/g, '/')}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700 max-w-md truncate" title={parametro.regla || ''}>
+                          {parametro.regla || '-'}
                         </td>
                       </tr>
                     ))}
