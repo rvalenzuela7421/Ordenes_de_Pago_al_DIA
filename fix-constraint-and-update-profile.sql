@@ -15,11 +15,14 @@ GROUP BY role;
 
 -- 2. VERIFICAR CONSTRAINT ACTUAL
 SELECT 'CONSTRAINT ACTUAL' as info,
-       constraint_name, 
-       check_clause
-FROM information_schema.check_constraints 
-WHERE constraint_name LIKE '%role%' 
-   AND table_name = 'profiles';
+       tc.constraint_name, 
+       cc.check_clause
+FROM information_schema.table_constraints tc
+JOIN information_schema.check_constraints cc 
+  ON tc.constraint_name = cc.constraint_name
+WHERE tc.table_name = 'profiles' 
+  AND tc.constraint_type = 'CHECK'
+  AND tc.constraint_name LIKE '%role%';
 
 -- 3. ELIMINAR CONSTRAINT ANTIGUO
 ALTER TABLE public.profiles 
@@ -32,11 +35,14 @@ CHECK (role IN ('AdminCOP', 'ConsultaCOP', 'OperacionCOP', 'OperacionBSEG'));
 
 -- 5. VERIFICAR NUEVO CONSTRAINT
 SELECT 'NUEVO CONSTRAINT' as info,
-       constraint_name, 
-       check_clause
-FROM information_schema.check_constraints 
-WHERE constraint_name LIKE '%role%' 
-   AND table_name = 'profiles';
+       tc.constraint_name, 
+       cc.check_clause
+FROM information_schema.table_constraints tc
+JOIN information_schema.check_constraints cc 
+  ON tc.constraint_name = cc.constraint_name
+WHERE tc.table_name = 'profiles' 
+  AND tc.constraint_type = 'CHECK'
+  AND tc.constraint_name LIKE '%role%';
 
 -- 6. AHORA SÍ PODEMOS ACTUALIZAR LOS DATOS EN public.profiles
 UPDATE public.profiles 
