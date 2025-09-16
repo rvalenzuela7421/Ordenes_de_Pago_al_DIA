@@ -880,16 +880,22 @@ function extractDataFromText(text: string): ExtractedPDFData {
     }
     
     // ASIGNACIÓN FINAL: Si el valor del IVA es mayor a cero, tieneIVA = true, sino tieneIVA = false
+    console.log('🔍 DIAGNÓSTICO FINAL IVA:')
+    console.log(`  📊 ivaFinalEncontrado: ${ivaFinalEncontrado}`)
+    console.log(`  🎯 Condición (ivaFinalEncontrado > 0): ${ivaFinalEncontrado !== null && ivaFinalEncontrado > 0}`)
+    
     if (ivaFinalEncontrado !== null && ivaFinalEncontrado > 0) {
       result.tieneIVA = true  // "S" en el formulario
       result.valorIVA = ivaFinalEncontrado
       result.extractedFields.push('tieneIVA')
       result.extractedFields.push('valorIVA')
-      console.log(`✅ RESULTADO IVA: tieneIVA=true, valorIVA=$${result.valorIVA.toLocaleString('es-CO')}`)
+      console.log(`✅ RESULTADO IVA FINAL: tieneIVA=true, valorIVA=$${result.valorIVA.toLocaleString('es-CO')}`)
+      console.log('🎯 ¡EL IVA SE ENVIARÁ AL FRONTEND!')
     } else {
       result.tieneIVA = false // "N" en el formulario
       result.valorIVA = null
-      console.log('✅ RESULTADO IVA: tieneIVA=false, valorIVA=null')
+      console.log('❌ RESULTADO IVA FINAL: tieneIVA=false, valorIVA=null')
+      console.log('⚠️ NO se encontró IVA válido - campo permanecerá vacío')
     }
 
     // CRITERIO 7: EXTRACCIÓN DE TOTAL SOLICITUD (Valor total final con IVA incluido) ✅
@@ -996,6 +1002,19 @@ function extractDataFromText(text: string): ExtractedPDFData {
     console.log(`✅ === EXTRACCIÓN COMPLETADA ===`)
     console.log(`📊 Campos extraídos (${fieldsCount}): ${result.extractedFields.join(', ')}`)
     console.log(`📈 Confianza: ${result.confidence}`)
+    
+    // RESUMEN FINAL DE TODOS LOS VALORES QUE SE ENVÍAN AL FRONTEND
+    console.log('🚀 === DATOS QUE SE ENVÍAN AL FRONTEND ===')
+    console.log(`  📅 fechaCuentaCobro: ${result.fechaCuentaCobro}`)
+    console.log(`  🏢 companiaReceptora: ${result.companiaReceptora}`)
+    console.log(`  👤 acreedor: ${result.acreedor}`)
+    console.log(`  📝 concepto: ${result.concepto}`)
+    console.log(`  📄 descripcion: ${result.descripcion ? result.descripcion.substring(0, 100) + '...' : null}`)
+    console.log(`  💰 valorSolicitud: ${result.valorSolicitud}`)
+    console.log(`  ✅ tieneIVA: ${result.tieneIVA}`)
+    console.log(`  💸 valorIVA: ${result.valorIVA}`)
+    console.log(`  🧾 valorTotalSolicitud: ${result.valorTotalSolicitud}`)
+    console.log('================================================')
     
   } catch (error) {
     console.error('❌ Error durante extracción:', error)

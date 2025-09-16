@@ -451,40 +451,38 @@ export default function NuevaSolicitudPage() {
             // 4. Valor de Solicitud + 5. IVA
             if (solicitud.valorSolicitud && solicitud.valorSolicitud > 0) {
               newFormData.valorSolicitud = solicitud.valorSolicitud.toString()
-              newFormData.tieneIVA = solicitud.tieneIVA || false
               
-              console.log('✨ Valor Solicitud extraído:', solicitud.valorSolicitud)
-              console.log('✨ Tiene IVA:', solicitud.tieneIVA)
+              console.log('🔍 DIAGNÓSTICO IVA - Datos recibidos del PDF:')
+              console.log('  📊 Valor Solicitud:', solicitud.valorSolicitud)
+              console.log('  ✅ tieneIVA:', solicitud.tieneIVA)
+              console.log('  💰 valorIVA:', solicitud.valorIVA)
+              console.log('  🧾 valorTotalSolicitud:', solicitud.valorTotalSolicitud)
               
-              // Calcular IVA y total basado en lo extraído
-              if (solicitud.tieneIVA) {
-                // Si hay un valor específico de IVA extraído del PDF, usarlo
-                if (solicitud.valorIVA) {
-                  newFormData.iva = Math.round(solicitud.valorIVA).toString()
-                  console.log(`✨ Usando IVA específico del PDF: $${Math.round(solicitud.valorIVA)}`)
-                } else {
-                  // Calcular IVA automáticamente
-                  const { iva, total } = calcularIVAyTotal(newFormData.valorSolicitud, true)
-                  newFormData.iva = iva
-                  console.log('✨ IVA calculado automáticamente')
-                }
+              // CRUCIAL: Verificar si se extrajo IVA del PDF
+              if (solicitud.valorIVA && solicitud.valorIVA > 0) {
+                // HAY IVA EXTRAÍDO DEL PDF
+                newFormData.tieneIVA = true
+                newFormData.iva = Math.round(solicitud.valorIVA).toString()
+                console.log(`🎯 ¡IVA ASIGNADO! Checkbox marcado, valor: $${Math.round(solicitud.valorIVA)}`)
                 
                 // Usar total del PDF si está disponible, sino calcular
-                if (solicitud.valorTotalSolicitud) {
+                if (solicitud.valorTotalSolicitud && solicitud.valorTotalSolicitud > 0) {
                   newFormData.totalSolicitud = Math.round(solicitud.valorTotalSolicitud).toString()
-                  console.log(`✨ Total extraído del PDF: $${Math.round(solicitud.valorTotalSolicitud)}`)
-          } else {
-                  const valorIVA = parseFloat(newFormData.iva)
-                  newFormData.totalSolicitud = (solicitud.valorSolicitud + valorIVA).toString()
-                  console.log('✨ Total calculado')
+                  console.log(`✅ Total del PDF: $${Math.round(solicitud.valorTotalSolicitud)}`)
+                } else {
+                  newFormData.totalSolicitud = (solicitud.valorSolicitud + Math.round(solicitud.valorIVA)).toString()
+                  console.log('✅ Total calculado: valor base + IVA extraído')
                 }
-                  } else {
-                // Sin IVA
+              } else {
+                // NO HAY IVA O ES CERO
+                newFormData.tieneIVA = false
                 newFormData.iva = '0'
                 newFormData.totalSolicitud = solicitud.valorSolicitud.toString()
-                console.log('✨ Sin IVA - total igual al valor base')
+                console.log('❌ Sin IVA - checkbox desmarcado, total = valor base')
+              }
+          } else {
+              console.log('⚠️ No se extrajo valor de solicitud del PDF')
             }
-          }
           
           return newFormData
         })
