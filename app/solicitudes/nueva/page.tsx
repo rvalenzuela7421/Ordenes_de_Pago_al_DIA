@@ -342,8 +342,8 @@ export default function NuevaSolicitudPage() {
     console.log('✅ Aplicando datos validados al formulario')
     
     setFormData(prev => {
-      const newFormData = { ...prev }
-      
+          const newFormData = { ...prev }
+          
         // ✨ USAR ESTRUCTURA UNIFICADA ExtractedPDFData
         console.log('✨ Usando estructura unificada ExtractedPDFData')
         const solicitud = data
@@ -358,7 +358,7 @@ export default function NuevaSolicitudPage() {
                 console.log('✨ Fecha Cuenta de Cobro convertida:', `${solicitud.fechaCuentaCobro} → ${fechaFormatoHTML}`)
               } else {
                 // Fallback si el formato no es el esperado
-                newFormData.fechaCuentaCobro = solicitud.fechaCuentaCobro
+              newFormData.fechaCuentaCobro = solicitud.fechaCuentaCobro
                 console.log('⚠️ Fecha Cuenta de Cobro (formato no esperado):', solicitud.fechaCuentaCobro)
               }
             }
@@ -374,7 +374,7 @@ export default function NuevaSolicitudPage() {
               )
               
               if (empresaEncontrada) {
-                newFormData.proveedor = solicitud.companiaReceptora
+              newFormData.proveedor = solicitud.companiaReceptora
                 console.log('✅ Compañía Receptora auto-seleccionada (coincidencia exacta):', solicitud.companiaReceptora)
               } else {
                 console.log('⚠️ Buscando coincidencia parcial para compañía receptora...')
@@ -417,7 +417,7 @@ export default function NuevaSolicitudPage() {
               const acreedorEncontrado = acreedores.find(acreedor => acreedor.valor === solicitud.acreedor)
               
               if (acreedorEncontrado) {
-                newFormData.acreedor = solicitud.acreedor
+              newFormData.acreedor = solicitud.acreedor
                 console.log('✅ Acreedor auto-seleccionado (coincidencia exacta):', solicitud.acreedor)
               } else {
                 // Buscar coincidencia parcial por NIT o nombre
@@ -473,18 +473,18 @@ export default function NuevaSolicitudPage() {
                 if (solicitud.valorTotalSolicitud) {
                   newFormData.totalSolicitud = Math.round(solicitud.valorTotalSolicitud).toString()
                   console.log(`✨ Total extraído del PDF: $${Math.round(solicitud.valorTotalSolicitud)}`)
-                } else {
+          } else {
                   const valorIVA = parseFloat(newFormData.iva)
                   newFormData.totalSolicitud = (solicitud.valorSolicitud + valorIVA).toString()
                   console.log('✨ Total calculado')
                 }
-              } else {
+                  } else {
                 // Sin IVA
                 newFormData.iva = '0'
                 newFormData.totalSolicitud = solicitud.valorSolicitud.toString()
                 console.log('✨ Sin IVA - total igual al valor base')
-              }
             }
+          }
           
           return newFormData
         })
@@ -530,6 +530,9 @@ export default function NuevaSolicitudPage() {
     // Verificar campos de texto obligatorios
     if (!formData.concepto.trim()) return false
     
+    // Verificar fecha cuenta de cobro obligatoria
+    if (!formData.fechaCuentaCobro.trim()) return false
+    
     // Verificar valor solicitud
     const valor = parseFloat(formData.valorSolicitud)
     if (!formData.valorSolicitud || isNaN(valor) || valor <= 0) return false
@@ -556,6 +559,10 @@ export default function NuevaSolicitudPage() {
 
     if (!formData.concepto.trim()) {
       newErrors.concepto = 'El concepto es requerido'
+    }
+
+    if (!formData.fechaCuentaCobro.trim()) {
+      newErrors.fechaCuentaCobro = 'La fecha cuenta de cobro es requerida'
     }
 
     const valor = parseFloat(formData.valorSolicitud)
@@ -802,7 +809,7 @@ export default function NuevaSolicitudPage() {
             {/* Fecha Cuenta de Cobro */}
             <div>
               <label htmlFor="fechaCuentaCobro" className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Fecha Cuenta de Cobro
+                📅 Fecha Cuenta de Cobro <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -852,7 +859,7 @@ export default function NuevaSolicitudPage() {
             {/* Proveedor */}
             <div>
               <label htmlFor="proveedor" className="block text-sm font-medium text-gray-700 mb-2">
-                Compañía Receptora *
+                Compañía Receptora <span className="text-red-500">*</span>
               </label>
               <select
                 id="proveedor"
@@ -894,7 +901,7 @@ export default function NuevaSolicitudPage() {
             {/* Acreedor */}
             <div>
               <label htmlFor="acreedor" className="block text-sm font-medium text-gray-700 mb-2">
-                Acreedor *
+                Acreedor <span className="text-red-500">*</span>
               </label>
               <select
                 id="acreedor"
@@ -916,8 +923,8 @@ export default function NuevaSolicitudPage() {
                     <option key="empty" value="">Seleccione un acreedor</option>,
                     ...acreedores.map((acreedor) => (
                       <option key={acreedor.id} value={acreedor.valor}>
-                        {acreedor.label}
-                      </option>
+                    {acreedor.label}
+                  </option>
                     ))
                   ]
                 )}
@@ -956,8 +963,8 @@ export default function NuevaSolicitudPage() {
                     <option key="empty" value="">Seleccione un concepto</option>,
                     ...conceptos.map((concepto) => (
                       <option key={concepto.id} value={concepto.valor}>
-                        {concepto.label}
-                      </option>
+                    {concepto.label}
+                  </option>
                     ))
                   ]
                 )}
@@ -1171,7 +1178,7 @@ export default function NuevaSolicitudPage() {
               
 
 
-
+              
               {/* Status messages */}
               {archivoPDF && (
                 <div className="mt-2 space-y-1">

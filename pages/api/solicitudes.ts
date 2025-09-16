@@ -6,6 +6,7 @@ import { enviarNotificacionNuevaSolicitud } from '@/lib/email'
 
 // Tipos para la solicitud de OP
 interface SolicitudOPData {
+  fechaCuentaCobro: string
   companiaReceptora: string
   acreedor: string
   concepto: string
@@ -48,6 +49,7 @@ export default async function handler(
 
   try {
     const {
+      fechaCuentaCobro,
       companiaReceptora,
       acreedor,
       concepto,
@@ -64,9 +66,9 @@ export default async function handler(
     } = req.body
 
     // Validaciones básicas
-    if (!companiaReceptora || !acreedor || !concepto || !valorSolicitud) {
+    if (!fechaCuentaCobro || !companiaReceptora || !acreedor || !concepto || !valorSolicitud) {
       return res.status(400).json({ 
-        error: 'Datos incompletos. Compañía receptora, acreedor, concepto y valor son requeridos.' 
+        error: 'Datos incompletos. Fecha cuenta de cobro, compañía receptora, acreedor, concepto y valor son requeridos.' 
       })
     }
 
@@ -96,6 +98,7 @@ export default async function handler(
     // Crear objeto de solicitud usando nombres de campos de ordenes_pago
     const nuevaSolicitud = {
       numero_solicitud: numeroSolicitud,
+      fecha_cuenta_cobro: fechaCuentaCobro, // Campo requerido: fecha de la cuenta de cobro
       compania_receptora: companiaReceptora, // Nuevo campo compañía receptora
       proveedor: acreedor, // Mapear acreedor -> proveedor
       concepto,
