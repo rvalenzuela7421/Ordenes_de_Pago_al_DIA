@@ -593,20 +593,40 @@ export default function AdministracionPage() {
                     />
                   </div>
 
-                  {/* Nombre del Dominio */}
-                  <div>
-                    <label htmlFor="valor_dominio" className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre del Dominio <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="valor_dominio"
-                      value={nuevoParametro.valor_dominio}
-                      onChange={(e) => handleNuevoParametroChange('valor_dominio', e.target.value)}
-                      placeholder="ej: Solicitada, Aprobada, etc."
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                      required
-                    />
+                  {/* Fila con Nombre del Dominio y Orden */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Nombre del Dominio */}
+                    <div className="md:col-span-2">
+                      <label htmlFor="valor_dominio" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Dominio <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="valor_dominio"
+                        value={nuevoParametro.valor_dominio}
+                        onChange={(e) => handleNuevoParametroChange('valor_dominio', e.target.value)}
+                        placeholder="ej: Solicitada, Aprobada, etc."
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    {/* Orden */}
+                    <div className="md:col-span-1">
+                      <label htmlFor="orden" className="block text-sm font-medium text-gray-700 mb-1">
+                        Orden
+                      </label>
+                      <input
+                        type="number"
+                        id="orden"
+                        value={nuevoParametro.orden}
+                        onChange={(e) => handleNuevoParametroChange('orden', e.target.value)}
+                        placeholder="1, 2, 3..."
+                        min="0"
+                        step="1"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                      />
+                    </div>
                   </div>
 
                   {/* Regla */}
@@ -628,24 +648,9 @@ export default function AdministracionPage() {
                     </div>
                   </div>
 
-                  {/* Orden */}
-                  <div>
-                    <label htmlFor="orden" className="block text-sm font-medium text-gray-700 mb-1">
-                      Orden
-                    </label>
-                    <input
-                      type="number"
-                      id="orden"
-                      value={nuevoParametro.orden}
-                      onChange={(e) => handleNuevoParametroChange('orden', e.target.value)}
-                      placeholder="1, 2, 3..."
-                      min="0"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                    />
-                  </div>
 
                   {/* Botones */}
-                  <div className="flex justify-center space-x-3 pt-6 border-t border-gray-200">
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                     <button
                       type="button"
                       onClick={() => {
