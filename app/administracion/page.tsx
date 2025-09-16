@@ -102,12 +102,12 @@ export default function AdministracionPage() {
     loadEstadisticas()
   }, [])
 
-  // Manejar búsqueda
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1) // Reset a primera página
-    loadParametros()
-  }
+  // Reset a primera página cuando cambie el texto de búsqueda
+  useEffect(() => {
+    if (debouncedSearchText !== '') {
+      setCurrentPage(1)
+    }
+  }, [debouncedSearchText])
 
   // Limpiar filtros
   const handleLimpiar = () => {
@@ -211,13 +211,13 @@ export default function AdministracionPage() {
       {/* Controles de filtros */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
             {/* Búsqueda */}
-            <div className="flex-1 min-w-0">
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                Buscar parámetros
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <label htmlFor="search" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Buscar parámetros:
               </label>
-              <div className="relative">
+              <div className="relative flex-1">
                 <input
                   id="search"
                   type="text"
@@ -234,18 +234,11 @@ export default function AdministracionPage() {
                   </div>
                 )}
               </div>
-              
-              {/* Mostrar qué se está buscando */}
-              {debouncedSearchText && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Buscando: "{debouncedSearchText}" ({parametros.length} resultados)
-                </div>
-              )}
             </div>
 
             {/* Filtro de vigencia */}
             <div className="flex items-center">
-              <label className="flex items-center text-sm">
+              <label className="flex items-center text-sm whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={incluirNoVigentes}
@@ -256,23 +249,24 @@ export default function AdministracionPage() {
               </label>
             </div>
 
-            {/* Botones */}
-            <div className="flex gap-2">
+            {/* Botón limpiar */}
+            <div>
               <button
                 type="button"
                 onClick={handleLimpiar}
-                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200"
+                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap"
               >
                 Limpiar
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200"
-              >
-                Buscar
-              </button>
             </div>
-          </form>
+          </div>
+          
+          {/* Mostrar qué se está buscando - debajo de los controles */}
+          {debouncedSearchText && (
+            <div className="text-xs text-gray-500 mt-3 pl-0">
+              Buscando: "{debouncedSearchText}" ({parametros.length} resultados)
+            </div>
+          )}
         </div>
 
         {/* Tabla de parámetros */}
