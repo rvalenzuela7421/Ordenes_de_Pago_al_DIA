@@ -425,25 +425,25 @@ export default function AdministracionPage() {
                 <table className="w-full table-fixed divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-32">
                         Grupo
                       </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-48">
                         Descripción del Grupo
                       </th>
-                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 w-20">
                         Orden
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-36">
                         Nombre del Dominio
                       </th>
-                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 w-24">
                         Estado
                       </th>
-                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                      <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 w-28">
                         Fecha de Creación
                       </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-44">
                         Regla
                       </th>
                     </tr>
