@@ -108,7 +108,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Aplicar búsqueda por texto (en nombre_grupo y valor_dominio)
     if (textoBusqueda) {
-      query = query.or(`nombre_grupo.ilike.%${textoBusqueda}%,valor_dominio.ilike.%${textoBusqueda}%`)
+      // Log para debugging
+      console.log('🔍 API: Aplicando búsqueda para:', textoBusqueda)
+      
+      // Limpiar el texto de búsqueda
+      const searchTerm = textoBusqueda.trim().toUpperCase()
+      
+      // Búsqueda más flexible: busca en nombre_grupo y valor_dominio
+      query = query.or(`nombre_grupo.ilike.%${searchTerm}%,valor_dominio.ilike.%${searchTerm}%`)
+      
+      console.log('🔍 API: Patrón de búsqueda aplicado:', `%${searchTerm}%`)
     }
 
     // Aplicar ordenamiento específico

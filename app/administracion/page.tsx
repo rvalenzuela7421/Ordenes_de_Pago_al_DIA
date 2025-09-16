@@ -22,6 +22,7 @@ export default function AdministracionPage() {
 
   // Estados para filtros y paginación
   const [searchText, setSearchText] = useState('')
+  const [debouncedSearchText, setDebouncedSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [totalCount, setTotalCount] = useState(0)
@@ -34,12 +35,26 @@ export default function AdministracionPage() {
       setLoading(true)
       setError(null)
 
+      console.log('🔍 Ejecutando búsqueda con:', {
+        searchText,
+        incluirNoVigentes,
+        currentPage,
+        pageSize
+      })
+
       const result = await getTodosLosParametros(
         incluirNoVigentes,
-        searchText,
+        debouncedSearchText,
         currentPage,
         pageSize
       )
+
+      console.log('📊 Resultado de búsqueda:', {
+        encontrados: result.parametros.length,
+        total: result.totalCount,
+        searchText: debouncedSearchText,
+        grupos: result.grupos
+      })
 
       if (result.error) {
         throw new Error(result.error)
@@ -68,10 +83,19 @@ export default function AdministracionPage() {
     }
   }
 
+  // Debounce para el texto de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText)
+    }, 500) // Espera 500ms después de que el usuario pare de escribir
+
+    return () => clearTimeout(timer)
+  }, [searchText])
+
   // Cargar datos al montar y cuando cambien filtros
   useEffect(() => {
     loadParametros()
-  }, [searchText, currentPage, pageSize, incluirNoVigentes])
+  }, [debouncedSearchText, currentPage, pageSize, incluirNoVigentes])
 
   // Cargar estadísticas al montar
   useEffect(() => {
@@ -88,6 +112,7 @@ export default function AdministracionPage() {
   // Limpiar filtros
   const handleLimpiar = () => {
     setSearchText('')
+    setDebouncedSearchText('')
     setCurrentPage(1)
     setIncluirNoVigentes(true)
     // loadParametros se ejecutará automáticamente por el useEffect
@@ -192,15 +217,30 @@ export default function AdministracionPage() {
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
                 Buscar parámetros
               </label>
-              <input
-                id="search"
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Busque por grupo o valor..."
-                autoComplete="off"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-              />
+              <div className="relative">
+                <input
+                  id="search"
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Busque por grupo o valor..."
+                  autoComplete="off"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                />
+                {/* Indicador de búsqueda activa */}
+                {searchText !== debouncedSearchText && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-bolivar-green"></div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Mostrar qué se está buscando */}
+              {debouncedSearchText && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Buscando: "{debouncedSearchText}" ({parametros.length} resultados)
+                </div>
+              )}
             </div>
 
             {/* Filtro de vigencia */}
