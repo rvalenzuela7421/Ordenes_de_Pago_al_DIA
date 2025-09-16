@@ -1120,9 +1120,6 @@ export default function NuevaSolicitudPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Cuenta de Cobro (PDF) <span className="text-red-500">*</span>
-                <span className="ml-2 text-xs text-blue-600 font-normal">
-                  ✨ Se extraerán datos automáticamente
-                </span>
               </label>
               <div className="flex items-center justify-center w-full">
                 <label htmlFor="pdf-upload" className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 ${
@@ -1161,7 +1158,7 @@ export default function NuevaSolicitudPage() {
                         <p className="mb-2 text-sm text-gray-500">
                           <span className="font-semibold">Click para subir</span> o arrastra y suelta
                         </p>
-                        <p className="text-xs text-gray-500">Solo archivos PDF - Extracción automática</p>
+                        <p className="text-xs text-gray-500">Solo archivos PDF</p>
                       </>
                     )}
                   </div>
@@ -1227,7 +1224,6 @@ export default function NuevaSolicitudPage() {
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Archivo de Distribuciones (XLSX) <span className="text-red-500">*</span>
-                  <span className="ml-2 text-xs text-gray-500 font-normal">Requerido para todas las solicitudes</span>
                 </label>
                 <div className="flex items-center justify-center w-full">
                   <label htmlFor="xlsx-upload" className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 ${
