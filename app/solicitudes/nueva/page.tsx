@@ -312,6 +312,14 @@ export default function NuevaSolicitudPage() {
       }
 
       console.log('✨ Datos extraídos:', data)
+      console.log('🔍 === DIAGNÓSTICO IVA - RESPUESTA DEL BACKEND ===')
+      console.log('💰 IVA en respuesta backend:')
+      console.log('  - data.tieneIVA:', data.tieneIVA, '(tipo:', typeof data.tieneIVA, ')')
+      console.log('  - data.valorIVA:', data.valorIVA, '(tipo:', typeof data.valorIVA, ')')
+      console.log('📊 Otros campos relacionados:')
+      console.log('  - data.valorSolicitud:', data.valorSolicitud)
+      console.log('  - data.valorTotalSolicitud:', data.valorTotalSolicitud)
+      console.log('================================================')
 
       // Mostrar modal de validación antes de aplicar los datos
       if (data.success && data.extractedFields.length > 0) {
@@ -319,6 +327,18 @@ export default function NuevaSolicitudPage() {
         setExtractedData(data)
         // Aplicar datos automáticamente al formulario sin mostrar modal
         applyExtractedDataToForm(data)
+        
+        // Verificar estado del formulario después de la asignación
+        setTimeout(() => {
+          console.log('🎯 === VERIFICACIÓN POST-ASIGNACIÓN ===')
+          console.log('📋 Estado actual del formulario (formData):')
+          console.log('  - tieneIVA:', formData.tieneIVA)
+          console.log('  - iva:', formData.iva)
+          console.log('  - totalSolicitud:', formData.totalSolicitud)
+          console.log('  - valorSolicitud:', formData.valorSolicitud)
+          console.log('=======================================')
+        }, 100) // Pequeño delay para que el estado se actualice
+        
         setPdfDataExtracted(true)
         setExtractionConfidence(data.confidence)
         console.log('✅ Datos del PDF aplicados automáticamente al formulario')
@@ -340,6 +360,12 @@ export default function NuevaSolicitudPage() {
   // Función para aplicar los datos validados al formulario
   const applyExtractedDataToForm = (data: any) => {
     console.log('✅ Aplicando datos validados al formulario')
+    console.log('🔍 === DIAGNÓSTICO COMPLETO DATOS RECIBIDOS ===')
+    console.log('📋 Datos completos del PDF:', JSON.stringify(data, null, 2))
+    console.log('💰 Específicamente IVA:')
+    console.log('  - tieneIVA:', data.tieneIVA, '(tipo:', typeof data.tieneIVA, ')')
+    console.log('  - valorIVA:', data.valorIVA, '(tipo:', typeof data.valorIVA, ')')
+    console.log('=============================================')
     
     setFormData(prev => {
           const newFormData = { ...prev }
@@ -483,6 +509,14 @@ export default function NuevaSolicitudPage() {
           } else {
               console.log('⚠️ No se extrajo valor de solicitud del PDF')
             }
+          
+          console.log('🎯 === DIAGNÓSTICO FINAL - DATOS ASIGNADOS AL FORMULARIO ===')
+          console.log('📊 newFormData completo:', JSON.stringify(newFormData, null, 2))
+          console.log('💰 Campos IVA específicos:')
+          console.log('  - newFormData.tieneIVA:', newFormData.tieneIVA)
+          console.log('  - newFormData.iva:', newFormData.iva)
+          console.log('  - newFormData.totalSolicitud:', newFormData.totalSolicitud)
+          console.log('================================================================')
           
           return newFormData
         })
