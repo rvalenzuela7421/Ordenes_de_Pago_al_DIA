@@ -53,8 +53,8 @@ const PATTERNS = {
   // 3b. TOTAL FINAL (todo mayúsculas "TOTAL")
   totalFinal: /(?:^|\n|\s)TOTAL\s*\$?\s*([\d,\.]+)/g,
   
-  // 4. IVA - PATRÓN ESPECÍFICO PARA "IVA (19%)" CON DIAGNÓSTICOS AVANZADOS
-  ivaEspecifico: /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi,
+  // 4. IVA - PATRÓN FLEXIBLE PARA "IVA (...)" CON CUALQUIER PORCENTAJE
+  ivaEspecifico: /IVA\s*\([^)]*\)\s*\$?\s*([\d,\.]+)/gi,
   
   // 5. NÚMEROS DE FACTURA - ELIMINADO POR CAUSAR EXTRACCIONES INCORRECTAS
   
@@ -780,10 +780,11 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // CRITERIO 6: EXTRACCIÓN DE IVA - NUEVA LÓGICA ESPECÍFICA ✅
     console.log('6️⃣ Extrayendo valor del IVA usando patrón específico...')
     
-    // PATRÓN ESPECÍFICO: Buscar exactamente "IVA (19%)" seguido del valor
-    // Ejemplo del documento: "IVA (19%)                $ 1,104,885,787"
-    // El patrón capturará: 1,104,885,787
-    console.log('🔍 Buscando patrón exacto: "IVA (19%)" seguido del valor monetario')
+  // PATRÓN FLEXIBLE: Buscar "IVA (...)" con cualquier porcentaje seguido del valor
+  // Ejemplo del documento: "IVA (19%)                $ 1,104,885,787"
+  // También funciona con: "IVA (21%)", "IVA (16%)", etc.
+  // El patrón capturará: 1,104,885,787
+  console.log('🔍 Buscando patrón flexible: "IVA (...)" con cualquier porcentaje seguido del valor monetario')
     
   // DIAGNÓSTICO SIMPLIFICADO
   console.log('🔍 === ANÁLISIS INICIAL DEL PDF ===')
@@ -840,32 +841,32 @@ function extractDataFromText(text: string): ExtractedPDFData {
     if (indiceTotal !== -1 && indiceTOTAL !== -1 && indiceTotal < indiceTOTAL) {
       console.log(`🔍 Buscando IVA entre líneas ${indiceTotal + 1} y ${indiceTOTAL + 1}`)
       
-      // PATRONES ESPECÍFICOS para una línea que contenga IVA (19%)
-      const patronesIVALinea = [
-        // Patrón 1: IVA (19%) seguido del valor
-        /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/i,
-        
-        // Patrón 2: Con espacios no-breaking 
-        /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)/i,
-        
-        // Patrón 3: Con tabs y espacios múltiples
-        /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)/i,
-        
-        // Patrón 4: Muy flexible para caracteres especiales
-        /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)/i,
-        
-        // Patrón 5: Buscar número grande después de IVA (19%)
-        /IVA.*\(19%\).*?([\d,\.]{7,})/i
-      ]
+    // PATRONES FLEXIBLES para una línea que contenga IVA (cualquier %)
+    const patronesIVALinea = [
+      // Patrón 1: IVA (cualquier%) seguido del valor
+      /IVA\s*\([^)]*\)\s*\$?\s*([\d,\.]+)/i,
+      
+      // Patrón 2: Con espacios no-breaking 
+      /IVA[\s\u00A0]*\([^)]*\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)/i,
+      
+      // Patrón 3: Con tabs y espacios múltiples
+      /IVA[\s\t]*\([^)]*\)[\s\t]*\$?[\s\t]*([\d,\.]+)/i,
+      
+      // Patrón 4: Muy flexible para caracteres especiales
+      /IVA[^0-9A-Za-z]*\([^)]*\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)/i,
+      
+      // Patrón 5: Buscar número grande después de IVA (cualquier%)
+      /IVA.*\([^)]*\).*?([\d,\.]{7,})/i
+    ]
       
     // Buscar IVA solo en el rango entre "Total" y "TOTAL"
     for (let i = indiceTotal + 1; i < indiceTOTAL; i++) {
       const linea = todasLasLineas[i]
       console.log(`🔍 Revisando línea ${i + 1} en rango: "${linea.trim()}"`)
       
-      // NUEVA ESTRATEGIA: Buscar "IVA (19%)" y luego el valor en líneas siguientes
-      if (linea.includes('IVA') && linea.includes('19%')) {
-        console.log(`   💡 Línea contiene "IVA (19%)", buscando valor...`)
+      // NUEVA ESTRATEGIA: Buscar "IVA (...)" y luego el valor en líneas siguientes
+      if (linea.includes('IVA') && linea.includes('(') && linea.includes(')')) {
+        console.log(`   💡 Línea contiene patrón "IVA (...)", buscando valor...`)
         
         // MÉTODO 1: Intentar extraer valor de la misma línea (casos donde sí está junto)
         for (let j = 0; j < patronesIVALinea.length; j++) {
@@ -1026,7 +1027,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
     } else {
       console.log('❌ No se pudo extraer el valor del IVA de ninguna línea')
       
-      // DIAGNÓSTICO: Mostrar líneas que contienen IVA pero no 19%
+      // DIAGNÓSTICO: Mostrar líneas que contienen IVA pero no patrón completo
       console.log('🔍 === DIAGNÓSTICO: LÍNEAS CON SOLO "IVA" ===')
       const lineasSoloIVA = todasLasLineas.filter(linea => linea.toLowerCase().includes('iva'))
       if (lineasSoloIVA.length > 0) {
@@ -1077,7 +1078,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
             const porcentajeDiferencia = ivaEsperado > 0 ? diferencia / ivaEsperado * 100 : 100
             
             console.log(`      📊 Verificando si ${valorNum} es IVA de ${valorSolicitudNum}:`)
-            console.log(`      🧮 IVA esperado (19%): ${Math.round(ivaEsperado)}`)
+            console.log(`      🧮 IVA esperado (cálculo automático): ${Math.round(ivaEsperado)}`)
             console.log(`      📈 Diferencia: ${Math.round(diferencia)} (${porcentajeDiferencia.toFixed(1)}%)`)
             
             valoresEncontrados.push({
@@ -1122,7 +1123,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
       result.tieneIVA = false
       result.valorIVA = null
       console.log('❌ RESULTADO IVA FINAL: tieneIVA=false, valorIVA=null')
-      console.log('⚠️ NO se encontró patrón "IVA (19%)" válido')
+      console.log('⚠️ NO se encontró patrón "IVA (...)" válido')
     }
 
     // CRITERIO 7: EXTRACCIÓN DE TOTAL SOLICITUD (Valor total final con IVA incluido) ✅
