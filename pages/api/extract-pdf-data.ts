@@ -790,87 +790,115 @@ function extractDataFromText(text: string): ExtractedPDFData {
     console.log(`📄 Longitud total del texto: ${text.length} caracteres`)
     console.log('================================================')
     
-    // NUEVA ESTRATEGIA: Procesar línea por línea para mayor precisión
-    console.log('📋 Nueva estrategia: Buscar IVA línea por línea para evitar capturar valores de otras líneas')
+    // NUEVA ESTRATEGIA BASADA EN CONTEXTO: 
+    // El IVA está entre la línea "Total" (primera letra mayúscula) y "TOTAL" (todo mayúsculas)
+    console.log('🎯 Nueva estrategia: Buscar IVA entre líneas "Total" y "TOTAL"')
     
     const todasLasLineas = text.split('\n')
     console.log(`📄 Total de líneas en el documento: ${todasLasLineas.length}`)
     
-    // PATRONES ESPECÍFICOS para una línea que contenga IVA (19%)
-    const patronesIVALinea = [
-      // Patrón 1: IVA (19%) seguido del valor EN LA MISMA LÍNEA
-      /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)(?:\s|$)/i,
+    // PASO 1: Encontrar índices de las líneas "Total" y "TOTAL"
+    let indiceTotal = -1    // Línea con "Total" (primera mayúscula)
+    let indiceTOTAL = -1    // Línea con "TOTAL" (todo mayúsculas)
+    
+    for (let i = 0; i < todasLasLineas.length; i++) {
+      const linea = todasLasLineas[i].trim()
       
-      // Patrón 2: Con espacios no-breaking EN LA MISMA LÍNEA
-      /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)(?:\s|$)/i,
+      // Buscar "Total" (primera letra mayúscula, resto minúsculas)
+      if (linea.includes('Total') && !linea.includes('TOTAL')) {
+        indiceTotal = i
+        console.log(`📍 Línea "Total" encontrada en índice ${i}: "${linea}"`)
+      }
       
-      // Patrón 3: Con tabs y espacios múltiples EN LA MISMA LÍNEA
-      /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)(?:\s|$)/i,
-      
-      // Patrón 4: Muy flexible para caracteres especiales EN LA MISMA LÍNEA
-      /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)(?:\s|$)/i,
-      
-      // Patrón 5: Buscar el último número grande en una línea que contenga IVA (19%)
-      /IVA.*\(19%\).*?([\d,\.]{7,})(?:\s|$)/i  // Al menos 7 dígitos como 1,104,885
-    ]
+      // Buscar "TOTAL" (todo mayúsculas)
+      if (linea.includes('TOTAL')) {
+        indiceTOTAL = i
+        console.log(`📍 Línea "TOTAL" encontrada en índice ${i}: "${linea}"`)
+      }
+    }
+    
+    console.log(`📊 Rangos encontrados: Total=${indiceTotal}, TOTAL=${indiceTOTAL}`)
     
     let valorIVAEncontrado: number | null = null
     let lineaEncontrada = -1
     let patronExitoso = -1
     
-    // Buscar líneas que contengan "IVA" Y "19%"
-    const lineasConIVA = todasLasLineas.filter((linea, index) => {
-      const contieneIVA = linea.includes('IVA') && linea.includes('19%')
-      if (contieneIVA) {
-        console.log(`📍 Línea ${index + 1} candidata: "${linea.trim()}"`)
-      }
-      return contieneIVA
-    })
-    
-    console.log(`🎯 Líneas con IVA (19%) encontradas: ${lineasConIVA.length}`)
-    
-    // Procesar cada línea candidata con todos los patrones
-    for (let lineaIndex = 0; lineaIndex < lineasConIVA.length; lineaIndex++) {
-      const linea = lineasConIVA[lineaIndex]
-      console.log(`🔍 Procesando línea ${lineaIndex + 1}: "${linea.trim()}"`)
+    // PASO 2: Si encontramos ambas líneas, buscar IVA en el rango entre ellas
+    if (indiceTotal !== -1 && indiceTOTAL !== -1 && indiceTotal < indiceTOTAL) {
+      console.log(`🔍 Buscando IVA entre líneas ${indiceTotal + 1} y ${indiceTOTAL + 1}`)
       
-      // Probar todos los patrones en esta línea específica
-      for (let i = 0; i < patronesIVALinea.length; i++) {
-        const patron = patronesIVALinea[i]
-        const match = linea.match(patron)
+      // PATRONES ESPECÍFICOS para una línea que contenga IVA (19%)
+      const patronesIVALinea = [
+        // Patrón 1: IVA (19%) seguido del valor
+        /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/i,
         
-        console.log(`   🧪 Patrón ${i + 1} en esta línea:`, match ? `MATCH: "${match[0]}"` : 'Sin coincidencias')
+        // Patrón 2: Con espacios no-breaking 
+        /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)/i,
         
-        if (match && match[1]) {
-          console.log(`      💰 Valor extraído de la línea: "${match[1]}"`)
+        // Patrón 3: Con tabs y espacios múltiples
+        /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)/i,
+        
+        // Patrón 4: Muy flexible para caracteres especiales
+        /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)/i,
+        
+        // Patrón 5: Buscar número grande después de IVA (19%)
+        /IVA.*\(19%\).*?([\d,\.]{7,})/i
+      ]
+      
+      // Buscar IVA solo en el rango entre "Total" y "TOTAL"
+      for (let i = indiceTotal + 1; i < indiceTOTAL; i++) {
+        const linea = todasLasLineas[i]
+        console.log(`🔍 Revisando línea ${i + 1} en rango: "${linea.trim()}"`)
+        
+        // Solo procesar líneas que contengan "IVA"
+        if (linea.includes('IVA')) {
+          console.log(`   💡 Línea contiene "IVA", probando patrones...`)
           
-          // Limpiar y convertir el valor numérico
-          const valorLimpio = cleanNumericValue(match[1])
-          const valorNum = parseFloat(valorLimpio)
-          
-          console.log(`      📊 Valor limpio: "${valorLimpio}" -> ${valorNum}`)
-          
-          // Validar que sea un número válido y mayor a 0
-          if (!isNaN(valorNum) && valorNum > 0) {
-            valorIVAEncontrado = Math.round(valorNum)
-            lineaEncontrada = lineaIndex + 1
-            patronExitoso = i + 1
+          // Probar todos los patrones en esta línea específica
+          for (let j = 0; j < patronesIVALinea.length; j++) {
+            const patron = patronesIVALinea[j]
+            const match = linea.match(patron)
             
-            console.log(`      ✅ VALOR IVA ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
-            console.log(`      📋 Línea: ${lineaEncontrada}, Patrón: ${patronExitoso}`)
+            console.log(`   🧪 Patrón ${j + 1}:`, match ? `MATCH: "${match[0]}"` : 'Sin coincidencias')
             
-            // Salir de ambos bucles - encontramos el valor
+            if (match && match[1]) {
+              console.log(`      💰 Valor extraído: "${match[1]}"`)
+              
+              // Limpiar y convertir el valor numérico
+              const valorLimpio = cleanNumericValue(match[1])
+              const valorNum = parseFloat(valorLimpio)
+              
+              console.log(`      📊 Valor limpio: "${valorLimpio}" -> ${valorNum}`)
+              
+              // Validar que sea un número válido y mayor a 0
+              if (!isNaN(valorNum) && valorNum > 0) {
+                valorIVAEncontrado = Math.round(valorNum)
+                lineaEncontrada = i + 1
+                patronExitoso = j + 1
+                
+                console.log(`      ✅ VALOR IVA ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+                console.log(`      📋 Línea: ${lineaEncontrada}, Patrón: ${patronExitoso}`)
+                
+                // Salir de ambos bucles - encontramos el valor
+                break
+              } else {
+                console.log(`      ❌ Valor inválido: ${valorNum}`)
+              }
+            }
+          }
+          
+          // Si encontramos valor, salir del bucle de líneas
+          if (valorIVAEncontrado) {
             break
-          } else {
-            console.log(`      ❌ Valor inválido: ${valorNum}`)
           }
         }
       }
-      
-      // Si encontramos valor, salir del bucle de líneas
-      if (valorIVAEncontrado) {
-        break
-      }
+    } else {
+      console.log('❌ No se encontraron las líneas "Total" y "TOTAL" para definir el rango')
+      console.log('🔍 Mostrando primeras 15 líneas para diagnóstico:')
+      todasLasLineas.slice(0, 15).forEach((linea, index) => {
+        console.log(`  ${(index + 1).toString().padStart(2, '0')}: "${linea.trim()}"`)
+      })
     }
     
     // RESULTADO FINAL
