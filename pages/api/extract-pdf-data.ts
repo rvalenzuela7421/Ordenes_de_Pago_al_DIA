@@ -1042,6 +1042,74 @@ function extractDataFromText(text: string): ExtractedPDFData {
         })
       }
       console.log('=============================================')
+      
+      // MÉTODO 4: BÚSQUEDA GLOBAL DE VALORES IVA (NUEVO)
+      console.log('🌍 === MÉTODO 4: BÚSQUEDA GLOBAL DE IVA EN TODO EL DOCUMENTO ===')
+      console.log('💡 El valor del IVA puede estar fuera del rango Total-TOTAL')
+      
+      // Buscar valores que puedan ser IVA en todo el documento
+      const patronesIVAGlobal = [
+        /\$\s*([\d,\.]+)/g,                    // Todos los valores con $
+        /^\s*([\d,\.]{5,})\s*$/gm,             // Números solos de 5+ dígitos
+      ]
+      
+      const valoresEncontrados = []
+      
+      for (let p = 0; p < patronesIVAGlobal.length; p++) {
+        const patron = patronesIVAGlobal[p]
+        const matches = Array.from(text.matchAll(patron))
+        
+        console.log(`🔍 Patrón global ${p + 1}: ${matches.length} valores encontrados`)
+        
+        matches.forEach((match, index) => {
+          const valorBruto = match[1]
+          const valorLimpio = cleanNumericValue(valorBruto)
+          const valorNum = parseFloat(valorLimpio)
+          
+          console.log(`   💰 Valor ${index + 1}: "${match[0]}" → limpio: ${valorLimpio} → número: ${valorNum}`)
+          
+          // Filtrar valores que puedan ser IVA (no muy pequeños ni muy grandes)
+          if (!isNaN(valorNum) && valorNum > 1000 && valorNum < 100000000) {
+            // Calcular si es aproximadamente 19% del valor solicitud
+            const valorSolicitudNum = result.valorSolicitud || 0
+            const ivaEsperado = valorSolicitudNum * 0.19
+            const diferencia = Math.abs(valorNum - ivaEsperado)
+            const porcentajeDiferencia = diferencia / ivaEsperado * 100
+            
+            console.log(`      📊 Verificando si ${valorNum} es IVA de ${valorSolicitudNum}:`)
+            console.log(`      🧮 IVA esperado (19%): ${Math.round(ivaEsperado)}`)
+            console.log(`      📈 Diferencia: ${Math.round(diferencia)} (${porcentajeDiferencia.toFixed(1)}%)`)
+            
+            valoresEncontrados.push({
+              valor: valorNum,
+              diferencia: diferencia,
+              porcentaje: porcentajeDiferencia,
+              match: match[0]
+            })
+          }
+        })
+      }
+      
+      // Ordenar por menor diferencia con el IVA esperado
+      valoresEncontrados.sort((a, b) => a.diferencia - b.diferencia)
+      
+      console.log(`📋 Valores candidatos a IVA encontrados: ${valoresEncontrados.length}`)
+      
+      if (valoresEncontrados.length > 0) {
+        const mejorCandidato = valoresEncontrados[0]
+        
+        // Si la diferencia es menor al 5%, lo consideramos IVA válido
+        if (mejorCandidato.porcentaje < 5) {
+          valorIVAEncontrado = Math.round(mejorCandidato.valor)
+          console.log(`🏆 MEJOR CANDIDATO ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+          console.log(`📊 Match original: "${mejorCandidato.match}"`)
+          console.log(`📈 Diferencia con IVA esperado: ${mejorCandidato.porcentaje.toFixed(1)}%`)
+        } else {
+          console.log(`❌ Mejor candidato tiene diferencia del ${mejorCandidato.porcentaje.toFixed(1)}% (muy alta)`)
+        }
+      }
+      
+      console.log('================================================================')
     }
     
     // ASIGNACIÓN FINAL: Configurar resultado basado en si se encontró IVA
