@@ -53,7 +53,7 @@ const PATTERNS = {
   // 3b. TOTAL FINAL (todo mayúsculas "TOTAL")
   totalFinal: /(?:^|\n|\s)TOTAL\s*\$?\s*([\d,\.]+)/g,
   
-  // 4. IVA - PATRÓN ESPECÍFICO PARA "IVA (19%)"
+  // 4. IVA - PATRÓN ESPECÍFICO PARA "IVA (19%)" CON DIAGNÓSTICOS AVANZADOS
   ivaEspecifico: /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi,
   
   // 5. NÚMEROS DE FACTURA - ELIMINADO POR CAUSAR EXTRACCIONES INCORRECTAS
@@ -785,15 +785,65 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // El patrón capturará: 1,104,885,787
     console.log('🔍 Buscando patrón exacto: "IVA (19%)" seguido del valor monetario')
     
+    // DIAGNÓSTICO AVANZADO: Analizar el texto completo del PDF
+    console.log('🔍 === DIAGNÓSTICO DETALLADO DEL TEXTO PDF ===')
+    console.log(`📄 Longitud total del texto: ${text.length} caracteres`)
+    console.log('🔍 Buscando líneas que contengan "IVA" (cualquier variación):')
+    
+    const lineasConIVA = text.split('\n').filter((linea, index) => {
+      const contieneIVA = linea.toLowerCase().includes('iva')
+      if (contieneIVA) {
+        console.log(`  📍 Línea ${index + 1}: "${linea}"`)
+        console.log(`     👀 Caracteres exactos: [${Array.from(linea).map(c => c.charCodeAt(0)).join(', ')}]`)
+        console.log(`     🔤 Longitud: ${linea.length} caracteres`)
+        
+        // Buscar específicamente "IVA (19%)"
+        if (linea.includes('IVA') && linea.includes('19%')) {
+          console.log(`     🎯 ¡LÍNEA CANDIDATA! Contiene "IVA" y "19%"`)
+          
+          // Probar diferentes variaciones del patrón en esta línea específica
+          const patronesTest = [
+            /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi,     // Patrón original
+            /IVA.*?19%.*?\$?\s*([\d,\.]+)/gi,         // Más flexible
+            /IVA.*?\$\s*([\d,\.]+)/gi,                // Solo IVA seguido de $
+            /IVA[^0-9]*?([\d,\.]{4,})/gi,             // IVA seguido de número grande
+            /19%.*?\$\s*([\d,\.]+)/gi                 // 19% seguido de $
+          ]
+          
+          patronesTest.forEach((patron, i) => {
+            const testMatches = Array.from(linea.matchAll(patron))
+            console.log(`     🧪 Patrón ${i + 1} (${patron.source}): ${testMatches.length} coincidencias`)
+            testMatches.forEach(match => {
+              console.log(`        💰 Match: "${match[0]}" → Valor: "${match[1]}"`)
+            })
+          })
+        }
+      }
+      return contieneIVA
+    })
+    
+    console.log(`📊 Total líneas con "IVA": ${lineasConIVA.length}`)
+    
+    if (lineasConIVA.length === 0) {
+      console.log('❌ NO SE ENCONTRÓ NINGUNA LÍNEA CON "IVA"')
+      console.log('🔍 Mostrando primeras 20 líneas del PDF para diagnóstico:')
+      text.split('\n').slice(0, 20).forEach((linea, index) => {
+        console.log(`  ${(index + 1).toString().padStart(2, '0')}: "${linea}"`)
+      })
+    }
+    
+    console.log('================================================')
+    
     // Regex para encontrar "IVA (19%)" seguido del valor
     const patronIVA = /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi
     
-    console.log('📋 Aplicando patrón: /IVA\\s*\\(19%\\)\\s*\\$?\\s*([\\d,\\.]+)/gi')
+    console.log('📋 Aplicando patrón principal: /IVA\\s*\\(19%\\)\\s*\\$?\\s*([\\d,\\.]+)/gi')
+    console.log('🎯 Probando patrón contra TODO el texto del PDF...')
     
     let valorIVAEncontrado: number | null = null
     const matches = Array.from(text.matchAll(patronIVA))
     
-    console.log(`📊 Coincidencias encontradas: ${matches.length}`)
+    console.log(`📊 Coincidencias del patrón principal: ${matches.length}`)
     
     if (matches.length > 0) {
       // Procesar todas las coincidencias encontradas
@@ -850,7 +900,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
       result.extractedFields.push('tieneIVA')
       result.extractedFields.push('valorIVA')
       
-      console.log(`✅ RESULTADO IVA FINAL: tieneIVA=true, valorIVA=$${result.valorIVA?.toLocaleString('es-CO') || 'N/A'}`)
+      console.log(`✅ RESULTADO IVA FINAL: tieneIVA=true, valorIVA=$${result.valorIVA ? result.valorIVA.toLocaleString('es-CO') : 'N/A'}`)
       console.log('🎯 ¡El IVA será enviado al frontend!')
     } else {
       result.tieneIVA = false
