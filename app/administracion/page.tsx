@@ -759,16 +759,23 @@ export default function AdministracionPage() {
                 </table>
               </div>
 
-              {/* Paginación */}
+              {/* Paginación mejorada */}
               <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-gray-700">
-                    <span>
-                      Mostrando {((currentPage - 1) * pageSize) + 1} a{' '}
-                      {Math.min(currentPage * pageSize, totalCount)} de {totalCount} registros
-                    </span>
+                  {/* Información de página - Izquierda */}
+                  <div className="text-sm text-gray-700">
+                    Página {currentPage} de {totalPages}
                   </div>
-                  <div className="flex items-center space-x-2">
+                  
+                  {/* Información de registros - Centro */}
+                  <div className="text-sm text-gray-700">
+                    Mostrando {((currentPage - 1) * pageSize) + 1} a{' '}
+                    {Math.min(currentPage * pageSize, totalCount)} registros de {totalCount}
+                  </div>
+                  
+                  {/* Navegación - Derecha */}
+                  <div className="flex items-center space-x-1">
+                    {/* Botón Anterior */}
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage <= 1}
@@ -777,10 +784,31 @@ export default function AdministracionPage() {
                       Anterior
                     </button>
                     
-                    <span className="text-sm text-gray-700">
-                      Página {currentPage} de {totalPages}
-                    </span>
+                    {/* Botones de páginas numerados */}
+                    {(() => {
+                      const pageNumbers = []
+                      const startPage = Math.max(1, currentPage - 2)
+                      const endPage = Math.min(totalPages, currentPage + 2)
+                      
+                      for (let i = startPage; i <= endPage; i++) {
+                        pageNumbers.push(
+                          <button
+                            key={i}
+                            onClick={() => handlePageChange(i)}
+                            className={`w-8 h-8 text-sm font-medium rounded-md transition-colors duration-200 ${
+                              i === currentPage
+                                ? 'bg-bolivar-green text-white'
+                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {i}
+                          </button>
+                        )
+                      }
+                      return pageNumbers
+                    })()}
                     
+                    {/* Botón Siguiente */}
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage >= totalPages}
@@ -788,20 +816,24 @@ export default function AdministracionPage() {
                     >
                       Siguiente
                     </button>
-
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(parseInt(e.target.value))
-                        setCurrentPage(1)
-                      }}
-                      className="ml-4 text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-bolivar-green"
-                    >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
+                    
+                    {/* Selector de registros por página */}
+                    <div className="flex items-center ml-4 space-x-2">
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(parseInt(e.target.value))
+                          setCurrentPage(1)
+                        }}
+                        className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-bolivar-green"
+                      >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                      <span className="text-sm text-gray-700">por página</span>
+                    </div>
                   </div>
                 </div>
               </div>
