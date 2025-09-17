@@ -834,97 +834,111 @@ function extractDataFromText(text: string): ExtractedPDFData {
     
     console.log('================================================')
     
-    // MÚLTIPLES PATRONES ROBUSTOS para manejar diferentes formatos de espacios
-    const patronesIVA = [
-      // Patrón 1: Espacios estándar
-      /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi,
+    // NUEVA ESTRATEGIA: Procesar línea por línea para mayor precisión
+    console.log('📋 Nueva estrategia: Buscar IVA línea por línea para evitar capturar valores de otras líneas')
+    
+    const todasLasLineas = text.split('\n')
+    console.log(`📄 Total de líneas en el documento: ${todasLasLineas.length}`)
+    
+    // PATRONES ESPECÍFICOS para una línea que contenga IVA (19%)
+    const patronesIVALinea = [
+      // Patrón 1: IVA (19%) seguido del valor EN LA MISMA LÍNEA
+      /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)(?:\s|$)/i,
       
-      // Patrón 2: Espacios no-breaking y caracteres especiales  
-      /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)/gi,
+      // Patrón 2: Con espacios no-breaking EN LA MISMA LÍNEA
+      /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)(?:\s|$)/i,
       
-      // Patrón 3: Múltiples espacios y tabs
-      /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)/gi,
+      // Patrón 3: Con tabs y espacios múltiples EN LA MISMA LÍNEA
+      /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)(?:\s|$)/i,
       
-      // Patrón 4: Muy flexible - cualquier cantidad de espacios/caracteres invisibles
-      /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)/gi,
+      // Patrón 4: Muy flexible para caracteres especiales EN LA MISMA LÍNEA
+      /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)(?:\s|$)/i,
       
-      // Patrón 5: Buscar IVA y 19% en la misma línea, luego el número más grande
-      /IVA.*19%.*?([\d,\.]{7,})/gi  // Para números como 1,104,885,787 (7+ dígitos)
+      // Patrón 5: Buscar el último número grande en una línea que contenga IVA (19%)
+      /IVA.*\(19%\).*?([\d,\.]{7,})(?:\s|$)/i  // Al menos 7 dígitos como 1,104,885
     ]
     
-    console.log('📋 Aplicando 5 patrones robustos de IVA...')
-    console.log('🎯 Probando cada patrón contra TODO el texto del PDF...')
-    
     let valorIVAEncontrado: number | null = null
+    let lineaEncontrada = -1
     let patronExitoso = -1
     
-    // Probar cada patrón hasta encontrar coincidencias
-    for (let i = 0; i < patronesIVA.length; i++) {
-      const patron = patronesIVA[i]
-      const matches = Array.from(text.matchAll(patron))
+    // Buscar líneas que contengan "IVA" Y "19%"
+    const lineasConIVA = todasLasLineas.filter((linea, index) => {
+      const contieneIVA = linea.includes('IVA') && linea.includes('19%')
+      if (contieneIVA) {
+        console.log(`📍 Línea ${index + 1} candidata: "${linea.trim()}"`)
+      }
+      return contieneIVA
+    })
+    
+    console.log(`🎯 Líneas con IVA (19%) encontradas: ${lineasConIVA.length}`)
+    
+    // Procesar cada línea candidata con todos los patrones
+    for (let lineaIndex = 0; lineaIndex < lineasConIVA.length; lineaIndex++) {
+      const linea = lineasConIVA[lineaIndex]
+      console.log(`🔍 Procesando línea ${lineaIndex + 1}: "${linea.trim()}"`)
       
-      console.log(`🧪 Patrón ${i + 1} (${patron.source}): ${matches.length} coincidencias`)
-      
-      if (matches.length > 0) {
-        patronExitoso = i + 1
-        console.log(`🎯 ¡PATRÓN ${i + 1} EXITOSO!`)
+      // Probar todos los patrones en esta línea específica
+      for (let i = 0; i < patronesIVALinea.length; i++) {
+        const patron = patronesIVALinea[i]
+        const match = linea.match(patron)
         
-        // Procesar todas las coincidencias encontradas
-        matches.forEach((match, index) => {
-          console.log(`  ${index + 1}. Match completo: "${match[0]}"`)
-          console.log(`     Valor extraído: "${match[1]}"`)
+        console.log(`   🧪 Patrón ${i + 1} en esta línea:`, match ? `MATCH: "${match[0]}"` : 'Sin coincidencias')
+        
+        if (match && match[1]) {
+          console.log(`      💰 Valor extraído de la línea: "${match[1]}"`)
           
           // Limpiar y convertir el valor numérico
           const valorLimpio = cleanNumericValue(match[1])
           const valorNum = parseFloat(valorLimpio)
           
-          console.log(`     Valor limpio: "${valorLimpio}" -> ${valorNum}`)
+          console.log(`      📊 Valor limpio: "${valorLimpio}" -> ${valorNum}`)
           
           // Validar que sea un número válido y mayor a 0
           if (!isNaN(valorNum) && valorNum > 0) {
-            // Si hay múltiples valores, tomar el mayor (más probable que sea correcto)
-            if (!valorIVAEncontrado || valorNum > valorIVAEncontrado) {
-              valorIVAEncontrado = Math.round(valorNum)
-              console.log(`     ✅ Valor IVA actualizado: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
-            }
+            valorIVAEncontrado = Math.round(valorNum)
+            lineaEncontrada = lineaIndex + 1
+            patronExitoso = i + 1
+            
+            console.log(`      ✅ VALOR IVA ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+            console.log(`      📋 Línea: ${lineaEncontrada}, Patrón: ${patronExitoso}`)
+            
+            // Salir de ambos bucles - encontramos el valor
+            break
           } else {
-            console.log(`     ❌ Valor inválido o cero: ${valorNum}`)
+            console.log(`      ❌ Valor inválido: ${valorNum}`)
           }
-        })
-        
-        // Si encontramos un valor válido, salir del bucle
-        if (valorIVAEncontrado) {
-          console.log(`🏆 ÉXITO: Patrón ${i + 1} encontró IVA = $${valorIVAEncontrado.toLocaleString('es-CO')}`)
-          break
         }
+      }
+      
+      // Si encontramos valor, salir del bucle de líneas
+      if (valorIVAEncontrado) {
+        break
       }
     }
     
-    console.log(`📊 RESUMEN: ${patronExitoso > 0 ? `Patrón ${patronExitoso} exitoso` : 'Ningún patrón funcionó'}`)
-    
-    // Si no se encontró IVA con ningún patrón, ejecutar diagnóstico adicional
-    if (!valorIVAEncontrado) {
-      console.log('❌ No se encontró el patrón "IVA (19%)" con ninguno de los 5 patrones')
+    // RESULTADO FINAL
+    if (valorIVAEncontrado) {
+      console.log(`🏆 ÉXITO FINAL: Valor IVA extraído = $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+      console.log(`📋 Encontrado en línea ${lineaEncontrada} usando patrón ${patronExitoso}`)
+    } else {
+      console.log('❌ No se pudo extraer el valor del IVA de ninguna línea')
       
-      // DIAGNÓSTICO: Buscar variaciones del patrón para debugging
-      console.log('🔍 === DIAGNÓSTICO: BUSCANDO VARIACIONES DEL PATRÓN ===')
-      
-      const variacionesPatron = [
-        /IVA.*19%/gi,           // IVA cualquier cosa 19%
-        /IVA\s*\([^)]*\)/gi,    // IVA (cualquier cosa)
-        /IVA.*\$/gi,            // IVA seguido de $
-        /19%.*\$/gi             // 19% seguido de $
-      ]
-      
-      variacionesPatron.forEach((patron, index) => {
-        const variacionMatches = Array.from(text.matchAll(patron))
-        if (variacionMatches.length > 0) {
-          console.log(`  Variación ${index + 1} (${patron.source}) encontró ${variacionMatches.length} coincidencias:`)
-          variacionMatches.forEach((match, i) => {
-            console.log(`    ${i + 1}. "${match[0]}"`)
-          })
-        }
-      })
+      // DIAGNÓSTICO: Mostrar líneas que contienen IVA pero no 19%
+      console.log('🔍 === DIAGNÓSTICO: LÍNEAS CON SOLO "IVA" ===')
+      const lineasSoloIVA = todasLasLineas.filter(linea => linea.toLowerCase().includes('iva'))
+      if (lineasSoloIVA.length > 0) {
+        console.log(`📄 Encontradas ${lineasSoloIVA.length} líneas con "IVA":`)
+        lineasSoloIVA.forEach((linea, index) => {
+          console.log(`  ${index + 1}. "${linea.trim()}"`)
+        })
+      } else {
+        console.log('📄 No se encontraron líneas con "IVA" en el documento')
+        console.log('🔍 Mostrando primeras 10 líneas del PDF:')
+        todasLasLineas.slice(0, 10).forEach((linea, index) => {
+          console.log(`    ${(index + 1).toString().padStart(2, '0')}: "${linea.trim()}"`)
+        })
+      }
       console.log('=============================================')
     }
     
