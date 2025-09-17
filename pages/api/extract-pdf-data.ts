@@ -785,10 +785,23 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // El patrón capturará: 1,104,885,787
     console.log('🔍 Buscando patrón exacto: "IVA (19%)" seguido del valor monetario')
     
-    // DIAGNÓSTICO SIMPLIFICADO
-    console.log('🔍 === ANÁLISIS INICIAL DEL PDF ===')
-    console.log(`📄 Longitud total del texto: ${text.length} caracteres`)
-    console.log('================================================')
+  // DIAGNÓSTICO SIMPLIFICADO
+  console.log('🔍 === ANÁLISIS INICIAL DEL PDF ===')
+  console.log(`📄 Longitud total del texto: ${text.length} caracteres`)
+  console.log('================================================')
+  
+  // DIAGNÓSTICO ESPECÍFICO: Mostrar líneas exactas que contienen "Total" y "IVA"
+  console.log('🔍 === DIAGNÓSTICO DE LÍNEAS CRÍTICAS ===')
+  const lineasTexto = text.split('\n')
+  lineasTexto.forEach((linea, index) => {
+    const lineaTrim = linea.trim()
+    if (lineaTrim.includes('Total') || lineaTrim.includes('IVA') || lineaTrim.includes('TOTAL')) {
+      console.log(`📍 Línea ${index + 1}: "${linea}"`)
+      console.log(`   🔤 Caracteres: [${Array.from(linea).map(c => `${c.charCodeAt(0)}`).join(', ')}]`)
+      console.log(`   📏 Longitud: ${linea.length} caracteres`)
+    }
+  })
+  console.log('=================================================')
     
     // NUEVA ESTRATEGIA BASADA EN CONTEXTO: 
     // El IVA está entre la línea "Total" (primera letra mayúscula) y "TOTAL" (todo mayúsculas)
