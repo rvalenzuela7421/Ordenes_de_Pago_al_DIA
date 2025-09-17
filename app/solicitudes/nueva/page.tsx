@@ -703,6 +703,7 @@ export default function NuevaSolicitudPage() {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
+          fechaCuentaCobro: formData.fechaCuentaCobro,
           companiaReceptora: formData.proveedor,
           acreedor: formData.acreedor,
           concepto: formData.concepto,
