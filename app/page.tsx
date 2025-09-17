@@ -876,7 +876,7 @@ export default function Dashboard() {
                   >
                     <div className="flex items-start justify-center">
                       <div className="capitalize text-center">
-                        Fecha CC
+                        Fecha Cta.Cobr.
                       </div>
                       {getSortIcon('fecha_cuenta_cobro')}
                     </div>
