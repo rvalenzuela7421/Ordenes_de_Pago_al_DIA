@@ -951,6 +951,60 @@ function extractDataFromText(text: string): ExtractedPDFData {
           }
         }
         
+        // MÉTODO 3: Si no se encontró adelante, buscar en líneas anteriores (NUEVO)
+        if (!valorIVAEncontrado) {
+          console.log(`   🔍 No encontrado adelante, buscando en líneas ANTERIORES...`)
+          
+          // Buscar en las 3 líneas anteriores máximo
+          for (let lineaAnterior = Math.max(indiceTotal + 1, i - 3); lineaAnterior < i; lineaAnterior++) {
+            const lineaValor = todasLasLineas[lineaAnterior]
+            console.log(`      📍 Revisando línea anterior ${lineaAnterior + 1}: "${lineaValor.trim()}"`)
+            
+            // Patrones para buscar solo valores monetarios
+            const patronesValorSolo = [
+              /\$\s*([\d,\.]+)/i,                    // $ seguido de número
+              /^\s*([\d,\.]{3,})\s*$/i,              // Solo números (mínimo 3 dígitos para $24,585)
+              /^\s*\$?\s*([\d,\.]{3,})\s*$/i,       // Opcional $ seguido de números
+              /([\d,\.]{3,})\s*$/i,                 // Número al final de línea
+            ]
+            
+            for (let k = 0; k < patronesValorSolo.length; k++) {
+              const patronValor = patronesValorSolo[k]
+              const matchValor = lineaValor.match(patronValor)
+              
+              console.log(`         🧪 Patrón anterior ${k + 1}:`, matchValor ? `MATCH: "${matchValor[0]}"` : 'Sin coincidencias')
+              
+              if (matchValor && matchValor[1]) {
+                console.log(`         💰 Valor extraído de línea anterior: "${matchValor[1]}"`)
+                
+                // Limpiar y convertir el valor numérico
+                const valorLimpio = cleanNumericValue(matchValor[1])
+                const valorNum = parseFloat(valorLimpio)
+                
+                console.log(`         📊 Valor limpio: "${valorLimpio}" -> ${valorNum}`)
+                
+                // Validar que sea un número válido y mayor a 0, pero no demasiado grande
+                if (!isNaN(valorNum) && valorNum > 0 && valorNum < 100000000) {
+                  valorIVAEncontrado = Math.round(valorNum)
+                  lineaEncontrada = lineaAnterior + 1
+                  patronExitoso = k + 1
+                  
+                  console.log(`         ✅ VALOR IVA ENCONTRADO (línea anterior): $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+                  console.log(`         📋 Valor en línea ${lineaEncontrada}, IVA en línea ${i + 1}, Patrón: ${patronExitoso}`)
+                  
+                  // Salir de todos los bucles
+                  break
+                }
+              }
+            }
+            
+            // Si encontramos valor, salir del bucle de líneas anteriores
+            if (valorIVAEncontrado) {
+              break
+            }
+          }
+        }
+        
         // Si encontramos valor (cualquier método), salir del bucle principal
         if (valorIVAEncontrado) {
           break
