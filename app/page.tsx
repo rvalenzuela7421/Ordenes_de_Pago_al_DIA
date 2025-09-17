@@ -871,6 +871,18 @@ export default function Dashboard() {
                     </div>
                   </th>
                   <th 
+                    onClick={() => handleSort('fecha_cuenta_cobro')}
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[130px]"
+                  >
+                    <div className="flex items-start justify-center">
+                      <div className="capitalize text-center">
+                        <div>Fecha Cuenta</div>
+                        <div>de Cobro</div>
+                      </div>
+                      {getSortIcon('fecha_cuenta_cobro')}
+                    </div>
+                  </th>
+                  <th 
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-[200px]"
                   >
                     <div className="space-y-2">
@@ -1046,6 +1058,11 @@ export default function Dashboard() {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         <div className="text-xs font-medium text-gray-900">{orden.numero_solicitud}</div>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-center">
+                        <div className="text-xs text-gray-500">
+                          {orden.fecha_cuenta_cobro ? formatDate(orden.fecha_cuenta_cobro) : '-'}
+                        </div>
                       </td>
                       <td className="px-3 py-3 max-w-[140px]">
                         <div className="text-xs text-gray-900 truncate" title={orden.compania_receptora || 'No especificado'}>
