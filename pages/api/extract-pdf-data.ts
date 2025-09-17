@@ -1047,18 +1047,25 @@ function extractDataFromText(text: string): ExtractedPDFData {
     console.log(`📊 Campos extraídos (${fieldsCount}): ${result.extractedFields.join(', ')}`)
     console.log(`📈 Confianza: ${result.confidence}`)
     
-    // RESUMEN FINAL DE TODOS LOS VALORES QUE SE ENVÍAN AL FRONTEND
-    console.log('🚀 === DATOS QUE SE ENVÍAN AL FRONTEND ===')
-    console.log(`  📅 fechaCuentaCobro: ${result.fechaCuentaCobro}`)
-    console.log(`  🏢 companiaReceptora: ${result.companiaReceptora}`)
-    console.log(`  👤 acreedor: ${result.acreedor}`)
-    console.log(`  📝 concepto: ${result.concepto}`)
-    console.log(`  📄 descripcion: ${result.descripcion ? result.descripcion.substring(0, 100) + '...' : null}`)
-    console.log(`  💰 valorSolicitud: ${result.valorSolicitud}`)
-    console.log(`  ✅ tieneIVA: ${result.tieneIVA}`)
-    console.log(`  💸 valorIVA: ${result.valorIVA}`)
-    console.log(`  🧾 valorTotalSolicitud: ${result.valorTotalSolicitud}`)
-    console.log('================================================')
+  // RESUMEN FINAL DE TODOS LOS VALORES QUE SE ENVÍAN AL FRONTEND
+  console.log('🚀 === DATOS QUE SE ENVÍAN AL FRONTEND ===')
+  console.log(`  📅 fechaCuentaCobro: ${result.fechaCuentaCobro}`)
+  console.log(`  🏢 companiaReceptora: ${result.companiaReceptora}`)
+  console.log(`  👤 acreedor: ${result.acreedor}`)
+  console.log(`  📝 concepto: ${result.concepto}`)
+  console.log(`  📄 descripcion: ${result.descripcion ? result.descripcion.substring(0, 100) + '...' : null}`)
+  console.log(`  💰 valorSolicitud: ${result.valorSolicitud}`)
+  console.log(`  ✅ tieneIVA: ${result.tieneIVA}`)
+  console.log(`  💸 valorIVA: ${result.valorIVA}`)
+  console.log(`  🧾 valorTotalSolicitud: ${result.valorTotalSolicitud}`)
+  console.log('================================================')
+  
+  // LOGS CRÍTICOS PARA DEBUGGING DEL PROBLEMA DE DESCONEXIÓN
+  console.log('🔥 === RESPUESTA HTTP QUE SE ENVÍA AL FRONTEND ===')
+  console.log('🎯 TIMESTAMP:', new Date().toISOString())
+  console.log('📦 JSON RESPONSE:', JSON.stringify(result, null, 2))
+  console.log('💥 SI ESTE LOG NO APARECE EN EL FRONTEND, HAY PROBLEMA DE CACHÉ')
+  console.log('=======================================================')
     
   } catch (error) {
     console.error('❌ Error durante extracción:', error)

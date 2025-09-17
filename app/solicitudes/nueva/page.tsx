@@ -320,6 +320,17 @@ export default function NuevaSolicitudPage() {
       console.log('  - data.valorSolicitud:', data.valorSolicitud)
       console.log('  - data.valorTotalSolicitud:', data.valorTotalSolicitud)
       console.log('================================================')
+      
+      // CRÍTICO: Verificar si recibimos el documento correcto
+      console.log('🚨 === VERIFICACIÓN DE DOCUMENTO CORRECTO ===')
+      console.log('🎯 TIMESTAMP RESPUESTA:', new Date().toISOString())
+      console.log('📦 RESPUESTA COMPLETA DEL BACKEND:', JSON.stringify(data, null, 2))
+      console.log('🔍 INDICADORES DE DOCUMENTO:')
+      console.log('  - Valor Solicitud:', data.valorSolicitud, '(esperado: ~5815188351 para doc con IVA)')
+      console.log('  - Compañía:', data.companiaReceptora)
+      console.log('  - Acreedor:', data.acreedor)
+      console.log('💥 SI VALORES NO COINCIDEN = PROBLEMA DE CACHÉ O REQUEST CRUZADO')
+      console.log('=========================================================')
 
       // Mostrar modal de validación antes de aplicar los datos
       if (data.success && data.extractedFields.length > 0) {
