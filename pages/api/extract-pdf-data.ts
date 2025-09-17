@@ -834,42 +834,77 @@ function extractDataFromText(text: string): ExtractedPDFData {
     
     console.log('================================================')
     
-    // Regex para encontrar "IVA (19%)" seguido del valor
-    const patronIVA = /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi
+    // MÚLTIPLES PATRONES ROBUSTOS para manejar diferentes formatos de espacios
+    const patronesIVA = [
+      // Patrón 1: Espacios estándar
+      /IVA\s*\(19%\)\s*\$?\s*([\d,\.]+)/gi,
+      
+      // Patrón 2: Espacios no-breaking y caracteres especiales  
+      /IVA[\s\u00A0]*\(19%\)[\s\u00A0]*\$?[\s\u00A0]*([\d,\.]+)/gi,
+      
+      // Patrón 3: Múltiples espacios y tabs
+      /IVA[\s\t]*\(19%\)[\s\t]*\$?[\s\t]*([\d,\.]+)/gi,
+      
+      // Patrón 4: Muy flexible - cualquier cantidad de espacios/caracteres invisibles
+      /IVA[^0-9A-Za-z]*\(19%\)[^0-9A-Za-z]*\$?[^0-9]*([\d,\.]+)/gi,
+      
+      // Patrón 5: Buscar IVA y 19% en la misma línea, luego el número más grande
+      /IVA.*19%.*?([\d,\.]{7,})/gi  // Para números como 1,104,885,787 (7+ dígitos)
+    ]
     
-    console.log('📋 Aplicando patrón principal: /IVA\\s*\\(19%\\)\\s*\\$?\\s*([\\d,\\.]+)/gi')
-    console.log('🎯 Probando patrón contra TODO el texto del PDF...')
+    console.log('📋 Aplicando 5 patrones robustos de IVA...')
+    console.log('🎯 Probando cada patrón contra TODO el texto del PDF...')
     
     let valorIVAEncontrado: number | null = null
-    const matches = Array.from(text.matchAll(patronIVA))
+    let patronExitoso = -1
     
-    console.log(`📊 Coincidencias del patrón principal: ${matches.length}`)
-    
-    if (matches.length > 0) {
-      // Procesar todas las coincidencias encontradas
-      matches.forEach((match, index) => {
-        console.log(`  ${index + 1}. Match completo: "${match[0]}"`)
-        console.log(`     Valor extraído: "${match[1]}"`)
+    // Probar cada patrón hasta encontrar coincidencias
+    for (let i = 0; i < patronesIVA.length; i++) {
+      const patron = patronesIVA[i]
+      const matches = Array.from(text.matchAll(patron))
+      
+      console.log(`🧪 Patrón ${i + 1} (${patron.source}): ${matches.length} coincidencias`)
+      
+      if (matches.length > 0) {
+        patronExitoso = i + 1
+        console.log(`🎯 ¡PATRÓN ${i + 1} EXITOSO!`)
         
-        // Limpiar y convertir el valor numérico
-        const valorLimpio = cleanNumericValue(match[1])
-        const valorNum = parseFloat(valorLimpio)
-        
-        console.log(`     Valor limpio: "${valorLimpio}" -> ${valorNum}`)
-        
-        // Validar que sea un número válido y mayor a 0
-        if (!isNaN(valorNum) && valorNum > 0) {
-          // Si hay múltiples valores, tomar el mayor (más probable que sea correcto)
-          if (!valorIVAEncontrado || valorNum > valorIVAEncontrado) {
-            valorIVAEncontrado = Math.round(valorNum)
-            console.log(`     ✅ Valor IVA actualizado: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+        // Procesar todas las coincidencias encontradas
+        matches.forEach((match, index) => {
+          console.log(`  ${index + 1}. Match completo: "${match[0]}"`)
+          console.log(`     Valor extraído: "${match[1]}"`)
+          
+          // Limpiar y convertir el valor numérico
+          const valorLimpio = cleanNumericValue(match[1])
+          const valorNum = parseFloat(valorLimpio)
+          
+          console.log(`     Valor limpio: "${valorLimpio}" -> ${valorNum}`)
+          
+          // Validar que sea un número válido y mayor a 0
+          if (!isNaN(valorNum) && valorNum > 0) {
+            // Si hay múltiples valores, tomar el mayor (más probable que sea correcto)
+            if (!valorIVAEncontrado || valorNum > valorIVAEncontrado) {
+              valorIVAEncontrado = Math.round(valorNum)
+              console.log(`     ✅ Valor IVA actualizado: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+            }
+          } else {
+            console.log(`     ❌ Valor inválido o cero: ${valorNum}`)
           }
-        } else {
-          console.log(`     ❌ Valor inválido o cero: ${valorNum}`)
+        })
+        
+        // Si encontramos un valor válido, salir del bucle
+        if (valorIVAEncontrado) {
+          console.log(`🏆 ÉXITO: Patrón ${i + 1} encontró IVA = $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+          break
         }
-      })
-    } else {
-      console.log('❌ No se encontró el patrón "IVA (19%)" en el documento')
+      }
+    }
+    
+    console.log(`📊 RESUMEN: ${patronExitoso > 0 ? `Patrón ${patronExitoso} exitoso` : 'Ningún patrón funcionó'}`)
+    
+    // Si no se encontró IVA con ningún patrón, ejecutar diagnóstico adicional
+    if (!valorIVAEncontrado) {
+      console.log('❌ No se encontró el patrón "IVA (19%)" con ninguno de los 5 patrones')
       
       // DIAGNÓSTICO: Buscar variaciones del patrón para debugging
       console.log('🔍 === DIAGNÓSTICO: BUSCANDO VARIACIONES DEL PATRÓN ===')
