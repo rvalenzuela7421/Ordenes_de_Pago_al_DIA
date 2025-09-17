@@ -872,12 +872,11 @@ export default function Dashboard() {
                   </th>
                   <th 
                     onClick={() => handleSort('fecha_cuenta_cobro')}
-                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[130px]"
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors w-[100px]"
                   >
                     <div className="flex items-start justify-center">
                       <div className="capitalize text-center">
-                        <div>Fecha Cuenta</div>
-                        <div>de Cobro</div>
+                        Fecha CC
                       </div>
                       {getSortIcon('fecha_cuenta_cobro')}
                     </div>
