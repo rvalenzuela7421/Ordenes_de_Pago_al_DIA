@@ -1068,13 +1068,13 @@ function extractDataFromText(text: string): ExtractedPDFData {
           
           console.log(`   💰 Valor ${index + 1}: "${match[0]}" → limpio: ${valorLimpio} → número: ${valorNum}`)
           
-          // Filtrar valores que puedan ser IVA (no muy pequeños ni muy grandes)
-          if (!isNaN(valorNum) && valorNum > 1000 && valorNum < 100000000) {
+          // Filtrar valores que puedan ser IVA (solo mayor a 0)
+          if (!isNaN(valorNum) && valorNum > 0) {
             // Calcular si es aproximadamente 19% del valor solicitud
             const valorSolicitudNum = result.valorSolicitud || 0
             const ivaEsperado = valorSolicitudNum * 0.19
             const diferencia = Math.abs(valorNum - ivaEsperado)
-            const porcentajeDiferencia = diferencia / ivaEsperado * 100
+            const porcentajeDiferencia = ivaEsperado > 0 ? diferencia / ivaEsperado * 100 : 100
             
             console.log(`      📊 Verificando si ${valorNum} es IVA de ${valorSolicitudNum}:`)
             console.log(`      🧮 IVA esperado (19%): ${Math.round(ivaEsperado)}`)
@@ -1098,15 +1098,12 @@ function extractDataFromText(text: string): ExtractedPDFData {
       if (valoresEncontrados.length > 0) {
         const mejorCandidato = valoresEncontrados[0]
         
-        // Si la diferencia es menor al 5%, lo consideramos IVA válido
-        if (mejorCandidato.porcentaje < 5) {
-          valorIVAEncontrado = Math.round(mejorCandidato.valor)
-          console.log(`🏆 MEJOR CANDIDATO ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
-          console.log(`📊 Match original: "${mejorCandidato.match}"`)
-          console.log(`📈 Diferencia con IVA esperado: ${mejorCandidato.porcentaje.toFixed(1)}%`)
-        } else {
-          console.log(`❌ Mejor candidato tiene diferencia del ${mejorCandidato.porcentaje.toFixed(1)}% (muy alta)`)
-        }
+        // Aceptar el mejor candidato (cualquier valor > 0)
+        valorIVAEncontrado = Math.round(mejorCandidato.valor)
+        console.log(`🏆 MEJOR CANDIDATO ENCONTRADO: $${valorIVAEncontrado.toLocaleString('es-CO')}`)
+        console.log(`📊 Match original: "${mejorCandidato.match}"`)
+        console.log(`📈 Diferencia con IVA esperado: ${mejorCandidato.porcentaje.toFixed(1)}%`)
+        console.log(`✅ ACEPTADO: Cualquier valor > 0 es válido como IVA`)
       }
       
       console.log('================================================================')
