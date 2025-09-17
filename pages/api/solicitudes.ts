@@ -95,10 +95,37 @@ export default async function handler(
     const ivaCalculado = parseFloat(iva) || 0
     const totalCalculado = parseFloat(totalSolicitud)
 
+    // DIAGNÓSTICO: Validar formato de fecha antes de crear el objeto
+    console.log('🔍 === DIAGNÓSTICO FECHA CUENTA COBRO ===')
+    console.log('📅 Fecha recibida:', fechaCuentaCobro)
+    console.log('📅 Tipo de dato:', typeof fechaCuentaCobro)
+    
+    // Intentar parsear la fecha para validar formato
+    let fechaValidada = fechaCuentaCobro
+    try {
+      const fechaParsed = new Date(fechaCuentaCobro)
+      if (isNaN(fechaParsed.getTime())) {
+        console.error('❌ Fecha inválida:', fechaCuentaCobro)
+        return res.status(400).json({ 
+          error: 'Formato de fecha inválido para Fecha Cuenta de Cobro' 
+        })
+      }
+      
+      // Convertir a formato ISO para la base de datos
+      fechaValidada = fechaParsed.toISOString().split('T')[0] // YYYY-MM-DD
+      console.log('✅ Fecha validada (formato DB):', fechaValidada)
+    } catch (error) {
+      console.error('❌ Error al validar fecha:', error)
+      return res.status(400).json({ 
+        error: 'Error al procesar la fecha de cuenta de cobro' 
+      })
+    }
+    console.log('==========================================')
+
     // Crear objeto de solicitud usando nombres de campos de ordenes_pago
     const nuevaSolicitud = {
       numero_solicitud: numeroSolicitud,
-      fecha_cuenta_cobro: fechaCuentaCobro, // Campo requerido: fecha de la cuenta de cobro
+      fecha_cuenta_cobro: fechaValidada, // Campo requerido: fecha de la cuenta de cobro (validada)
       compania_receptora: companiaReceptora, // Nuevo campo compañía receptora
       proveedor: acreedor, // Mapear acreedor -> proveedor
       concepto,
@@ -198,22 +225,41 @@ export default async function handler(
         })
       }
 
+      // DIAGNÓSTICO: Logging detallado del objeto que se va a insertar
+      const objetoAInsertar = {
+        ...nuevaSolicitud,
+        creado_por: user.id, // Campo requerido por políticas RLS
+        created_at: getColombiaDateTime(),
+        updated_at: getColombiaDateTime()
+      }
+      
+      console.log('🔍 === DIAGNÓSTICO INSERCIÓN SOLICITUD ===')
+      console.log('📊 Usuario ID:', user.id)
+      console.log('📋 Objeto a insertar:', JSON.stringify(objetoAInsertar, null, 2))
+      console.log('============================================')
+
       // Insertar en la tabla de ordenes_pago usando el cliente admin
       const { data, error } = await supabaseAdmin
         .from('ordenes_pago')
-        .insert({
-          ...nuevaSolicitud,
-          creado_por: user.id, // Campo requerido por políticas RLS
-          created_at: getColombiaDateTime(),
-          updated_at: getColombiaDateTime()
-        })
+        .insert(objetoAInsertar)
         .select()
         .single()
 
       if (error) {
-        console.error('Error al guardar solicitud:', error)
+        console.error('❌ Error detallado al guardar solicitud:', error)
+        console.error('📊 Código de error:', error.code)
+        console.error('📝 Mensaje de error:', error.message) 
+        console.error('💾 Detalles del error:', error.details)
+        console.error('💡 Hint del error:', error.hint)
+        
         return res.status(500).json({ 
-          error: 'Error interno del servidor al guardar la solicitud' 
+          error: 'Error interno del servidor al guardar la solicitud',
+          details: process.env.NODE_ENV === 'development' ? {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          } : 'Contacte al administrador'
         })
       }
 
