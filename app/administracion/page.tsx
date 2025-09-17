@@ -24,7 +24,7 @@ export default function AdministracionPage() {
   const [searchText, setSearchText] = useState('')
   const [debouncedSearchText, setDebouncedSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
+  const [pageSize, setPageSize] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [incluirNoVigentes, setIncluirNoVigentes] = useState(true)
@@ -764,58 +764,64 @@ export default function AdministracionPage() {
                 <div className="flex items-center justify-between">
                   {/* Información de página - Izquierda */}
                   <div className="text-sm text-gray-700">
-                    Página {currentPage} de {totalPages}
+                    {pageSize === 0 ? 'Todos los registros' : `Página ${currentPage} de ${totalPages}`}
                   </div>
                   
                   {/* Información de registros - Centro */}
                   <div className="text-sm text-gray-700">
-                    Mostrando {((currentPage - 1) * pageSize) + 1} a{' '}
-                    {Math.min(currentPage * pageSize, totalCount)} registros de {totalCount}
+                    {pageSize === 0 
+                      ? `Mostrando todos los ${totalCount} registros`
+                      : `Mostrando ${((currentPage - 1) * pageSize) + 1} a ${Math.min(currentPage * pageSize, totalCount)} registros de ${totalCount}`
+                    }
                   </div>
                   
                   {/* Navegación - Derecha */}
                   <div className="flex items-center space-x-1">
-                    {/* Botón Anterior */}
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage <= 1}
-                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                    >
-                      Anterior
-                    </button>
-                    
-                    {/* Botones de páginas numerados */}
-                    {(() => {
-                      const pageNumbers = []
-                      const startPage = Math.max(1, currentPage - 2)
-                      const endPage = Math.min(totalPages, currentPage + 2)
-                      
-                      for (let i = startPage; i <= endPage; i++) {
-                        pageNumbers.push(
-                          <button
-                            key={i}
-                            onClick={() => handlePageChange(i)}
-                            className={`w-8 h-8 text-sm font-medium rounded-md transition-colors duration-200 ${
-                              i === currentPage
-                                ? 'bg-bolivar-green text-white'
-                                : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            {i}
-                          </button>
-                        )
-                      }
-                      return pageNumbers
-                    })()}
-                    
-                    {/* Botón Siguiente */}
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage >= totalPages}
-                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                    >
-                      Siguiente
-                    </button>
+                    {pageSize > 0 && (
+                      <>
+                        {/* Botón Anterior */}
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage <= 1}
+                          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        >
+                          Anterior
+                        </button>
+                        
+                        {/* Botones de páginas numerados */}
+                        {(() => {
+                          const pageNumbers = []
+                          const startPage = Math.max(1, currentPage - 2)
+                          const endPage = Math.min(totalPages, currentPage + 2)
+                          
+                          for (let i = startPage; i <= endPage; i++) {
+                            pageNumbers.push(
+                              <button
+                                key={i}
+                                onClick={() => handlePageChange(i)}
+                                className={`w-8 h-8 text-sm font-medium rounded-md transition-colors duration-200 ${
+                                  i === currentPage
+                                    ? 'bg-bolivar-green text-white'
+                                    : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                {i}
+                              </button>
+                            )
+                          }
+                          return pageNumbers
+                        })()}
+                        
+                        {/* Botón Siguiente */}
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage >= totalPages}
+                          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        >
+                          Siguiente
+                        </button>
+                      </>
+                    )}
                     
                     {/* Selector de registros por página */}
                     <div className="flex items-center ml-4 space-x-2">
@@ -831,6 +837,7 @@ export default function AdministracionPage() {
                         <option value={25}>25</option>
                         <option value={50}>50</option>
                         <option value={100}>100</option>
+                        <option value={0}>Todos</option>
                       </select>
                       <span className="text-sm text-gray-700">por página</span>
                     </div>

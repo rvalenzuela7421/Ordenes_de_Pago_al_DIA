@@ -1235,6 +1235,7 @@ export default function Dashboard() {
                       className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
                     >
                       <option value={10}>10</option>
+                      <option value={25}>25</option>
                       <option value={50}>50</option>
                       <option value={100}>100</option>
                       <option value={0}>Todos</option>

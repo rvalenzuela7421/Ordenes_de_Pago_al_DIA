@@ -169,13 +169,16 @@ async function handleGetParametros(req: NextApiRequest, res: NextApiResponse) {
       query = query.order('valor_dominio', { ascending: true })
     }
 
-    // Aplicar paginación
-    if (paginaActual > 1) {
-      const offsetValue = (paginaActual - 1) * tamañoPagina
-      query = query.range(offsetValue, offsetValue + tamañoPagina - 1)
-    } else {
-      query = query.range(0, tamañoPagina - 1)
+    // Aplicar paginación (si tamañoPagina es 0, obtener todos los registros)
+    if (tamañoPagina > 0) {
+      if (paginaActual > 1) {
+        const offsetValue = (paginaActual - 1) * tamañoPagina
+        query = query.range(offsetValue, offsetValue + tamañoPagina - 1)
+      } else {
+        query = query.range(0, tamañoPagina - 1)
+      }
     }
+    // Si tamañoPagina es 0, no aplicamos .range() para obtener todos los registros
 
     const { data: parametrosData, error, count } = await query
 
@@ -194,7 +197,7 @@ async function handleGetParametros(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const totalCount = count || 0
-    const totalPages = Math.ceil(totalCount / tamañoPagina)
+    const totalPages = tamañoPagina === 0 ? 1 : Math.ceil(totalCount / tamañoPagina)
 
     if (!parametrosData || parametrosData.length === 0) {
       const filtrosAplicados = []

@@ -384,11 +384,13 @@ export async function getTodosLosParametros(
     // Obtener lista única de grupos para filtros
     const gruposUnicos = [...new Set(data.parametros.map((p: Parametro) => p.nombre_grupo))].sort()
 
+    const totalCount = data.totalCount || data.count
+    
     return {
       parametros: data.parametros,
-      totalCount: data.totalCount || data.count,
+      totalCount: totalCount,
       currentPage: page,
-      totalPages: Math.ceil((data.totalCount || data.count) / pageSize),
+      totalPages: pageSize === 0 ? 1 : Math.ceil(totalCount / pageSize),
       grupos: gruposUnicos,
       error: undefined
     }
