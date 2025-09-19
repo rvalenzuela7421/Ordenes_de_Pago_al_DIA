@@ -252,7 +252,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
         nitFormateado: '860.002.503',
         nombre: 'COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
         codigo: 'NT-860002503-COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
-        palabrasClave: ['compañía', 'de', 'seguros', 'bolivar', 'bolívar']
+        palabrasClave: ['compañía', 'compania', 'de', 'seguros', 'bolivar', 'bolívar']
       },
       {
         nit: '830025448',
@@ -287,8 +287,17 @@ function extractDataFromText(text: string): ExtractedPDFData {
       let match
       while ((match = pattern.exec(seccionAcreedor)) !== null) {
         const nitEncontrado = match[1] || match[0]
-        // Limpiar el NIT (quitar puntos, guiones, espacios y prefijos)
-        const nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        // Limpiar el NIT (quitar puntos, guiones, espacios, prefijos y dígito verificador)
+        let nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        
+        // 🔧 NUEVO: Eliminar dígito verificador automáticamente si está presente
+        // Si el NIT tiene más de 9 dígitos, probablemente incluye dígito verificador
+        if (nitLimpio.length > 9) {
+          const nitSinDigito = nitLimpio.substring(0, 9)
+          console.log(`✂️ Removiendo dígito verificador acreedor: "${nitLimpio}" → "${nitSinDigito}"`)
+          nitLimpio = nitSinDigito
+        }
+        
         console.log(`🔢 NIT acreedor encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}" (longitud: ${nitLimpio.length})`)
         
         // VALIDACIÓN: Solo procesar NITs con longitud válida (9-11 dígitos)
@@ -427,6 +436,8 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // Definir empresas del Grupo Bolívar con sus NITs y palabras clave
     // ⚠️ IMPORTANTE: Estos datos deben coincidir con la base de datos (tabla parametros)
     // 🔧 CORRECCIÓN: NIT 860002180 corresponde a SEGUROS COMERCIALES (no CONSTRUCTORA)
+    // 🔧 MEJORA: Eliminación automática de dígitos verificadores en limpieza de NITs
+    // 🔧 MEJORA: Palabras clave ampliadas para manejar variantes de nombres (con/sin "DE")
     const empresasGrupoBolivar = [
       {
         nit: '860002180',
@@ -440,7 +451,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
         nitFormateado: '860.002.503', 
         nombre: 'COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
         codigo: 'NT-860002503-COMPAÑÍA DE SEGUROS BOLÍVAR S.A.',
-        palabrasClave: ['compañia', 'compañía', 'de', 'seguros', 'bolivar', 'bolívar']
+        palabrasClave: ['compañía', 'compania', 'de', 'seguros', 'bolivar', 'bolívar']
       },
       {
         nit: '860034313',
@@ -493,9 +504,26 @@ function extractDataFromText(text: string): ExtractedPDFData {
       let match
       while ((match = pattern.exec(encabezado)) !== null) {
         const nitEncontrado = match[1] || match[0]
-        // Limpiar el NIT (quitar puntos, guiones, espacios y prefijos)
-        const nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        // Limpiar el NIT (quitar puntos, guiones, espacios, prefijos y dígito verificador)
+        let nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        
+        // 🔧 NUEVO: Eliminar dígito verificador automáticamente si está presente
+        // Si el NIT tiene más de 9 dígitos, probablemente incluye dígito verificador
+        if (nitLimpio.length > 9) {
+          const nitSinDigito = nitLimpio.substring(0, 9)
+          console.log(`✂️ Removiendo dígito verificador: "${nitLimpio}" → "${nitSinDigito}"`)
+          nitLimpio = nitSinDigito
+        }
+        
         console.log(`🔢 NIT encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}" (longitud: ${nitLimpio.length})`)
+        
+        // 🔍 DEBUG ESPECÍFICO para el caso reportado por usuario
+        if (nitLimpio.includes('860002503') || nitEncontrado.includes('860.002.503')) {
+          console.log(`🚨 DEBUG ESPECÍFICO - NIT COMPAÑÍA SEGUROS BOLÍVAR detectado:`)
+          console.log(`   📄 Original: "${nitEncontrado}"`)
+          console.log(`   🧹 Limpio: "${nitLimpio}"`)
+          console.log(`   📏 Longitud: ${nitLimpio.length}`)
+        }
         
         // VALIDACIÓN: Solo procesar NITs con longitud válida (9-11 dígitos)
         if (nitLimpio.length < 9 || nitLimpio.length > 11 || !/^\d+$/.test(nitLimpio)) {
@@ -569,6 +597,9 @@ function extractDataFromText(text: string): ExtractedPDFData {
       result.companiaReceptora = companiaEncontrada.codigo
       result.extractedFields.push('companiaReceptora')
       console.log('✅ Compañía receptora identificada:', companiaEncontrada.codigo)
+      console.log(`🏢 RESULTADO FINAL - Empresa seleccionada: "${companiaEncontrada.nombre}"`)
+      console.log(`🔢 NIT empresa seleccionada: "${companiaEncontrada.nit}"`)
+      console.log(`📝 Código empresa: "${companiaEncontrada.codigo}"`)
     } else {
       console.log('❌ No se pudo identificar la compañía receptora del Grupo Bolívar')
     }
