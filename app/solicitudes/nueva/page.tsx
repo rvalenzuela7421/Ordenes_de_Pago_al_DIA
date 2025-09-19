@@ -641,12 +641,18 @@ export default function NuevaSolicitudPage() {
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      })
+      // Crear fecha local sin conversión UTC para Colombia (igual que en el formulario)
+      const [año, mes, dia] = dateString.split('-')
+      if (año && mes && dia) {
+        const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
+        return fecha.toLocaleDateString('es-CO', { 
+          year: 'numeric', 
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: 'America/Bogota'
+        })
+      }
+      return dateString
     } catch {
       return dateString
     }
