@@ -1514,11 +1514,14 @@ export default function NuevaSolicitudPage() {
                 <p><strong>Acreedor:</strong> {formData.acreedor}</p>
                 <p><strong>Fecha Cuenta de Cobro:</strong> {formatDate(formData.fechaCuentaCobro)}</p>
                 <p><strong>Concepto:</strong> {formData.concepto}</p>
-                <p><strong>Valor base:</strong> {formatCurrency(parseFloat(formData.valorSolicitud))}</p>
-                {formData.tieneIVA && ivaVigente && (
-                  <p><strong>IVA ({(ivaVigente.porcentaje * 100).toFixed(1)}%):</strong> {formatCurrency(parseFloat(formData.iva))}</p>
+                {formData.descripcion && (
+                  <p><strong>Descripción:</strong> {formData.descripcion}</p>
                 )}
-                <p className="font-semibold text-gray-900"><strong>Total:</strong> {formatCurrency(parseFloat(formData.totalSolicitud))}</p>
+                <p><strong>Vr. Solicitud:</strong> {formatCurrency(parseFloat(formData.valorSolicitud))}</p>
+                {formData.tieneIVA && ivaVigente && (
+                  <p><strong>Vr. IVA ({(ivaVigente.porcentaje * 100).toFixed(1)}%):</strong> {formatCurrency(parseFloat(formData.iva))}</p>
+                )}
+                <p className="font-semibold text-gray-900"><strong>Total Solicitud:</strong> {formatCurrency(parseFloat(formData.totalSolicitud))}</p>
                 <p className="text-xs mt-4 text-gray-500">
                   ¿Está seguro de que desea guardar esta solicitud?
                 </p>
