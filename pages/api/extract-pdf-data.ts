@@ -399,13 +399,15 @@ function extractDataFromText(text: string): ExtractedPDFData {
     console.log('📋 Analizando encabezado antes de "DEBE A:":', encabezado.substring(0, 200).replace(/\s+/g, ' '))
     
     // Definir empresas del Grupo Bolívar con sus NITs y palabras clave
+    // ⚠️ IMPORTANTE: Estos datos deben coincidir con la base de datos (tabla parametros)
+    // 🔧 CORRECCIÓN: NIT 860002180 corresponde a SEGUROS COMERCIALES (no CONSTRUCTORA)
     const empresasGrupoBolivar = [
       {
-        nit: '8600021807',
-        nitFormateado: '860.002.180-7',
-        nombre: 'CONSTRUCTORA BOLÍVAR S.A.',
-        codigo: 'NT-860002180-7-CONSTRUCTORA BOLÍVAR S.A.',
-        palabrasClave: ['constructora', 'bolivar', 'bolívar']
+        nit: '860002180',
+        nitFormateado: '860.002.180',
+        nombre: 'SEGUROS COMERCIALES BOLÍVAR S.A.',
+        codigo: 'NT-860002180-SEGUROS COMERCIALES BOLÍVAR S.A.',
+        palabrasClave: ['seguros', 'comerciales', 'bolivar', 'bolívar']
       },
       {
         nit: '860002503',
