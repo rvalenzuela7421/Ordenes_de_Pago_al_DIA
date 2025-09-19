@@ -688,11 +688,61 @@ export default function NuevaSolicitudPage() {
 
     // 1. Validar Fecha Cuenta de Cobro
     if (extractedData.fechaCuentaCobro && formData.fechaCuentaCobro) {
-      const extractedDate = normalizeString(extractedData.fechaCuentaCobro)
-      const formDate = normalizeString(formData.fechaCuentaCobro)
+      // Función helper para normalizar fechas a formato comparable
+      const normalizeDateForComparison = (dateStr: string): Date | null => {
+        try {
+          // Limpiar la fecha de espacios extra
+          const cleanDate = dateStr.trim()
+          
+          // Detectar formato DD-MM-YYYY (del PDF)
+          if (/^\d{2}-\d{2}-\d{4}$/.test(cleanDate)) {
+            const [dia, mes, año] = cleanDate.split('-')
+            return new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
+          }
+          
+          // Detectar formato YYYY-MM-DD (del formulario)  
+          if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+            const [año, mes, dia] = cleanDate.split('-')
+            return new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
+          }
+          
+          // Fallback: intentar parsear como Date directamente
+          const fecha = new Date(cleanDate)
+          return isNaN(fecha.getTime()) ? null : fecha
+        } catch {
+          return null
+        }
+      }
       
-      if (extractedDate !== formDate) {
-        errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}"`)
+      const extractedDate = normalizeDateForComparison(extractedData.fechaCuentaCobro)
+      const formDate = normalizeDateForComparison(formData.fechaCuentaCobro)
+      
+      console.log('📅 Validando fechas:')
+      console.log(`   📄 PDF: "${extractedData.fechaCuentaCobro}" → ${extractedDate?.toDateString()}`)
+      console.log(`   📋 Form: "${formData.fechaCuentaCobro}" → ${formDate?.toDateString()}`)
+      
+      if (extractedDate && formDate) {
+        // Comparar fechas por separado (año, mes, día) para evitar problemas de timezone
+        const extractedDateStr = `${extractedDate.getFullYear()}-${(extractedDate.getMonth() + 1).toString().padStart(2, '0')}-${extractedDate.getDate().toString().padStart(2, '0')}`
+        const formDateStr = `${formDate.getFullYear()}-${(formDate.getMonth() + 1).toString().padStart(2, '0')}-${formDate.getDate().toString().padStart(2, '0')}`
+        
+        console.log(`   🔍 Comparación normalizada: "${extractedDateStr}" vs "${formDateStr}"`)
+        
+        if (extractedDateStr !== formDateStr) {
+          errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}"`)
+          console.log('❌ Fechas NO coinciden')
+        } else {
+          console.log('✅ Fechas SÍ coinciden (mismo día)')
+        }
+      } else {
+        // Si no se pueden parsear las fechas, compararlas como string (fallback)
+        const extractedDateStr = normalizeString(extractedData.fechaCuentaCobro)
+        const formDateStr = normalizeString(formData.fechaCuentaCobro)
+        
+        if (extractedDateStr !== formDateStr) {
+          errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}" (no se pudieron normalizar las fechas)`)
+          console.log('⚠️ No se pudieron parsear las fechas, comparando como string')
+        }
       }
     }
 
