@@ -264,13 +264,36 @@ export function formatCurrency(amount: number): string {
 }
 
 // Función para formatear fecha en español (dd/mm/yyyy)
+// 🇨🇴 CORREGIDO para zona horaria de Bogotá, Colombia (UTC-5)
 export function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  if (!dateString) return ''
+  try {
+    // Crear fecha local sin conversión UTC para Colombia (igual que en formulario)
+    if (dateString.includes('-')) {
+      // Formato YYYY-MM-DD
+      const [año, mes, dia] = dateString.split('T')[0].split('-')
+      if (año && mes && dia) {
+        const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia))
+        return fecha.toLocaleDateString('es-CO', { 
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          timeZone: 'America/Bogota'
+        })
+      }
+    }
+    
+    // Fallback para otros formatos
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-CO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'America/Bogota'
+    })
+  } catch {
+    return dateString
+  }
 }
 
 // Función para obtener el color del estado
