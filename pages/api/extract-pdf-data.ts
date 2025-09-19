@@ -268,24 +268,50 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // PRIMERA BÚSQUEDA: Por NIT
     console.log('🔍 Primera búsqueda: Por NIT del acreedor...')
     
+    // 🔧 CORREGIDO: Patrones más precisos para NITs de acreedores
     const nitPatternsAcreedor = [
-      /NIT\.?\s*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/gi,
-      /(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/g
+      // Patrón 1: NIT explícito con formato completo (9-11 dígitos)
+      /NIT\.?\s*N[oº]?\.?\s*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d{1,2})/gi,
+      
+      // Patrón 2: NIT con formato específico
+      /NIT[:\s\.]*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d{1,2})/gi,
+      
+      // Patrón 3: NIT con formato NT- específico  
+      /NT[-\s]*(\d{9,11})/gi,
+      
+      // Patrón 4: Secuencia de 9-11 dígitos en contexto de acreedor
+      /(?:acreedor|proveedor|nit)[\s\w]*?(\d{9,11})/gi
     ]
     
     for (const pattern of nitPatternsAcreedor) {
       let match
       while ((match = pattern.exec(seccionAcreedor)) !== null) {
         const nitEncontrado = match[1] || match[0]
-        const nitLimpio = nitEncontrado.replace(/[\.\-\s]/g, '')
-        console.log(`🔢 NIT acreedor encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}"`)
+        // Limpiar el NIT (quitar puntos, guiones, espacios y prefijos)
+        const nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        console.log(`🔢 NIT acreedor encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}" (longitud: ${nitLimpio.length})`)
         
-        // Buscar coincidencia con acreedores disponibles
+        // VALIDACIÓN: Solo procesar NITs con longitud válida (9-11 dígitos)
+        if (nitLimpio.length < 9 || nitLimpio.length > 11 || !/^\d+$/.test(nitLimpio)) {
+          console.log(`⚠️ NIT acreedor inválido (longitud o formato): "${nitLimpio}"`)
+          continue
+        }
+        
+        // Buscar coincidencia EXACTA con acreedores disponibles
         for (const acreedor of acreedoresDisponibles) {
-          if (acreedor.nit === nitLimpio || acreedor.nitFormateado === nitEncontrado) {
+          // Comparación exacta - sin permitir coincidencias parciales
+          const nitAcreedor = acreedor.nit
+          const nitFormateadoAcreedor = acreedor.nitFormateado ? acreedor.nitFormateado.replace(/[\.\-\s]/g, '') : ''
+          
+          console.log(`🔍 Comparando acreedor "${nitLimpio}" vs "${acreedor.nombre}"`)
+          console.log(`   📊 NIT acreedor: "${nitAcreedor}" | Formateado limpio: "${nitFormateadoAcreedor}"`)
+          
+          if (nitLimpio === nitAcreedor || (nitFormateadoAcreedor && nitLimpio === nitFormateadoAcreedor)) {
             acreedorEncontrado = acreedor
-            console.log(`✅ Acreedor encontrado por NIT: ${acreedor.nombre}`)
+            console.log(`✅ COINCIDENCIA EXACTA - Acreedor: ${acreedor.nombre} (NIT: ${nitAcreedor})`)
             break
+          } else {
+            console.log(`❌ NO coincide: "${nitLimpio}" ≠ "${nitAcreedor}"`)
           }
         }
         
@@ -444,27 +470,54 @@ function extractDataFromText(text: string): ExtractedPDFData {
     // PRIMERA BÚSQUEDA: Por NIT
     console.log('🔍 Primera búsqueda: Por NIT...')
     
-    // Buscar patrones de NIT en el encabezado
+    // Buscar patrones de NIT en el encabezado  
+    // 🔧 CORREGIDO: Patrones más precisos para capturar NITs completos
     const nitPatternsCompania = [
-      /NIT\.?\s*N[oº]?\.?\s*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/gi,
-      /NIT[:\s\.]*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/gi,
-      /(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/g
+      // Patrón 1: NIT explícito con formato completo (9-11 dígitos)
+      /NIT\.?\s*N[oº]?\.?\s*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d{1,2})/gi,
+      
+      // Patrón 2: NIT con dos puntos, más flexible en dígitos  
+      /NIT[:\s\.]*(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d{1,2})/gi,
+      
+      // Patrón 3: Solo números con formato NIT (REMOVIDO el patrón genérico)
+      // El patrón genérico /(\d{3}\.?\d{3}\.?\d{3}[-\.]?\d)/g era muy amplio
+      
+      // Patrón 4: NIT con formato NT- específico  
+      /NT[-\s]*(\d{9,11})/gi,
+      
+      // Patrón 5: Secuencia de 9-11 dígitos precedida por contexto de empresa
+      /(?:empresa|compañía|nit|identificación)[\s\w]*?(\d{9,11})/gi
     ]
     
     for (const pattern of nitPatternsCompania) {
       let match
       while ((match = pattern.exec(encabezado)) !== null) {
         const nitEncontrado = match[1] || match[0]
-        // Limpiar el NIT (quitar puntos y guiones)
-        const nitLimpio = nitEncontrado.replace(/[\.\-\s]/g, '')
-        console.log(`🔢 NIT encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}"`)
+        // Limpiar el NIT (quitar puntos, guiones, espacios y prefijos)
+        const nitLimpio = nitEncontrado.replace(/^NT[-\s]*/i, '').replace(/[\.\-\s]/g, '')
+        console.log(`🔢 NIT encontrado: "${nitEncontrado}" → limpio: "${nitLimpio}" (longitud: ${nitLimpio.length})`)
         
-        // Buscar coincidencia con empresas del Grupo Bolívar
+        // VALIDACIÓN: Solo procesar NITs con longitud válida (9-11 dígitos)
+        if (nitLimpio.length < 9 || nitLimpio.length > 11 || !/^\d+$/.test(nitLimpio)) {
+          console.log(`⚠️ NIT inválido (longitud o formato): "${nitLimpio}"`)
+          continue
+        }
+        
+        // Buscar coincidencia EXACTA con empresas del Grupo Bolívar
         for (const empresa of empresasGrupoBolivar) {
-          if (empresa.nit === nitLimpio || empresa.nitFormateado === nitEncontrado) {
+          // Comparación exacta - sin permitir coincidencias parciales
+          const nitEmpresa = empresa.nit
+          const nitFormateadoEmpresa = empresa.nitFormateado.replace(/[\.\-\s]/g, '')
+          
+          console.log(`🔍 Comparando "${nitLimpio}" vs empresa "${empresa.nombre}"`)
+          console.log(`   📊 NIT empresa: "${nitEmpresa}" | Formateado limpio: "${nitFormateadoEmpresa}"`)
+          
+          if (nitLimpio === nitEmpresa || nitLimpio === nitFormateadoEmpresa) {
             companiaEncontrada = empresa
-            console.log(`✅ Compañía encontrada por NIT: ${empresa.nombre}`)
+            console.log(`✅ COINCIDENCIA EXACTA - Compañía: ${empresa.nombre} (NIT: ${nitEmpresa})`)
             break
+    } else {
+            console.log(`❌ NO coincide: "${nitLimpio}" ≠ "${nitEmpresa}"`)
           }
         }
         
@@ -1013,8 +1066,8 @@ function extractDataFromText(text: string): ExtractedPDFData {
           break
         }
       }
-    }
-  } else {
+            }
+          } else {
       console.log('❌ No se encontraron las líneas "Total" y "TOTAL" para definir el rango')
       console.log('🔍 Mostrando primeras 15 líneas para diagnóstico:')
       todasLasLineas.slice(0, 15).forEach((linea, index) => {
@@ -1026,7 +1079,7 @@ function extractDataFromText(text: string): ExtractedPDFData {
     if (valorIVAEncontrado) {
       console.log(`🏆 ÉXITO FINAL: Valor IVA extraído = $${valorIVAEncontrado.toLocaleString('es-CO')}`)
       console.log(`📋 Encontrado en línea ${lineaEncontrada} usando patrón ${patronExitoso}`)
-    } else {
+        } else {
       console.log('❌ No se pudo extraer el valor del IVA de ninguna línea')
       
       // DIAGNÓSTICO: Mostrar líneas que contienen IVA pero no patrón completo
@@ -1116,8 +1169,8 @@ function extractDataFromText(text: string): ExtractedPDFData {
     if (valorIVAEncontrado !== null && valorIVAEncontrado > 0) {
       result.tieneIVA = true
       result.valorIVA = valorIVAEncontrado
-      result.extractedFields.push('tieneIVA')
-      result.extractedFields.push('valorIVA')
+    result.extractedFields.push('tieneIVA')
+    result.extractedFields.push('valorIVA')
       
       console.log(`✅ RESULTADO IVA FINAL: tieneIVA=true, valorIVA=$${result.valorIVA ? result.valorIVA.toLocaleString('es-CO') : 'N/A'}`)
       console.log('🎯 ¡El IVA será enviado al frontend!')
