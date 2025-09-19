@@ -671,13 +671,53 @@ export default function NuevaSolicitudPage() {
     console.log('📝 Datos del formulario:', formData)
 
     const errors: string[] = []
-    const tolerance = 0.01 // Tolerancia para diferencias numéricas mínimas
+    const tolerance = 1.0 // Tolerancia para diferencias numéricas mínimas (1 peso)
+    console.log(`⚖️ Tolerancia aplicada: ${tolerance} peso(s)`)
 
     // Función helper para normalizar y limpiar valores numéricos
     const normalizeNumericValue = (value: any): number => {
       if (!value) return 0
-      const stringValue = String(value).replace(/[^\d]/g, '')
-      return parseFloat(stringValue) || 0
+      
+      // Convertir a string y limpiar
+      let stringValue = String(value).trim()
+      
+      console.log(`🔢 Normalizando valor numérico: "${value}" → string: "${stringValue}"`)
+      
+      // Detectar y manejar formato colombiano de números
+      // Ejemplo: "59.197.588" o "59,197,588.50" 
+      
+      // Si hay múltiples puntos, es formato colombiano (puntos = separadores de miles)
+      const puntosCount = (stringValue.match(/\./g) || []).length
+      const comasCount = (stringValue.match(/,/g) || []).length
+      
+      if (puntosCount > 1) {
+        // Formato: 59.197.588 (puntos para miles, sin decimales)
+        stringValue = stringValue.replace(/\./g, '')
+        console.log(`   📊 Formato colombiano detectado (solo miles): "${stringValue}"`)
+      } else if (puntosCount === 1 && comasCount === 0) {
+        // Podría ser decimal (59197.588) o miles (59.197)
+        const partes = stringValue.split('.')
+        if (partes[1] && partes[1].length > 2) {
+          // Es formato de miles: 59.197.588 → 59197588
+          stringValue = stringValue.replace(/\./g, '')
+          console.log(`   📊 Formato miles detectado (punto único con >2 dígitos): "${stringValue}"`)
+        } else {
+          // Es formato decimal: 59197.50 → mantener
+          console.log(`   📊 Formato decimal detectado: "${stringValue}"`)
+        }
+      } else if (comasCount === 1) {
+        // Formato: 59,197,588.50 → 59197588.50
+        stringValue = stringValue.replace(/,/g, '')
+        console.log(`   📊 Formato con comas para miles: "${stringValue}"`)
+      }
+      
+      // Limpiar caracteres no numéricos (excepto punto decimal)
+      stringValue = stringValue.replace(/[^\d\.]/g, '')
+      
+      const resultado = parseFloat(stringValue) || 0
+      console.log(`   ✅ Resultado final: ${resultado}`)
+      
+      return resultado
     }
 
     // Función helper para normalizar strings
@@ -759,33 +799,55 @@ export default function NuevaSolicitudPage() {
 
     // 3. Validar IVA
     if (extractedData.tieneIVA !== undefined && extractedData.valorIVA !== undefined) {
+      console.log('💸 === VALIDACIÓN IVA ===')
       const extractedIVA = normalizeNumericValue(extractedData.valorIVA)
       const formIVA = normalizeNumericValue(formData.iva)
       const ivaExtracted = extractedData.tieneIVA
       const ivaForm = formData.tieneIVA
       
+      console.log(`   📄 PDF IVA original: "${extractedData.valorIVA}"`)
+      console.log(`   📋 Form IVA original: "${formData.iva}"`)
+      console.log(`   🔢 PDF IVA normalizado: ${extractedIVA}`)
+      console.log(`   🔢 Form IVA normalizado: ${formIVA}`)
+      
       // Verificar checkbox de IVA
       if (ivaExtracted !== ivaForm) {
         errors.push(`✅ Tiene IVA: El formulario indica "${ivaForm ? 'Sí' : 'No'}" pero el PDF indica "${ivaExtracted ? 'Sí' : 'No'}"`)
+        console.log('❌ Checkbox IVA no coincide')
       }
       
       // Verificar valor de IVA si ambos tienen IVA
       if (ivaExtracted && ivaForm && extractedIVA > 0) {
         const ivaDifference = Math.abs(extractedIVA - formIVA)
+        console.log(`   🔍 Diferencia IVA: ${ivaDifference} (tolerancia: ${tolerance})`)
+        
         if (ivaDifference > tolerance) {
           errors.push(`📊 Valor IVA: El formulario muestra $${parseInt(formData.iva).toLocaleString('es-CO')} pero el PDF indica $${extractedIVA.toLocaleString('es-CO')}`)
+          console.log('❌ IVA no coincide (fuera de tolerancia)')
+        } else {
+          console.log('✅ IVA válido (dentro de tolerancia)')
         }
       }
     }
 
     // 4. Validar Total Solicitud
     if (extractedData.valorTotalSolicitud) {
+      console.log('🧾 === VALIDACIÓN TOTAL ===')
       const extractedTotal = normalizeNumericValue(extractedData.valorTotalSolicitud)
       const formTotal = normalizeNumericValue(formData.totalSolicitud)
       const totalDifference = Math.abs(extractedTotal - formTotal)
       
+      console.log(`   📄 PDF Total original: "${extractedData.valorTotalSolicitud}"`)
+      console.log(`   📋 Form Total original: "${formData.totalSolicitud}"`)
+      console.log(`   🔢 PDF Total normalizado: ${extractedTotal}`)
+      console.log(`   🔢 Form Total normalizado: ${formTotal}`)
+      console.log(`   🔍 Diferencia Total: ${totalDifference} (tolerancia: ${tolerance})`)
+      
       if (totalDifference > tolerance && extractedTotal > 0) {
         errors.push(`🧾 Valor Total: El formulario muestra $${parseInt(formData.totalSolicitud).toLocaleString('es-CO')} pero el PDF indica $${extractedTotal.toLocaleString('es-CO')}`)
+        console.log('❌ Total no coincide (fuera de tolerancia)')
+      } else {
+        console.log('✅ Total válido (dentro de tolerancia)')
       }
     }
 
