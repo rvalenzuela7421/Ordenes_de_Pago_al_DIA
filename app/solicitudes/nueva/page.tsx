@@ -767,6 +767,9 @@ export default function NuevaSolicitudPage() {
       }
     }
 
+    // NOTA: No validamos el campo "Descripción" ya que el usuario puede modificarlo 
+    // libremente para dar mayor detalle a la solicitud sin que sea una inconsistencia
+
     // Guardar errores y mostrar modal si los hay
     if (errors.length > 0) {
       console.log(`❌ Se encontraron ${errors.length} inconsistencias:`, errors)
