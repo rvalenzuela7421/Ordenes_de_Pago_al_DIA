@@ -80,6 +80,8 @@ export default function NuevaSolicitudPage() {
   const [pendingPDFFile, setPendingPDFFile] = useState<File | null>(null)
   // Modal de validación eliminado - los datos se aplican automáticamente
   const [extractedData, setExtractedData] = useState<any>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
 
   // Leer parámetros del tipo de solicitud de la URL
   useEffect(() => {
@@ -650,10 +652,146 @@ export default function NuevaSolicitudPage() {
     }
   }
 
+  // Función para validar que los datos del formulario coincidan con los datos extraídos del PDF
+  const validatePDFConsistency = (): boolean => {
+    console.log('🔍 Validando consistencia PDF vs Formulario...')
+    
+    if (!extractedData) {
+      console.log('ℹ️ No hay datos extraídos del PDF - omitiendo validación')
+      return true
+    }
+
+    console.log('📊 Datos extraídos del PDF:', extractedData)
+    console.log('📝 Datos del formulario:', formData)
+
+    const errors: string[] = []
+    const tolerance = 0.01 // Tolerancia para diferencias numéricas mínimas
+
+    // Función helper para normalizar y limpiar valores numéricos
+    const normalizeNumericValue = (value: any): number => {
+      if (!value) return 0
+      const stringValue = String(value).replace(/[^\d]/g, '')
+      return parseFloat(stringValue) || 0
+    }
+
+    // Función helper para normalizar strings
+    const normalizeString = (value: any): string => {
+      if (!value) return ''
+      return String(value).trim().toLowerCase()
+    }
+
+    // 1. Validar Fecha Cuenta de Cobro
+    if (extractedData.fechaCuentaCobro && formData.fechaCuentaCobro) {
+      const extractedDate = normalizeString(extractedData.fechaCuentaCobro)
+      const formDate = normalizeString(formData.fechaCuentaCobro)
+      
+      if (extractedDate !== formDate) {
+        errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}"`)
+      }
+    }
+
+    // 2. Validar Valor Solicitud
+    if (extractedData.valorSolicitud) {
+      const extractedValue = normalizeNumericValue(extractedData.valorSolicitud)
+      const formValue = normalizeNumericValue(formData.valorSolicitud)
+      const difference = Math.abs(extractedValue - formValue)
+      
+      if (difference > tolerance && extractedValue > 0) {
+        errors.push(`💰 Valor Solicitud: El formulario muestra $${parseInt(formData.valorSolicitud).toLocaleString('es-CO')} pero el PDF indica $${extractedValue.toLocaleString('es-CO')}`)
+      }
+    }
+
+    // 3. Validar IVA
+    if (extractedData.tieneIVA !== undefined && extractedData.valorIVA !== undefined) {
+      const extractedIVA = normalizeNumericValue(extractedData.valorIVA)
+      const formIVA = normalizeNumericValue(formData.iva)
+      const ivaExtracted = extractedData.tieneIVA
+      const ivaForm = formData.tieneIVA
+      
+      // Verificar checkbox de IVA
+      if (ivaExtracted !== ivaForm) {
+        errors.push(`✅ Tiene IVA: El formulario indica "${ivaForm ? 'Sí' : 'No'}" pero el PDF indica "${ivaExtracted ? 'Sí' : 'No'}"`)
+      }
+      
+      // Verificar valor de IVA si ambos tienen IVA
+      if (ivaExtracted && ivaForm && extractedIVA > 0) {
+        const ivaDifference = Math.abs(extractedIVA - formIVA)
+        if (ivaDifference > tolerance) {
+          errors.push(`📊 Valor IVA: El formulario muestra $${parseInt(formData.iva).toLocaleString('es-CO')} pero el PDF indica $${extractedIVA.toLocaleString('es-CO')}`)
+        }
+      }
+    }
+
+    // 4. Validar Total Solicitud
+    if (extractedData.valorTotalSolicitud) {
+      const extractedTotal = normalizeNumericValue(extractedData.valorTotalSolicitud)
+      const formTotal = normalizeNumericValue(formData.totalSolicitud)
+      const totalDifference = Math.abs(extractedTotal - formTotal)
+      
+      if (totalDifference > tolerance && extractedTotal > 0) {
+        errors.push(`🧾 Valor Total: El formulario muestra $${parseInt(formData.totalSolicitud).toLocaleString('es-CO')} pero el PDF indica $${extractedTotal.toLocaleString('es-CO')}`)
+      }
+    }
+
+    // 5. Validar Compañía Receptora
+    if (extractedData.companiaReceptora && formData.proveedor) {
+      const extractedCompany = normalizeString(extractedData.companiaReceptora)
+      const formCompany = normalizeString(formData.proveedor)
+      
+      // Comparación más flexible para compañías (buscar coincidencia parcial)
+      if (!extractedCompany.includes(formCompany.split('-').pop()?.trim() || '') && 
+          !formCompany.includes(extractedCompany.split('-').pop()?.trim() || '')) {
+        errors.push(`🏢 Compañía Receptora: El formulario muestra "${formData.proveedor}" pero el PDF indica "${extractedData.companiaReceptora}"`)
+      }
+    }
+
+    // 6. Validar Acreedor
+    if (extractedData.acreedor && formData.acreedor) {
+      const extractedCreditor = normalizeString(extractedData.acreedor)
+      const formCreditor = normalizeString(formData.acreedor)
+      
+      // Comparación más flexible para acreedores (buscar coincidencia parcial)
+      if (!extractedCreditor.includes(formCreditor.split('-').pop()?.trim() || '') && 
+          !formCreditor.includes(extractedCreditor.split('-').pop()?.trim() || '')) {
+        errors.push(`👤 Acreedor: El formulario muestra "${formData.acreedor}" pero el PDF indica "${extractedData.acreedor}"`)
+      }
+    }
+
+    // 7. Validar Concepto
+    if (extractedData.concepto && formData.concepto) {
+      const extractedConcept = normalizeString(extractedData.concepto)
+      const formConcept = normalizeString(formData.concepto)
+      
+      if (extractedConcept !== formConcept) {
+        errors.push(`📝 Concepto: El formulario muestra "${formData.concepto}" pero el PDF indica "${extractedData.concepto}"`)
+      }
+    }
+
+    // Guardar errores y mostrar modal si los hay
+    if (errors.length > 0) {
+      console.log(`❌ Se encontraron ${errors.length} inconsistencias:`, errors)
+      setValidationErrors(errors)
+      setShowValidationErrors(true)
+      return false
+    }
+
+    console.log('✅ Validación exitosa - no se encontraron inconsistencias')
+    return true
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Limpiar errores de validación previos
+    setValidationErrors([])
+    setShowValidationErrors(false)
+    
     if (!validateForm()) return
+    
+    // Validar consistencia con datos del PDF antes de continuar
+    if (!validatePDFConsistency()) {
+      return // Los errores ya se muestran en el modal
+    }
 
     setShowConfirmation(true)
   }
@@ -1402,6 +1540,80 @@ export default function NuevaSolicitudPage() {
                   Confirmar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de errores de validación */}
+      {showValidationErrors && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                ⚠️ Inconsistencias Detectadas
+              </h3>
+              
+              <div className="text-left mb-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  Se encontraron diferencias entre la información del formulario y los datos extraídos del PDF. 
+                  Por favor, verifique y corrija los siguientes campos:
+                </p>
+                
+                <div className="max-h-64 overflow-y-auto bg-red-50 border border-red-200 rounded-lg p-4">
+                  <ul className="space-y-3">
+                    {validationErrors.map((error, index) => (
+                      <li key={index} className="flex items-start text-sm text-red-700">
+                        <div className="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
+                        <span className="flex-1">{error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-800">
+                    <strong>💡 Recomendación:</strong> Para evitar que la solicitud sea devuelta, 
+                    asegúrese de que la información del formulario coincida exactamente con el PDF de la cuenta de cobro.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={() => setShowValidationErrors(false)}
+                  className="flex items-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                  </svg>
+                  Revisar y Corregir
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowValidationErrors(false)
+                    setShowConfirmation(true)
+                  }}
+                  className="flex items-center gap-2 px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                  title="⚠️ No recomendado: Puede causar rechazo de la solicitud"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Continuar de Todas Formas
+                </button>
+              </div>
+              
+              <p className="mt-2 text-xs text-gray-500">
+                ⚠️ Continuar con inconsistencias puede resultar en el rechazo de la solicitud
+              </p>
             </div>
           </div>
         </div>
