@@ -16,6 +16,7 @@ interface SolicitudOPData {
   iva: number
   totalSolicitud: number
   tieneDistribuciones: boolean
+  tipoSolicitud: string
   archivoPDF?: File
   archivoXLSX?: File
 }
@@ -62,13 +63,14 @@ export default async function handler(
       totalSolicitud,
       tieneDistribuciones,
       archivos,
-      metadata
+      metadata,
+      tipoSolicitud
     } = req.body
 
     // Validaciones básicas
-    if (!fechaCuentaCobro || !companiaReceptora || !acreedor || !concepto || !valorSolicitud) {
+    if (!fechaCuentaCobro || !companiaReceptora || !acreedor || !concepto || !valorSolicitud || !tipoSolicitud) {
       return res.status(400).json({ 
-        error: 'Datos incompletos. Fecha cuenta de cobro, compañía receptora, acreedor, concepto y valor son requeridos.' 
+        error: 'Datos incompletos. Fecha cuenta de cobro, compañía receptora, acreedor, concepto, valor y tipo de solicitud son requeridos.' 
       })
     }
 
@@ -134,6 +136,7 @@ export default async function handler(
       iva: tieneIVABool ? Math.round(ivaCalculado * 100) / 100 : 0,
       total_solicitud: Math.round(totalCalculado * 100) / 100,
       ind_distribuciones: tieneDistribuciones ? 'S' : 'N', // Mapear boolean a S/N
+      tipo_solicitud: tipoSolicitud, // Nuevo campo: tipo de solicitud seleccionado
       estado: 'Solicitada',
       fecha_solicitud: getColombiaDateTime(),
       // URLs de archivos subidos
@@ -147,7 +150,8 @@ export default async function handler(
         numero: numeroSolicitud,
         proveedor: acreedor,
         total: totalCalculado,
-        estado: 'Solicitada'
+        estado: 'Solicitada',
+        tipo_solicitud: tipoSolicitud
       })
 
       // Simular delay de red

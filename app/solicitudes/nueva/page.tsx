@@ -13,7 +13,7 @@ import Link from 'next/link'
 
 // Todos los datos se cargan desde la base de datos - tabla parametros
 
-interface FormData {
+interface SolicitudFormData {
   fechaCuentaCobro: string
   proveedor: string
   acreedor: string
@@ -50,7 +50,7 @@ export default function NuevaSolicitudPage() {
   const [conceptos, setConceptos] = useState<Concepto[]>([])
   const [loadingConceptos, setLoadingConceptos] = useState(true)
   
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<SolicitudFormData>({
     fechaCuentaCobro: '',
     proveedor: '', // Usuario debe seleccionar
     acreedor: '', // Usuario debe seleccionar
@@ -345,10 +345,10 @@ export default function NuevaSolicitudPage() {
         setTimeout(() => {
           console.log('🎯 === VERIFICACIÓN POST-ASIGNACIÓN ===')
           console.log('📋 Estado actual del formulario (formData):')
-          console.log('  - tieneIVA:', formData.tieneIVA)
-          console.log('  - iva:', formData.iva)
-          console.log('  - totalSolicitud:', formData.totalSolicitud)
-          console.log('  - valorSolicitud:', formData.valorSolicitud)
+          console.log('  - tieneIVA:', (formData as unknown as SolicitudFormData).tieneIVA)
+          console.log('  - iva:', (formData as unknown as SolicitudFormData).iva)
+          console.log('  - totalSolicitud:', (formData as unknown as SolicitudFormData).totalSolicitud)
+          console.log('  - valorSolicitud:', (formData as unknown as SolicitudFormData).valorSolicitud)
           console.log('=======================================')
         }, 100) // Pequeño delay para que el estado se actualice
         
@@ -1047,6 +1047,7 @@ export default function NuevaSolicitudPage() {
           iva: formData.iva,
           totalSolicitud: formData.totalSolicitud,
           tieneDistribuciones: true, // Siempre true ya que el Excel es obligatorio
+          tipoSolicitud: tipoSolicitud, // Tipo de solicitud seleccionado en la pantalla inicial
           archivos: {
             pdf_url: uploadResult.urls?.pdf || null,
             xlsx_url: uploadResult.urls?.xlsx || null,
