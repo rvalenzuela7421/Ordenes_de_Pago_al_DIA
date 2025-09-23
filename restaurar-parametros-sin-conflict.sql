@@ -136,3 +136,4 @@ FROM public.parametros;
 -- ============================================================================
 SELECT 'Todos los parámetros restaurados exitosamente sin errores de constraint' as resultado;
 
+

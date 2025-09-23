@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { 
   getOrdenesPago, 
   getReporteEstados, 
-  getReporteProveedores, 
+  getReporteTipoServicio, 
   getReporteFinanciero, 
   getReporteEficiencia,
   exportToCSV,
@@ -17,7 +17,7 @@ import type {
   OrdenPago, 
   FilterState,
   ReporteEstados, 
-  ReporteProveedores, 
+  ReporteTipoServicio, 
   ReporteFinanciero, 
   ReporteEficiencia 
 } from '@/lib/dashboard-data'
@@ -37,7 +37,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
-type TipoReporte = 'estados' | 'periodos' | 'proveedores' | 'financiero' | 'eficiencia' | null
+type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
 
 // Colores para las gráficas
 const COLORES_ESTADOS = {
@@ -48,7 +48,98 @@ const COLORES_ESTADOS = {
   'Pagada': '#059669'        // verde esmeralda
 }
 
+const COLORES_TIPOS_SERVICIO = {
+  'Pago de Comisiones Bancarias': '#3B82F6',   // azul
+  'Pago de Servicios Públicos': '#10B981',     // verde
+  'Sin especificar': '#6B7280'                 // gris
+}
+
 const COLORES_GRAFICAS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
+
+// Componente personalizado para etiquetas de pie chart con cantidad dentro y porcentaje fuera
+const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, index, name, data, porcentaje }: any) => {
+  const RADIAN = Math.PI / 180
+  
+  // Posición para la cantidad (dentro de la sección)
+  const innerRadiusPos = innerRadius + (outerRadius - innerRadius) * 0.5
+  const xInner = cx + innerRadiusPos * Math.cos(-midAngle * RADIAN)
+  const yInner = cy + innerRadiusPos * Math.sin(-midAngle * RADIAN)
+  
+  // Posición para el porcentaje (fuera del pie)
+  const outerRadiusPos = outerRadius + 25 // 25px fuera del borde
+  const xOuter = cx + outerRadiusPos * Math.cos(-midAngle * RADIAN)
+  const yOuter = cy + outerRadiusPos * Math.sin(-midAngle * RADIAN)
+  
+  // Calcular tamaño de fuente basado en el porcentaje de la sección
+  const percentage = data && data.length > 0 ? (value / data.reduce((sum: number, entry: any) => sum + entry.value, 0)) * 100 : 0
+  let fontSize = 12
+  
+  // Ajustar tamaño de fuente según el porcentaje de la sección
+  if (percentage > 20) {
+    fontSize = 14
+  } else if (percentage > 10) {
+    fontSize = 12
+  } else if (percentage > 5) {
+    fontSize = 10
+  } else {
+    fontSize = 9
+  }
+  
+  // No mostrar texto si la sección es muy pequeña
+  if (percentage < 3) {
+    return null
+  }
+
+  const displayPercentage = porcentaje || Math.round(percentage * 10) / 10
+
+  return (
+    <g>
+      {/* Cantidad dentro de la sección */}
+      <text 
+        x={xInner} 
+        y={yInner} 
+        fill="#fff" 
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={fontSize}
+        fontWeight="700"
+        style={{
+          textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
+          filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.9))'
+        }}
+      >
+        {value}
+      </text>
+      
+      {/* Línea de conexión del porcentaje (opcional) */}
+      <line
+        x1={cx + outerRadius * Math.cos(-midAngle * RADIAN)}
+        y1={cy + outerRadius * Math.sin(-midAngle * RADIAN)}
+        x2={xOuter - (xOuter > cx ? 8 : -8)}
+        y2={yOuter}
+        stroke="#666"
+        strokeWidth={1}
+        opacity={0.5}
+      />
+      
+      {/* Porcentaje fuera del pie */}
+      <text 
+        x={xOuter} 
+        y={yOuter} 
+        fill="#374151" 
+        textAnchor={xOuter > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        fontSize={11}
+        fontWeight="600"
+        style={{
+          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
+        }}
+      >
+        {displayPercentage}%
+      </text>
+    </g>
+  )
+}
 
 export default function ReportesPage() {
   const [loading, setLoading] = useState(false)
@@ -62,6 +153,22 @@ export default function ReportesPage() {
   
   // Modal states
   const [modalAbierto, setModalAbierto] = useState(false)
+
+  // Manejar tecla ESC para cerrar modal
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && modalAbierto) {
+        cerrarModal()
+      }
+    }
+
+    if (modalAbierto) {
+      document.addEventListener('keydown', handleEscKey)
+      return () => {
+        document.removeEventListener('keydown', handleEscKey)
+      }
+    }
+  }, [modalAbierto])
 
   // Función utilitaria para formatear fechas correctamente (evitando problema de timezone)
   const formatearFechaUtil = (fechaISO: string | null) => {
@@ -374,10 +481,10 @@ export default function ReportesPage() {
     setLoading(false)
   }
 
-  const generarReporteProveedores = async () => {
+  const generarReporteTipoServicio = async () => {
     setLoading(true)
     try {
-      const datos = await getReporteProveedores(filtros.dateRange.from || filtros.dateRange.to ? filtros : undefined)
+      const datos = await getReporteTipoServicio(filtros.dateRange.from || filtros.dateRange.to ? filtros : undefined)
       
       // Obtener órdenes para calcular período
       let ordenes: OrdenPago[]
@@ -412,8 +519,8 @@ export default function ReportesPage() {
         tituloPeriodo = `${formatearFechaUtil(fechaInicio)} al ${formatearFechaUtil(fechaFin)}`
       }
       
-      // Ordenar proveedores por cantidad de mayor a menor
-      const proveedoresOrdenados = [...datos.proveedores].sort((a, b) => b.cantidad - a.cantidad)
+      // Ordenar tipos de servicio por cantidad de mayor a menor
+      const tiposOrdenados = [...datos.tiposServicio].sort((a, b) => b.cantidad - a.cantidad)
       
       // Calcular estadísticas básicas
       const totalOrdenes = datos.totales.totalOrdenes
@@ -421,31 +528,25 @@ export default function ReportesPage() {
       const totalIvaSum = ordenes.reduce((sum, orden) => sum + orden.iva, 0)
       const montoBaseSum = ordenes.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
       
-      // Preparar datos para la gráfica (top 10)
-      const datosGrafica = proveedoresOrdenados.slice(0, 10).map(proveedor => {
-        // Calcular valores reales basados en las órdenes del proveedor
-        const ordenesProveedor = proveedor.ordenes || []
-        const montoBaseReal = ordenesProveedor.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
-        const ivaReal = ordenesProveedor.reduce((sum, orden) => sum + orden.iva, 0)
-        const montoTotalReal = ordenesProveedor.reduce((sum, orden) => sum + orden.total_solicitud, 0)
-        
+      // Preparar datos para la gráfica
+      const datosGrafica = tiposOrdenados.map(tipo => {
         return {
-          proveedor: proveedor.proveedor.length > 30 ? 
-            proveedor.proveedor.substring(0, 27) + '...' : 
-            proveedor.proveedor,
-          proveedorCompleto: proveedor.proveedor,
-          Cantidad: proveedor.cantidad,
-          'Monto Total': montoTotalReal || proveedor.monto,
-          'Monto Base': montoBaseReal || (proveedor.monto * 0.81), // Fallback aproximado
-          'IVA': ivaReal || (proveedor.monto * 0.19), // Fallback aproximado
-          porcentaje: datos.totales.totalOrdenes > 0 ? Math.round((proveedor.cantidad / datos.totales.totalOrdenes) * 100) : 0
+          tipoServicio: tipo.tipoServicio.length > 30 ? 
+            tipo.tipoServicio.substring(0, 27) + '...' : 
+            tipo.tipoServicio,
+          tipoServicioCompleto: tipo.tipoServicio,
+          Cantidad: tipo.cantidad,
+          'Monto Total': tipo.monto,
+          'Monto Base': tipo.montoBase,
+          'IVA': tipo.iva,
+          porcentaje: datos.totales.totalOrdenes > 0 ? Math.round((tipo.cantidad / datos.totales.totalOrdenes) * 100) : 0
         }
       })
       
 
       setDatosReporte({
         ...datos,
-        proveedores: proveedoresOrdenados,
+        tiposServicio: tiposOrdenados,
         datosGrafica,
         totalOrdenes,
         montoBase: montoBaseSum,
@@ -453,10 +554,10 @@ export default function ReportesPage() {
         montoTotal: montoTotalSum,
         periodo: tituloPeriodo
       })
-      setReporteActivo('proveedores')
+      setReporteActivo('tipoServicio')
       setModalAbierto(true)
     } catch (error) {
-      console.error('Error generando reporte por proveedores:', error)
+      console.error('Error generando reporte por tipo de servicio:', error)
     }
     setLoading(false)
   }
@@ -779,16 +880,16 @@ export default function ReportesPage() {
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte por Proveedores</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte por Tipo de Servicio</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Ranking visual con gráficas de barras horizontales
+              Análisis detallado por tipo de solicitud con gráficas de barras
             </p>
             <button 
-              onClick={generarReporteProveedores}
+              onClick={generarReporteTipoServicio}
               className="w-full bg-purple-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading && reporteActivo === 'proveedores' ? 'Generando...' : 'Generar Reporte'}
+              {loading && reporteActivo === 'tipoServicio' ? 'Generando...' : 'Generar Reporte'}
             </button>
           </div>
 
@@ -867,7 +968,7 @@ export default function ReportesPage() {
                 <h2 className="text-xl font-semibold text-gray-900">
                   {reporteActivo === 'estados' && '📊 Reporte por Estados'}
                   {reporteActivo === 'periodos' && '📈 Reporte por Períodos'}
-                  {reporteActivo === 'proveedores' && '👥 Reporte por Proveedores'}
+                  {reporteActivo === 'tipoServicio' && '🏢 Reporte por Tipo de Servicio'}
                   {reporteActivo === 'financiero' && '💰 Reporte Financiero'}
                   {reporteActivo === 'eficiencia' && '⚡ Reporte de Eficiencia'}
                 </h2>
@@ -949,7 +1050,10 @@ export default function ReportesPage() {
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={({ name, porcentaje }) => `${name} (${porcentaje}%)`}
+                                label={(props) => {
+                                  const estadoData = datosReporte.estados[props.index]
+                                  return <CustomPieLabel {...props} data={datosReporte.estados.map((estado: any) => ({ value: estado.cantidad }))} porcentaje={estadoData?.porcentaje} />
+                                }}
                                 outerRadius={120}
                                 innerRadius={60}
                                 fill="#8884d8"
@@ -1159,8 +1263,8 @@ export default function ReportesPage() {
                   </div>
                 )}
 
-                {/* Contenido del Reporte por Proveedores */}
-                {reporteActivo === 'proveedores' && datosReporte && (
+                {/* Contenido del Reporte por Tipo de Servicio */}
+                {reporteActivo === 'tipoServicio' && datosReporte && (
                   <div className="space-y-6">
                     {/* Tarjetas de Estadísticas */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -1191,41 +1295,97 @@ export default function ReportesPage() {
                       </h3>
                     </div>
 
-                    {/* Gráfica de Barras Horizontales para Proveedores */}
+                    {/* Gráfica de Pie para Tipos de Servicio */}
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Ranking de Proveedores - Top 10</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Tipo de Servicio</h3>
                       
                       <div className="h-96 mb-6">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            layout="horizontal"
-                            data={[
-                              { name: "SCOTIABANK", value: 8 },
-                              { name: "BANCO AV VILLA", value: 6 },
-                              { name: "CITIBANK", value: 4 },
-                              { name: "BANCO CAJA SOC", value: 3 },
-                              { name: "BANCO POPULAR", value: 2 },
-                              { name: "BBVA COLOMBIA", value: 1 }
-                            ]}
-                            margin={{ top: 20, right: 30, left: 150, bottom: 5 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis type="number" />
-                            <YAxis type="category" dataKey="name" width={140} />
-                            <Tooltip />
-                            <Bar dataKey="value" fill="#3b82f6" />
-                          </BarChart>
+                          <PieChart>
+                            <defs>
+                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => {
+                                const color = COLORES_TIPOS_SERVICIO[tipo.tipoServicio as keyof typeof COLORES_TIPOS_SERVICIO] || COLORES_GRAFICAS[index % COLORES_GRAFICAS.length]
+                                return (
+                                  <linearGradient key={`gradient-${tipo.tipoServicio}`} id={`gradient-${tipo.tipoServicio.replace(/\s+/g, '-')}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor={color} stopOpacity={1} />
+                                    <stop offset="100%" stopColor={color} stopOpacity={0.8} />
+                                  </linearGradient>
+
+                                )
+                              })}
+                            </defs>
+                            <Pie
+                              data={datosReporte.tiposServicio?.map((tipo: any) => ({
+                                name: tipo.tipoServicio,
+                                value: tipo.cantidad,
+                                monto: tipo.monto,
+                                montoBase: tipo.montoBase,
+                                iva: tipo.iva,
+                                porcentaje: tipo.porcentaje
+                              })) || []}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={(props) => {
+                                const tipoData = datosReporte.tiposServicio?.[props.index]
+                                return <CustomPieLabel {...props} data={datosReporte.tiposServicio?.map((tipo: any) => ({ value: tipo.cantidad })) || []} porcentaje={tipoData?.porcentaje} />
+                              }}
+                              outerRadius={120}
+                              innerRadius={60}
+                              fill="#8884d8"
+                              dataKey="value"
+                              stroke="#fff"
+                              strokeWidth={3}
+                              startAngle={90}
+                              endAngle={450}
+                            >
+                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={`url(#gradient-${tipo.tipoServicio.replace(/\s+/g, '-')})`}
+                                  style={{
+                                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))'
+                                  }}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const data = payload[0].payload
+                                  return (
+                                    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                      <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
+                                      <div className="space-y-1 text-sm">
+                                        <p className="text-blue-600">Cantidad: <span className="font-medium">{data.value}</span></p>
+                                        <p className="text-green-600">Monto Base: <span className="font-medium">{formatCurrency(data.montoBase)}</span></p>
+                                        <p className="text-orange-600">IVA: <span className="font-medium">{formatCurrency(data.iva)}</span></p>
+                                        <p className="text-purple-600">Total: <span className="font-medium">{formatCurrency(data.monto)}</span></p>
+                                        <p className="text-gray-600">Participación: <span className="font-medium">{data.porcentaje}%</span></p>
+                                      </div>
+                                    </div>
+                                  )
+                                }
+                                return null
+                              }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={36}
+                              formatter={(value: string) => value.length > 25 ? value.substring(0, 22) + '...' : value}
+                            />
+                          </PieChart>
                         </ResponsiveContainer>
                       </div>
 
                       {/* Tabla de Detalles */}
                       <div className="mt-6 border-t pt-6">
-                        <h4 className="text-md font-medium text-gray-900 mb-4">Detalle de Proveedores</h4>
+                        <h4 className="text-md font-medium text-gray-900 mb-4">Detalle por Tipo de Servicio</h4>
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                               <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Servicio</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Solicitado</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA</th>
@@ -1234,14 +1394,14 @@ export default function ReportesPage() {
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                              {datosReporte.proveedores?.map((proveedor: any, index: number) => (
+                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
                                 <tr key={index} className="hover:bg-gray-50">
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{proveedor.proveedor}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{proveedor.cantidad}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(proveedor.monto * 0.81)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(proveedor.monto * 0.19)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(proveedor.monto)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{proveedor.porcentaje}%</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tipo.tipoServicio}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tipo.cantidad}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.montoBase)}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.iva)}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.monto)}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tipo.porcentaje}%</td>
                                 </tr>
                               )) || <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No hay datos disponibles</td></tr>}
                             </tbody>

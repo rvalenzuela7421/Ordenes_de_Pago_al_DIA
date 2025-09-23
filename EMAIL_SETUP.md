@@ -108,3 +108,4 @@ El email incluye:
 - Solo se envían emails a usuarios autenticados en el sistema
 - El sistema valida la configuración antes de intentar envíos
 
+

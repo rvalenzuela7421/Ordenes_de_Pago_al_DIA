@@ -58,3 +58,4 @@ FROM public.ordenes_pago;
 -- ============================================================================
 SELECT 'Distribución completada usando ROW_NUMBER - Compatible con UUID' as resultado;
 
+

@@ -370,20 +370,24 @@ export interface ReporteEstados {
   }
 }
 
-// Interfaz para reporte por proveedores
-export interface ReporteProveedores {
-  proveedores: {
-    proveedor: string
+// Interfaz para reporte por tipo de servicio
+export interface ReporteTipoServicio {
+  tiposServicio: {
+    tipoServicio: string
     cantidad: number
     monto: number
+    iva: number
+    montoBase: number
     porcentaje: number
     ordenes: OrdenPago[]
     estados: { [key: string]: number }
   }[]
   totales: {
-    totalProveedores: number
+    totalTipos: number
     totalOrdenes: number
     montoTotal: number
+    totalIva: number
+    totalBase: number
   }
 }
 
@@ -492,57 +496,81 @@ export async function getReporteEstados(filters?: FilterState): Promise<ReporteE
   }
 }
 
-// Función para generar reporte por proveedores
-export async function getReporteProveedores(filters?: FilterState): Promise<ReporteProveedores> {
+// Función para generar reporte por tipo de servicio
+export async function getReporteTipoServicio(filters?: FilterState): Promise<ReporteTipoServicio> {
   try {
     const ordenes = await getOrdenesPago(filters)
     
-    // Agrupar por proveedor
-    const proveedoresMap: { [key: string]: OrdenPago[] } = {}
-    ordenes.forEach(orden => {
-      if (!proveedoresMap[orden.proveedor]) {
-        proveedoresMap[orden.proveedor] = []
-      }
-      proveedoresMap[orden.proveedor].push(orden)
-    })
-    
+    // Calcular totales generales
     const totalOrdenes = ordenes.length
     const montoTotal = ordenes.reduce((sum, orden) => sum + orden.total_solicitud, 0)
+    const totalIva = ordenes.reduce((sum, orden) => sum + orden.iva, 0)
+    const totalBase = ordenes.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
     
-    const proveedores = Object.entries(proveedoresMap).map(([proveedor, ordenesProveedor]) => {
-      const cantidad = ordenesProveedor.length
-      const monto = ordenesProveedor.reduce((sum, orden) => sum + orden.total_solicitud, 0)
-      const porcentaje = totalOrdenes > 0 ? Math.round((cantidad / totalOrdenes) * 100) : 0
-      
-      // Contar por estados
-      const estados: { [key: string]: number } = {}
-      ordenesProveedor.forEach(orden => {
-        estados[orden.estado] = (estados[orden.estado] || 0) + 1
-      })
-      
-      return {
-        proveedor,
-        cantidad,
-        monto,
-        porcentaje,
-        ordenes: ordenesProveedor,
-        estados
+    // Agrupar por tipo de servicio
+    const tiposMap: { [key: string]: OrdenPago[] } = {}
+    ordenes.forEach(orden => {
+      const tipoServicio = orden.tipo_solicitud || 'Sin especificar'
+      if (!tiposMap[tipoServicio]) {
+        tiposMap[tipoServicio] = []
       }
-    }).sort((a, b) => b.monto - a.monto) // Ordenar por monto descendente
+      tiposMap[tipoServicio].push(orden)
+    })
+    
+    // Orden específico de tipos de servicio
+    const ordenTipos = ['Pago de Comisiones Bancarias', 'Pago de Servicios Públicos']
+    const tiposOrdenados = [...ordenTipos, ...Object.keys(tiposMap).filter(tipo => !ordenTipos.includes(tipo))]
+    
+    const tiposServicio = tiposOrdenados
+      .filter(tipo => tiposMap[tipo]) // Solo incluir tipos que existen
+      .map(tipoServicio => {
+        const ordenesTipo = tiposMap[tipoServicio]
+        const cantidad = ordenesTipo.length
+        const monto = ordenesTipo.reduce((sum, orden) => sum + orden.total_solicitud, 0)
+        const iva = ordenesTipo.reduce((sum, orden) => sum + orden.iva, 0)
+        const montoBase = ordenesTipo.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
+        const porcentaje = totalOrdenes > 0 ? Math.round((cantidad / totalOrdenes) * 100) : 0
+        
+        // Contar por estados
+        const estados: { [key: string]: number } = {}
+        ordenesTipo.forEach(orden => {
+          estados[orden.estado] = (estados[orden.estado] || 0) + 1
+        })
+        
+        return {
+          tipoServicio,
+          cantidad,
+          monto,
+          iva,
+          montoBase,
+          porcentaje,
+          ordenes: ordenesTipo,
+          estados
+        }
+      })
+      .sort((a, b) => b.monto - a.monto) // Ordenar por monto descendente
     
     return {
-      proveedores,
+      tiposServicio,
       totales: {
-        totalProveedores: proveedores.length,
+        totalTipos: tiposServicio.length,
         totalOrdenes,
-        montoTotal
+        montoTotal,
+        totalIva,
+        totalBase
       }
     }
   } catch (error) {
-    console.error('Error generando reporte por proveedores:', error)
+    console.error('Error generando reporte por tipo de servicio:', error)
     return {
-      proveedores: [],
-      totales: { totalProveedores: 0, totalOrdenes: 0, montoTotal: 0 }
+      tiposServicio: [],
+      totales: { 
+        totalTipos: 0, 
+        totalOrdenes: 0, 
+        montoTotal: 0,
+        totalIva: 0,
+        totalBase: 0 
+      }
     }
   }
 }

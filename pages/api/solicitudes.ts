@@ -9,6 +9,8 @@ interface SolicitudOPData {
   fechaCuentaCobro: string
   companiaReceptora: string
   acreedor: string
+  areaSolicitante?: string
+  autorizador?: string
   concepto: string
   valorSolicitud: number
   tieneIVA: boolean
@@ -53,6 +55,8 @@ export default async function handler(
       fechaCuentaCobro,
       companiaReceptora,
       acreedor,
+      areaSolicitante,
+      autorizador,
       concepto,
       descripcion,
       valorSolicitud,
@@ -71,6 +75,19 @@ export default async function handler(
     if (!fechaCuentaCobro || !companiaReceptora || !acreedor || !concepto || !valorSolicitud || !tipoSolicitud) {
       return res.status(400).json({ 
         error: 'Datos incompletos. Fecha cuenta de cobro, compañía receptora, acreedor, concepto, valor y tipo de solicitud son requeridos.' 
+      })
+    }
+
+    // Validación específica para Servicios Públicos
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !areaSolicitante) {
+      return res.status(400).json({ 
+        error: 'El área solicitante es requerida para solicitudes de Pago de Servicios Públicos.' 
+      })
+    }
+
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !autorizador) {
+      return res.status(400).json({ 
+        error: 'El autorizador es requerido para solicitudes de Pago de Servicios Públicos.' 
       })
     }
 
@@ -131,6 +148,8 @@ export default async function handler(
       fecha_cuenta_cobro: fechaValidada, // Campo requerido: fecha de la cuenta de cobro (validada)
       compania_receptora: companiaReceptora, // Nuevo campo compañía receptora
       proveedor: acreedor, // Mapear acreedor -> proveedor
+      area_solicitante: areaSolicitante || null, // Nuevo campo: área solicitante para servicios públicos
+      autorizador: autorizador || null, // Nuevo campo: autorizador para servicios públicos
       concepto,
       descripcion: descripcion || null, // Nuevo campo descripcion
       monto_solicitud: valorBase, // Mapear valor_solicitud -> monto_solicitud  

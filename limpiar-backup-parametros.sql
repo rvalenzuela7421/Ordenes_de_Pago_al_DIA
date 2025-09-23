@@ -53,3 +53,4 @@ FROM public.parametros;
 -- ============================================================================
 SELECT 'Tabla backup eliminada - Parámetros restaurados completamente en tabla principal' as resultado_final;
 
+

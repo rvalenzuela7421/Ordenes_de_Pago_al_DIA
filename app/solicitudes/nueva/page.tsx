@@ -18,6 +18,8 @@ interface SolicitudFormData {
   fechaCuentaCobro: string
   proveedor: string
   acreedor: string
+  areaSolicitante: string
+  autorizador: string
   concepto: string
   descripcion: string
   valorSolicitud: string
@@ -48,6 +50,10 @@ export default function NuevaSolicitudPage() {
   const [loadingEmpresas, setLoadingEmpresas] = useState(true)
   const [acreedores, setAcreedores] = useState<Acreedor[]>([])
   const [loadingAcreedores, setLoadingAcreedores] = useState(true)
+  const [areasSolicitantes, setAreasSolicitantes] = useState<Parametro[]>([])
+  const [loadingAreasSolicitantes, setLoadingAreasSolicitantes] = useState(true)
+  const [autorizadores, setAutorizadores] = useState<Parametro[]>([])
+  const [loadingAutorizadores, setLoadingAutorizadores] = useState(true)
   const [conceptos, setConceptos] = useState<Concepto[]>([])
   const [loadingConceptos, setLoadingConceptos] = useState(true)
   
@@ -55,6 +61,8 @@ export default function NuevaSolicitudPage() {
     fechaCuentaCobro: '',
     proveedor: '', // Usuario debe seleccionar
     acreedor: '', // Usuario debe seleccionar
+    areaSolicitante: '',
+    autorizador: '',
     concepto: '',
     descripcion: '',
     valorSolicitud: '',
@@ -92,9 +100,12 @@ export default function NuevaSolicitudPage() {
     const tipoId = searchParams.get('tipoId')
     const descripcionParam = searchParams.get('descripcionGrupo')
     
+    console.log('🔄 useEffect URL - Parámetros:', { tipo, tipoId, descripcionParam })
+    
     if (tipo) {
       setTipoSolicitud(tipo)
       console.log('📋 Tipo de solicitud recibido:', tipo)
+      // ✅ El useEffect se encargará de cargar los conceptos
     }
     if (tipoId) {
       setTipoSolicitudId(tipoId)
@@ -116,22 +127,41 @@ export default function NuevaSolicitudPage() {
     cargarDatosIniciales()
   }, [])
 
-  // Recargar conceptos cuando cambie el tipo de solicitud
+  // Cargar conceptos y acreedores cuando esté disponible el tipo de solicitud
   useEffect(() => {
+    console.log('🔄 useEffect para conceptos y acreedores - tipoSolicitud:', tipoSolicitud)
+    
+    // SOLO cargar si hay tipo de solicitud definido
     if (tipoSolicitud) {
-      cargarConceptosValidos()
-      // Limpiar el concepto seleccionado al cambiar tipo
-      setFormData(prev => ({ ...prev, concepto: '' }))
+      console.log('🔄 Cargando conceptos y acreedores para tipo específico:', tipoSolicitud)
+      cargarConceptosValidos(tipoSolicitud)
+      cargarAcreedoresSegunTipo(tipoSolicitud)
+      // Limpiar los campos seleccionados al cambiar tipo
+      setFormData(prev => ({ ...prev, concepto: '', acreedor: '' }))
+    } else {
+      // NO cargar nada si no hay tipo - evitar conflictos
+      console.log('⏸️ Sin tipo definido - esperando tipo de solicitud...')
+      setConceptos([]) // Limpiar lista de conceptos
+      setAcreedores([]) // Limpiar lista de acreedores
     }
   }, [tipoSolicitud])
 
-  // Cargar todos los datos necesarios desde la base de datos
+  // Rastrear cambios en el estado de conceptos
+  useEffect(() => {
+    console.log('📊 Estado conceptos cambió:', {
+      cantidad: conceptos.length,
+      valores: conceptos.length > 0 ? conceptos.map(c => c.valor) : 'VACÍO'
+    })
+  }, [conceptos])
+
+  // Cargar todos los datos necesarios desde la base de datos (excepto conceptos)
   const cargarDatosIniciales = async () => {
     await Promise.all([
       cargarIVAVigente(),
       cargarEmpresasGrupoBolivar(),
-      cargarAcreedoresAutorizados(),
-      cargarConceptosValidos()
+      cargarAreasSolicitantes(),
+      cargarAutorizadores()
+      // ❌ NO cargar conceptos ni acreedores aquí - se cargan según el tipo de solicitud
     ])
   }
 
@@ -208,13 +238,62 @@ export default function NuevaSolicitudPage() {
     }
   }
 
-  // Cargar acreedores autorizados desde tabla parametros
-  const cargarAcreedoresAutorizados = async () => {
+  // Cargar acreedores según el tipo de solicitud desde tabla parametros
+  const cargarAcreedoresSegunTipo = async (tipoSolicitudParam?: string) => {
     try {
       setLoadingAcreedores(true)
-      console.log('🏦 Cargando acreedores autorizados desde parámetros...')
       
-      const { acreedores: acreedoresCargados, count, error } = await getAcreedoresAutorizados(true)
+      // Usar el parámetro si se proporciona, sino usar el estado
+      const tipoActual = tipoSolicitudParam || tipoSolicitud
+      
+      console.log('🏦 Cargando acreedores para tipo:', tipoActual)
+      
+      let acreedoresCargados, count, error
+      
+      if (tipoActual === 'Pago de Servicios Públicos') {
+        // Para servicios públicos, usar grupo ACREEDORES_PSP
+        console.log('📋 Cargando acreedores específicos para Servicios Públicos (ACREEDORES_PSP)...')
+        const result = await getParametrosPorGrupo('ACREEDORES_PSP')
+        
+        if (result.parametros && result.parametros.length > 0) {
+          // Convertir parametros a formato de acreedores
+          acreedoresCargados = result.parametros.map(param => ({
+            id: param.id,
+            valor: param.valor_dominio,
+            label: param.valor_dominio.split('-').slice(2).join('-'), // Mostrar solo el nombre sin el NIT
+            vigente: param.vigente === 'S'
+          }))
+          count = result.count
+          error = result.error
+        } else {
+          error = result.error
+        }
+      } else if (tipoActual === 'Pago de Comisiones Bancarias') {
+        // Para comisiones bancarias, usar grupo ACREEDORES_PCB
+        console.log('📋 Cargando acreedores específicos para Comisiones Bancarias (ACREEDORES_PCB)...')
+        const result = await getParametrosPorGrupo('ACREEDORES_PCB')
+        
+        if (result.parametros && result.parametros.length > 0) {
+          // Convertir parametros a formato de acreedores
+          acreedoresCargados = result.parametros.map(param => ({
+            id: param.id,
+            valor: param.valor_dominio,
+            label: param.valor_dominio.split('-').slice(2).join('-'), // Mostrar solo el nombre sin el NIT
+            vigente: param.vigente === 'S'
+          }))
+          count = result.count
+          error = result.error
+        } else {
+          error = result.error
+        }
+      } else {
+        // Para otros tipos (fallback), usar acreedores regulares
+        console.log('📋 Cargando acreedores regulares (fallback) para:', tipoActual)
+        const result = await getAcreedoresAutorizados(true)
+        acreedoresCargados = result.acreedores
+        count = result.count
+        error = result.error
+      }
       
       if (error) {
         console.error('❌ Error al cargar acreedores:', error)
@@ -223,9 +302,9 @@ export default function NuevaSolicitudPage() {
       
       if (acreedoresCargados && acreedoresCargados.length > 0) {
         setAcreedores(acreedoresCargados)
-        console.log('✅ Acreedores autorizados cargados:', count)
+        console.log('✅ Acreedores cargados:', count)
       } else {
-        console.error('❌ No se encontraron acreedores en la base de datos')
+        console.error('❌ No se encontraron acreedores para tipo:', tipoActual)
         setAcreedores([])
       }
     } catch (error) {
@@ -236,15 +315,76 @@ export default function NuevaSolicitudPage() {
     }
   }
 
+  // Cargar áreas solicitantes para Servicios Públicos desde tabla parametros
+  const cargarAreasSolicitantes = async () => {
+    try {
+      setLoadingAreasSolicitantes(true)
+      console.log('🏢 Cargando áreas solicitantes desde parámetros...')
+      
+      const { parametros: areasCargadas, count, error } = await getParametrosPorGrupo('AREAS_SOLICITANTES_PSP')
+      
+      if (error) {
+        console.error('❌ Error al cargar áreas solicitantes:', error)
+        throw new Error(error)
+      }
+      
+      if (areasCargadas && areasCargadas.length > 0) {
+        setAreasSolicitantes(areasCargadas)
+        console.log('✅ Áreas solicitantes cargadas:', count)
+      } else {
+        console.error('❌ No se encontraron áreas solicitantes en la base de datos')
+        setAreasSolicitantes([])
+      }
+    } catch (error) {
+      console.error('💥 Error inesperado cargando áreas solicitantes:', error)
+      setAreasSolicitantes([])
+    } finally {
+      setLoadingAreasSolicitantes(false)
+    }
+  }
+
+  // Cargar autorizadores para Servicios Públicos desde tabla parametros
+  const cargarAutorizadores = async () => {
+    try {
+      setLoadingAutorizadores(true)
+      console.log('👤 Cargando autorizadores desde parámetros...')
+      
+      const { parametros: autorizadoresCargados, count, error } = await getParametrosPorGrupo('AUTORIZADOR_PSP')
+      
+      if (error) {
+        console.error('❌ Error al cargar autorizadores:', error)
+        throw new Error(error)
+      }
+      
+      if (autorizadoresCargados && autorizadoresCargados.length > 0) {
+        setAutorizadores(autorizadoresCargados)
+        console.log('✅ Autorizadores cargados:', count)
+      } else {
+        console.error('❌ No se encontraron autorizadores en la base de datos')
+        setAutorizadores([])
+      }
+    } catch (error) {
+      console.error('💥 Error inesperado cargando autorizadores:', error)
+      setAutorizadores([])
+    } finally {
+      setLoadingAutorizadores(false)
+    }
+  }
+
   // Cargar conceptos válidos desde tabla parametros
-  const cargarConceptosValidos = async () => {
+  const cargarConceptosValidos = async (tipoSolicitudParam?: string) => {
     try {
       setLoadingConceptos(true)
       
+      // Usar el parámetro si se proporciona, sino usar el estado
+      const tipoActual = tipoSolicitudParam || tipoSolicitud
+      
       // Determinar qué grupo cargar según el tipo de solicitud
-      const esServiciosPublicos = tipoSolicitud === 'Pago de Servicios Públicos'
+      const esServiciosPublicos = tipoActual === 'Pago de Servicios Públicos'
       
       console.log(`📋 Cargando ${esServiciosPublicos ? 'servicios públicos (grupo: SERVICIOS_PUBLICOS)' : 'conceptos (grupo: CONCEPTOS)'} desde parámetros...`)
+      console.log(`📋 Tipo actual recibido: "${tipoActual}"`)
+      console.log(`📋 Es servicios públicos: ${esServiciosPublicos}`)
       
       if (esServiciosPublicos) {
         // Cargar servicios públicos usando getParametrosPorGrupo
@@ -266,6 +406,8 @@ export default function NuevaSolicitudPage() {
           }))
           setConceptos(serviciosComoConceptos)
           console.log('✅ Servicios públicos cargados:', count)
+          console.log('📋 Lista de servicios cargados:', serviciosComoConceptos.map(s => s.valor))
+          console.log('🎯 Estado setConceptos llamado con servicios públicos')
         } else {
           console.warn('⚠️ No se encontraron servicios públicos en la base de datos')
           setConceptos([])
@@ -282,6 +424,8 @@ export default function NuevaSolicitudPage() {
         if (conceptosCargados && conceptosCargados.length > 0) {
           setConceptos(conceptosCargados)
           console.log('✅ Conceptos cargados:', count)
+          console.log('📋 Lista de conceptos cargados:', conceptosCargados.map(c => c.valor))
+          console.log('🎯 Estado setConceptos llamado con conceptos normales')
         } else {
           console.error('❌ No se encontraron conceptos en la base de datos')
           setConceptos([])
@@ -550,18 +694,18 @@ export default function NuevaSolicitudPage() {
                 if (solicitud.valorTotalSolicitud && solicitud.valorTotalSolicitud > 0) {
                   newFormData.totalSolicitud = Math.round(solicitud.valorTotalSolicitud).toString()
                   console.log(`✅ Total del PDF: $${Math.round(solicitud.valorTotalSolicitud)}`)
-                } else {
+          } else {
                   newFormData.totalSolicitud = (solicitud.valorSolicitud + Math.round(solicitud.valorIVA)).toString()
                   console.log('✅ Total calculado: valor base + IVA extraído')
                 }
-              } else {
+                  } else {
                 // NO HAY IVA O ES CERO
                 newFormData.tieneIVA = false
                 newFormData.iva = '0'
                 newFormData.totalSolicitud = solicitud.valorSolicitud.toString()
                 console.log('❌ Sin IVA - checkbox desmarcado, total = valor base')
-              }
-          } else {
+                  }
+                } else {
               console.log('⚠️ No se extrajo valor de solicitud del PDF')
             }
           
@@ -591,9 +735,14 @@ export default function NuevaSolicitudPage() {
       setPdfDataExtracted(false)
       setExtractionConfidence(null)
       
-      // Guardar el archivo pendiente y mostrar diálogo de confirmación
-      setPendingPDFFile(file)
-      setShowPDFExtractionDialog(true)
+      // Para Servicios Públicos, solo adjuntar sin extracción de datos
+      if (tipoSolicitud === 'Pago de Servicios Públicos') {
+        console.log('📁 Archivo PDF adjuntado (sin extracción de datos para Servicios Públicos)')
+      } else {
+        // Para otros tipos, guardar el archivo pendiente y mostrar diálogo de confirmación
+        setPendingPDFFile(file)
+        setShowPDFExtractionDialog(true)
+      }
     } else {
       setErrors(prev => ({ ...prev, archivoPDF: 'Solo se permiten archivos PDF' }))
     }
@@ -614,6 +763,12 @@ export default function NuevaSolicitudPage() {
     // Verificar compañía receptora y acreedor obligatorios
     if (!formData.proveedor.trim() || !formData.acreedor.trim()) return false
     
+    // Verificar área solicitante obligatoria para Servicios Públicos
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !formData.areaSolicitante.trim()) return false
+    
+    // Verificar autorizador obligatorio para Servicios Públicos
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !formData.autorizador.trim()) return false
+    
     // Verificar campos de texto obligatorios
     if (!formData.concepto.trim()) return false
     
@@ -628,8 +783,8 @@ export default function NuevaSolicitudPage() {
     // Verificar archivo PDF obligatorio
     if (!archivoPDF) return false
     
-    // Verificar archivo XLSX obligatorio (siempre requerido)
-    if (!archivoXLSX) return false
+    // Verificar archivo XLSX (obligatorio solo para tipos que no sean Servicios Públicos)
+    if (tipoSolicitud !== 'Pago de Servicios Públicos' && !archivoXLSX) return false
     
     return true
   }
@@ -643,6 +798,14 @@ export default function NuevaSolicitudPage() {
 
     if (!formData.acreedor.trim()) {
       newErrors.acreedor = 'El acreedor es requerido'
+    }
+
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !formData.areaSolicitante.trim()) {
+      newErrors.areaSolicitante = 'El área solicitante es requerida'
+    }
+
+    if (tipoSolicitud === 'Pago de Servicios Públicos' && !formData.autorizador.trim()) {
+      newErrors.autorizador = 'El autorizador es requerido'
     }
 
     if (!formData.concepto.trim()) {
@@ -661,10 +824,10 @@ export default function NuevaSolicitudPage() {
     // El IVA se calcula automáticamente, no necesita validación manual
 
     if (!archivoPDF) {
-      newErrors.archivoPDF = 'Debe adjuntar la cuenta de cobro en PDF'
+      newErrors.archivoPDF = tipoSolicitud === 'Pago de Servicios Públicos' ? 'Debe adjuntar los soportes en PDF' : 'Debe adjuntar la cuenta de cobro en PDF'
     }
 
-    if (!archivoXLSX) {
+    if (tipoSolicitud !== 'Pago de Servicios Públicos' && !archivoXLSX) {
       newErrors.archivoXLSX = 'Debe adjuntar el archivo de distribuciones en XLSX'
     }
 
@@ -1081,6 +1244,8 @@ export default function NuevaSolicitudPage() {
           fechaCuentaCobro: formData.fechaCuentaCobro,
           companiaReceptora: formData.proveedor,
           acreedor: formData.acreedor,
+          areaSolicitante: tipoSolicitud === 'Pago de Servicios Públicos' ? formData.areaSolicitante : null,
+          autorizador: tipoSolicitud === 'Pago de Servicios Públicos' ? formData.autorizador : null,
           concepto: formData.concepto,
           descripcion: formData.descripcion,
           valorSolicitud: formData.valorSolicitud,
@@ -1089,7 +1254,7 @@ export default function NuevaSolicitudPage() {
           porcentajeIVA: ivaVigente?.porcentaje || 0,
           iva: formData.iva,
           totalSolicitud: formData.totalSolicitud,
-          tieneDistribuciones: true, // Siempre true ya que el Excel es obligatorio
+          tieneDistribuciones: tipoSolicitud !== 'Pago de Servicios Públicos' || !!archivoXLSX, // Solo true si no es Servicios Públicos o si hay archivo XLSX
           tipoSolicitud: tipoSolicitud, // Tipo de solicitud seleccionado en la pantalla inicial
           archivos: {
             pdf_url: uploadResult.urls?.pdf || null,
@@ -1382,6 +1547,94 @@ export default function NuevaSolicitudPage() {
               )}
             </div>
 
+            {/* Area Solicitante - Solo para Servicios Públicos */}
+            {tipoSolicitud === 'Pago de Servicios Públicos' && (
+              <div>
+                <label htmlFor="areaSolicitante" className="block text-sm font-medium text-gray-700 mb-2">
+                  Area Solicitante <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="areaSolicitante"
+                  value={formData.areaSolicitante}
+                  onChange={(e) => setFormData(prev => ({ ...prev, areaSolicitante: e.target.value }))}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-bolivar-green ${
+                    errors.areaSolicitante 
+                      ? 'border-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-bolivar-green'
+                  }`}
+                  disabled={loadingAreasSolicitantes}
+                >
+                  {loadingAreasSolicitantes ? (
+                    <option value="">Cargando áreas solicitantes...</option>
+                  ) : areasSolicitantes.length === 0 ? (
+                    <option value="">❌ No hay áreas disponibles - Verificar base de datos</option>
+                  ) : (
+                    [
+                      <option key="empty" value="">Seleccione un área solicitante</option>,
+                      ...areasSolicitantes.map((area) => (
+                        <option key={area.id} value={area.valor_dominio}>
+                          {area.valor_dominio}
+                        </option>
+                      ))
+                    ]
+                  )}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {loadingAreasSolicitantes ? 'Cargando...' : 
+                   areasSolicitantes.length === 0 ? 
+                   '⚠️ No hay áreas disponibles. Debe insertar datos en tabla parametros (grupo: AREAS_SOLICITANTES_PSP)' : 
+                   `✅ ${areasSolicitantes.length} áreas solicitantes disponibles`}
+                </p>
+                {errors.areaSolicitante && (
+                  <p className="mt-1 text-sm text-red-600">{errors.areaSolicitante}</p>
+                )}
+              </div>
+            )}
+
+            {/* Autorizador - Solo para Servicios Públicos */}
+            {tipoSolicitud === 'Pago de Servicios Públicos' && (
+              <div>
+                <label htmlFor="autorizador" className="block text-sm font-medium text-gray-700 mb-2">
+                  Autorizador <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="autorizador"
+                  value={formData.autorizador}
+                  onChange={(e) => setFormData(prev => ({ ...prev, autorizador: e.target.value }))}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-bolivar-green ${
+                    errors.autorizador 
+                      ? 'border-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-bolivar-green'
+                  }`}
+                  disabled={loadingAutorizadores}
+                >
+                  {loadingAutorizadores ? (
+                    <option value="">Cargando autorizadores...</option>
+                  ) : autorizadores.length === 0 ? (
+                    <option value="">❌ No hay autorizadores disponibles - Verificar base de datos</option>
+                  ) : (
+                    [
+                      <option key="empty" value="">Seleccione un autorizador</option>,
+                      ...autorizadores.map((autorizador) => (
+                        <option key={autorizador.id} value={autorizador.valor_dominio}>
+                          {autorizador.valor_dominio}
+                        </option>
+                      ))
+                    ]
+                  )}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {loadingAutorizadores ? 'Cargando...' : 
+                   autorizadores.length === 0 ? 
+                   '⚠️ No hay autorizadores disponibles. Debe insertar datos en tabla parametros (grupo: AUTORIZADOR_PSP)' : 
+                   `✅ ${autorizadores.length} autorizadores disponibles`}
+                </p>
+                {errors.autorizador && (
+                  <p className="mt-1 text-sm text-red-600">{errors.autorizador}</p>
+                )}
+              </div>
+            )}
+
             {/* Descripción */}
             <div className="col-span-2">
               <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
@@ -1521,7 +1774,7 @@ export default function NuevaSolicitudPage() {
             {/* Cuenta de Cobro PDF */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cuenta de Cobro (PDF) <span className="text-red-500">*</span>
+                {tipoSolicitud === 'Pago de Servicios Públicos' ? 'Adjuntar Soportes (PDF)' : 'Adjuntar Cuenta de Cobro (PDF)'} <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center justify-center w-full">
                 <label htmlFor="pdf-upload" className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 ${
@@ -1622,10 +1875,10 @@ export default function NuevaSolicitudPage() {
               )}
             </div>
 
-            {/* Archivo de distribuciones XLSX - Siempre obligatorio */}
+            {/* Archivo de distribuciones XLSX - Opcional para Servicios Públicos */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Archivo de Distribuciones (XLSX) <span className="text-red-500">*</span>
+                  {tipoSolicitud === 'Pago de Servicios Públicos' ? 'Adjuntar Soportes (XLSX)' : 'Adjuntar Archivo de Distribuciones (XLSX)'} {tipoSolicitud === 'Pago de Servicios Públicos' ? '' : <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-center justify-center w-full">
                   <label htmlFor="xlsx-upload" className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 ${
@@ -1718,6 +1971,12 @@ export default function NuevaSolicitudPage() {
               <div className="text-sm text-gray-600 mb-6 space-y-2">
                 <p><strong>Compañía Receptora:</strong> {formData.proveedor}</p>
                 <p><strong>Acreedor:</strong> {formData.acreedor}</p>
+                {tipoSolicitud === 'Pago de Servicios Públicos' && formData.areaSolicitante && (
+                  <p><strong>Area Solicitante:</strong> {formData.areaSolicitante}</p>
+                )}
+                {tipoSolicitud === 'Pago de Servicios Públicos' && formData.autorizador && (
+                  <p><strong>Autorizador:</strong> {formData.autorizador}</p>
+                )}
                 <p><strong>Fecha Documento de Cobro:</strong> {formatDate(formData.fechaCuentaCobro)}</p>
                 <p><strong>Concepto:</strong> {formData.concepto}</p>
                 {formData.descripcion && (

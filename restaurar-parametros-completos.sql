@@ -95,3 +95,4 @@ FROM public.parametros;
 -- ============================================================================
 SELECT 'Parámetros restaurados completamente desde backup + nuevos parámetros' as resultado;
 
+
