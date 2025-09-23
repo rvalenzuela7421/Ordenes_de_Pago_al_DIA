@@ -4,6 +4,7 @@ export interface OrdenPago {
   id: string
   fecha_solicitud: string
   numero_solicitud: string
+  tipo_solicitud: string
   fecha_cuenta_cobro?: string
   compania_receptora: string
   proveedor: string
@@ -50,6 +51,7 @@ export interface FilterState {
   estados: string[]
   companiasReceptoras: string[]
   conceptos: string[]
+  tiposSolicitud: string[]
   montoRange: {
     min: number | null
     max: number | null
@@ -104,6 +106,11 @@ export async function getOrdenesPago(filters?: FilterState): Promise<OrdenPago[]
       // Filtro por conceptos (selección múltiple)
       if (filters.conceptos && filters.conceptos.length > 0) {
         query = query.in('concepto', filters.conceptos)
+      }
+      
+      // Filtro por tipos de solicitud (selección múltiple)
+      if (filters.tiposSolicitud && filters.tiposSolicitud.length > 0) {
+        query = query.in('tipo_solicitud', filters.tiposSolicitud)
       }
       
       // Filtro por rango de montos

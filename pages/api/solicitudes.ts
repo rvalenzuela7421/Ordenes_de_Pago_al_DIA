@@ -74,6 +74,7 @@ export default async function handler(
       })
     }
 
+
     // Validar que compañía receptora sea de GRUPO_BOLIVAR
     if (!companiaReceptora.startsWith('NT-')) {
       return res.status(400).json({ 

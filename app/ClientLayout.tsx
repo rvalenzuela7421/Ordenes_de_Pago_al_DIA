@@ -202,11 +202,16 @@ export default function ClientLayout({
                 </div>
                 
                 <div className="hidden sm:block">
-                  <span className="text-xl font-bold text-bolivar-green">
-                    Mis Pagos{' '}
-                    <span className="font-bold text-black">ALD</span>
-                    <span className="font-bold text-bolivar-yellow">IA</span>
-                  </span>
+                  <div className="text-left">
+                    <span className="text-xl font-bold text-bolivar-green">
+                      Mis Pagos{' '}
+                      <span className="font-bold text-black">ALD</span>
+                      <span className="font-bold text-bolivar-yellow">IA</span>
+                    </span>
+                    <div className="text-sm text-bolivar-green font-medium mt-1">
+                      Centro de Órdenes de Pago - COP
+                    </div>
+                  </div>
                 </div>
               </div>
 

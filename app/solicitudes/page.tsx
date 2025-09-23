@@ -15,6 +15,9 @@ export default function TipoSolicitudPage() {
   const [tipoSeleccionado, setTipoSeleccionado] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
 
+  // Tipos de solicitud habilitados para usar
+  const TIPOS_HABILITADOS = ['Pago de Comisiones Bancarias', 'Pago de Servicios Públicos']
+
   useEffect(() => {
     loadTiposSolicitud()
   }, [])
@@ -54,7 +57,7 @@ export default function TipoSolicitudPage() {
 
   const handleAceptar = () => {
     // Validaciones de respaldo (el botón ya debería estar deshabilitado)
-    if (!tipoSeleccionado || tipoSeleccionado !== 'Pago de Comisiones Bancarias') {
+    if (!tipoSeleccionado || !TIPOS_HABILITADOS.includes(tipoSeleccionado)) {
       return
     }
     
@@ -139,14 +142,18 @@ export default function TipoSolicitudPage() {
                   : "No hay tipos disponibles - Ejecute el script SQL"
                 }
               </option>
-              {Array.isArray(tiposSolicitud) && tiposSolicitud.map((tipo) => (
-                <option key={tipo.id} value={tipo.valor_dominio}>
-                  {tipo.valor_dominio === 'Pago de Comisiones Bancarias' 
-                    ? `✅ ${tipo.valor_dominio}` 
-                    : `🚧 ${tipo.valor_dominio} (En construcción)`
-                  }
-                </option>
-              ))}
+              {Array.isArray(tiposSolicitud) && tiposSolicitud.map((tipo) => {
+                const estaHabilitado = TIPOS_HABILITADOS.includes(tipo.valor_dominio)
+                
+                return (
+                  <option key={tipo.id} value={tipo.valor_dominio}>
+                    {estaHabilitado 
+                      ? `✅ ${tipo.valor_dominio}` 
+                      : `🚧 ${tipo.valor_dominio} (En construcción)`
+                    }
+                  </option>
+                )
+              })}
             </select>
             <p className="mt-1 text-xs text-gray-500">
               ✅ = Disponible • 🚧 = En construcción (próximamente)
@@ -169,12 +176,12 @@ export default function TipoSolicitudPage() {
             <button
               type="button"
               onClick={handleAceptar}
-              disabled={!tipoSeleccionado || tipoSeleccionado !== 'Pago de Comisiones Bancarias'}
+              disabled={!tipoSeleccionado || !TIPOS_HABILITADOS.includes(tipoSeleccionado)}
               className="flex items-center gap-2 px-6 py-2 bg-bolivar-green hover:bg-bolivar-green-dark text-white text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               title={
                 !tipoSeleccionado 
                   ? 'Seleccione un tipo de solicitud para continuar' 
-                  : tipoSeleccionado !== 'Pago de Comisiones Bancarias'
+                  : !TIPOS_HABILITADOS.includes(tipoSeleccionado)
                   ? 'Esta funcionalidad está en proceso de construcción'
                   : 'Continuar al formulario de solicitud'
               }

@@ -7,7 +7,8 @@ import {
   getEmpresasGrupoBolivar, type EmpresaGrupoBolivar, 
   getAcreedoresAutorizados, type Acreedor,
   getConceptosValidos, type Concepto,
-  getIVAVigente 
+  getIVAVigente,
+  getParametrosPorGrupo, type Parametro
 } from '@/lib/parametros-data'
 import Link from 'next/link'
 
@@ -114,6 +115,15 @@ export default function NuevaSolicitudPage() {
   useEffect(() => {
     cargarDatosIniciales()
   }, [])
+
+  // Recargar conceptos cuando cambie el tipo de solicitud
+  useEffect(() => {
+    if (tipoSolicitud) {
+      cargarConceptosValidos()
+      // Limpiar el concepto seleccionado al cambiar tipo
+      setFormData(prev => ({ ...prev, concepto: '' }))
+    }
+  }, [tipoSolicitud])
 
   // Cargar todos los datos necesarios desde la base de datos
   const cargarDatosIniciales = async () => {
@@ -230,21 +240,52 @@ export default function NuevaSolicitudPage() {
   const cargarConceptosValidos = async () => {
     try {
       setLoadingConceptos(true)
-      console.log('📋 Cargando conceptos válidos desde parámetros...')
       
-      const { conceptos: conceptosCargados, count, error } = await getConceptosValidos(true)
+      // Determinar qué grupo cargar según el tipo de solicitud
+      const esServiciosPublicos = tipoSolicitud === 'Pago de Servicios Públicos'
       
-      if (error) {
-        console.error('❌ Error al cargar conceptos:', error)
-        throw new Error(error)
-      }
+      console.log(`📋 Cargando ${esServiciosPublicos ? 'servicios públicos (grupo: SERVICIOS_PUBLICOS)' : 'conceptos (grupo: CONCEPTOS)'} desde parámetros...`)
       
-      if (conceptosCargados && conceptosCargados.length > 0) {
-        setConceptos(conceptosCargados)
-        console.log('✅ Conceptos válidos cargados:', count)
+      if (esServiciosPublicos) {
+        // Cargar servicios públicos usando getParametrosPorGrupo
+        const { parametros: serviciosCargados, count, error } = await getParametrosPorGrupo('SERVICIOS_PUBLICOS', true, true)
+        
+        if (error) {
+          console.error('❌ Error al cargar servicios públicos:', error)
+          throw new Error(error)
+        }
+        
+        if (serviciosCargados && serviciosCargados.length > 0) {
+          // Convertir parametros a formato de conceptos para compatibilidad
+          const serviciosComoConceptos = serviciosCargados.map(servicio => ({
+            id: servicio.id,
+            valor: servicio.valor_dominio,
+            label: servicio.valor_dominio,
+            orden: servicio.orden,
+            vigente: servicio.vigente === 'S'
+          }))
+          setConceptos(serviciosComoConceptos)
+          console.log('✅ Servicios públicos cargados:', count)
+        } else {
+          console.warn('⚠️ No se encontraron servicios públicos en la base de datos')
+          setConceptos([])
+        }
       } else {
-        console.error('❌ No se encontraron conceptos en la base de datos')
-        setConceptos([])
+        // Cargar conceptos normales usando getConceptosValidos (que usa grupo CONCEPTOS)
+        const { conceptos: conceptosCargados, count, error } = await getConceptosValidos(true)
+        
+        if (error) {
+          console.error('❌ Error al cargar conceptos:', error)
+          throw new Error(error)
+        }
+        
+        if (conceptosCargados && conceptosCargados.length > 0) {
+          setConceptos(conceptosCargados)
+          console.log('✅ Conceptos cargados:', count)
+        } else {
+          console.error('❌ No se encontraron conceptos en la base de datos')
+          setConceptos([])
+        }
       }
     } catch (error) {
       console.error('💥 Error inesperado cargando conceptos:', error)
@@ -253,6 +294,7 @@ export default function NuevaSolicitudPage() {
       setLoadingConceptos(false)
     }
   }
+
 
   // Calcular automáticamente IVA y total
   const calcularIVAyTotal = (valor: string, tieneIVA: boolean) => {
@@ -387,18 +429,18 @@ export default function NuevaSolicitudPage() {
         console.log('✨ Usando estructura unificada ExtractedPDFData')
         const solicitud = data
             
-            // 1. Fecha Cuenta de Cobro (convertir de DD-MM-YYYY a YYYY-MM-DD)
+            // 1. Fecha Documento de Cobro (convertir de DD-MM-YYYY a YYYY-MM-DD)
             if (solicitud.fechaCuentaCobro) {
               // Convertir formato DD-MM-YYYY a YYYY-MM-DD para input date HTML
               const fechaParts = solicitud.fechaCuentaCobro.split('-')
               if (fechaParts.length === 3) {
                 const fechaFormatoHTML = `${fechaParts[2]}-${fechaParts[1]}-${fechaParts[0]}` // YYYY-MM-DD
                 newFormData.fechaCuentaCobro = fechaFormatoHTML
-                console.log('✨ Fecha Cuenta de Cobro convertida:', `${solicitud.fechaCuentaCobro} → ${fechaFormatoHTML}`)
+                console.log('✨ Fecha Documento de Cobro convertida:', `${solicitud.fechaCuentaCobro} → ${fechaFormatoHTML}`)
               } else {
                 // Fallback si el formato no es el esperado
               newFormData.fechaCuentaCobro = solicitud.fechaCuentaCobro
-                console.log('⚠️ Fecha Cuenta de Cobro (formato no esperado):', solicitud.fechaCuentaCobro)
+                console.log('⚠️ Fecha Documento de Cobro (formato no esperado):', solicitud.fechaCuentaCobro)
               }
             }
             
@@ -577,6 +619,7 @@ export default function NuevaSolicitudPage() {
     
     // Verificar fecha cuenta de cobro obligatoria
     if (!formData.fechaCuentaCobro.trim()) return false
+
     
     // Verificar valor solicitud
     const valor = parseFloat(formData.valorSolicitud)
@@ -726,7 +769,7 @@ export default function NuevaSolicitudPage() {
       return String(value).trim().toLowerCase()
     }
 
-    // 1. Validar Fecha Cuenta de Cobro
+    // 1. Validar Fecha Documento de Cobro
     if (extractedData.fechaCuentaCobro && formData.fechaCuentaCobro) {
       // Función helper para normalizar fechas a formato comparable
       const normalizeDateForComparison = (dateStr: string): Date | null => {
@@ -769,7 +812,7 @@ export default function NuevaSolicitudPage() {
         console.log(`   🔍 Comparación normalizada: "${extractedDateStr}" vs "${formDateStr}"`)
         
         if (extractedDateStr !== formDateStr) {
-          errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}"`)
+          errors.push(`📅 Fecha Documento de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}"`)
           console.log('❌ Fechas NO coinciden')
         } else {
           console.log('✅ Fechas SÍ coinciden (mismo día)')
@@ -780,7 +823,7 @@ export default function NuevaSolicitudPage() {
         const formDateStr = normalizeString(formData.fechaCuentaCobro)
         
         if (extractedDateStr !== formDateStr) {
-          errors.push(`📅 Fecha Cuenta de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}" (no se pudieron normalizar las fechas)`)
+          errors.push(`📅 Fecha Documento de Cobro: El formulario muestra "${formData.fechaCuentaCobro}" pero el PDF indica "${extractedData.fechaCuentaCobro}" (no se pudieron normalizar las fechas)`)
           console.log('⚠️ No se pudieron parsear las fechas, comparando como string')
         }
       }
@@ -1149,10 +1192,10 @@ export default function NuevaSolicitudPage() {
           </h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Fecha Cuenta de Cobro */}
+            {/* Fecha Documento de Cobro */}
             <div>
               <label htmlFor="fechaCuentaCobro" className="block text-sm font-medium text-gray-700 mb-2">
-                📅 Fecha Cuenta de Cobro <span className="text-red-500">*</span>
+                📅 Fecha Documento de Cobro <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -1196,6 +1239,62 @@ export default function NuevaSolicitudPage() {
               </p>
               {errors.fechaCuentaCobro && (
                 <p className="mt-1 text-sm text-red-600">{errors.fechaCuentaCobro}</p>
+              )}
+            </div>
+
+            {/* Concepto */}
+            <div>
+              <label htmlFor="concepto" className="block text-sm font-medium text-gray-700 mb-2">
+                Concepto <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="concepto"
+                value={formData.concepto}
+                onChange={(e) => setFormData(prev => ({ ...prev, concepto: e.target.value }))}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green ${
+                  errors.concepto ? 'border-red-500' : 'border-gray-300'
+                }`}
+                disabled={loadingConceptos}
+              >
+                {loadingConceptos ? (
+                  <option value="">Cargando conceptos...</option>
+                ) : conceptos.length === 0 ? (
+                  <option value="">
+                    {tipoSolicitud === 'Pago de Servicios Públicos' 
+                      ? '❌ No hay servicios públicos disponibles - Ejecutar script SQL' 
+                      : '❌ No hay conceptos disponibles - Verificar base de datos'
+                    }
+                  </option>
+                ) : (
+                  [
+                    <option key="empty" value="">
+                      {tipoSolicitud === 'Pago de Servicios Públicos' 
+                        ? 'Seleccione un servicio público...' 
+                        : 'Seleccione un concepto...'
+                      }
+                    </option>,
+                    ...conceptos.map((concepto) => (
+                      <option key={concepto.id} value={concepto.valor}>
+                    {concepto.label}
+                  </option>
+                    ))
+                  ]
+                )}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {loadingConceptos ? 'Cargando conceptos...' : 
+                 conceptos.length === 0 ? 
+                 (tipoSolicitud === 'Pago de Servicios Públicos' 
+                   ? '⚠️ No hay servicios públicos disponibles. Debe insertar datos en tabla parametros (grupo: SERVICIOS_PUBLICOS)'
+                   : '⚠️ No hay conceptos disponibles. Debe insertar datos en tabla parametros (grupo: CONCEPTOS)'
+                 ) :
+                 (tipoSolicitud === 'Pago de Servicios Públicos'
+                   ? `✅ ${conceptos.length} servicios públicos disponibles`
+                   : `✅ ${conceptos.length} conceptos disponibles`
+                 )}
+              </p>
+              {errors.concepto && (
+                <p className="mt-1 text-sm text-red-600">{errors.concepto}</p>
               )}
             </div>
 
@@ -1280,46 +1379,6 @@ export default function NuevaSolicitudPage() {
               </p>
               {errors.acreedor && (
                 <p className="mt-1 text-sm text-red-600">{errors.acreedor}</p>
-              )}
-            </div>
-
-            {/* Concepto */}
-            <div>
-              <label htmlFor="concepto" className="block text-sm font-medium text-gray-700 mb-2">
-                Concepto <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="concepto"
-                value={formData.concepto}
-                onChange={(e) => setFormData(prev => ({ ...prev, concepto: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green ${
-                  errors.concepto ? 'border-red-500' : 'border-gray-300'
-                }`}
-                disabled={loadingConceptos}
-              >
-                {loadingConceptos ? (
-                  <option value="">Cargando conceptos válidos...</option>
-                ) : conceptos.length === 0 ? (
-                  <option value="">❌ No hay conceptos disponibles - Verificar base de datos</option>
-                ) : (
-                  [
-                    <option key="empty" value="">Seleccione un concepto</option>,
-                    ...conceptos.map((concepto) => (
-                      <option key={concepto.id} value={concepto.valor}>
-                    {concepto.label}
-                  </option>
-                    ))
-                  ]
-                )}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">
-                {loadingConceptos ? 'Cargando...' : 
-                 conceptos.length === 0 ? 
-                 '⚠️ No hay conceptos disponibles. Debe insertar datos en tabla parametros (grupo: CONCEPTOS)' : 
-                 `✅ ${conceptos.length} conceptos válidos disponibles`}
-              </p>
-              {errors.concepto && (
-                <p className="mt-1 text-sm text-red-600">{errors.concepto}</p>
               )}
             </div>
 
@@ -1659,7 +1718,7 @@ export default function NuevaSolicitudPage() {
               <div className="text-sm text-gray-600 mb-6 space-y-2">
                 <p><strong>Compañía Receptora:</strong> {formData.proveedor}</p>
                 <p><strong>Acreedor:</strong> {formData.acreedor}</p>
-                <p><strong>Fecha Cuenta de Cobro:</strong> {formatDate(formData.fechaCuentaCobro)}</p>
+                <p><strong>Fecha Documento de Cobro:</strong> {formatDate(formData.fechaCuentaCobro)}</p>
                 <p><strong>Concepto:</strong> {formData.concepto}</p>
                 {formData.descripcion && (
                   <p><strong>Descripción:</strong> {formData.descripcion}</p>
