@@ -1704,7 +1704,7 @@ export default function ReportesPage() {
                               <table className="min-w-full text-sm divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[100px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[120px]">
                                       <div 
                                         onClick={() => handleSort('fecha_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
@@ -1716,7 +1716,7 @@ export default function ReportesPage() {
                                         {getSortIcon('fecha_solicitud')}
                                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[130px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[160px]">
                                       <div 
                                         onClick={() => handleSort('numero_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
@@ -1728,7 +1728,7 @@ export default function ReportesPage() {
                                         {getSortIcon('numero_solicitud')}
                                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[160px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[180px]">
                                       <div className="space-y-2">
                                         <div 
                                           onClick={() => handleSort('compania_receptora')}
@@ -1749,7 +1749,7 @@ export default function ReportesPage() {
                                         />
                                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[140px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[200px]">
                                       <div className="space-y-2">
                                         <div 
                                           onClick={() => handleSort('concepto')}
@@ -1769,7 +1769,7 @@ export default function ReportesPage() {
                                         />
                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 w-[130px]">
+                                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 w-[150px]">
                                       <div 
                                         onClick={() => handleSort('total_solicitud')}
                                         className="flex items-start justify-end cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
