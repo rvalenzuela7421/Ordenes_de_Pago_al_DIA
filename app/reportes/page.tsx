@@ -39,13 +39,13 @@ import {
 
 type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
 
-// Colores para las gráficas - Coherentes con dashboard
+// Colores para las gráficas - Exactamente iguales al dashboard
 const COLORES_ESTADOS = {
-  'Solicitada': '#3B82F6',   // azul (blue-500) - coherente con dashboard
-  'Devuelta': '#EF4444',     // rojo (red-500) - coherente con dashboard
-  'Generada': '#F59E0B',     // amarillo (yellow-500) - coherente con dashboard
-  'Aprobada': '#10B981',     // verde (green-500) - coherente con dashboard
-  'Pagada': '#059669'        // esmeralda (emerald-600) - coherente con dashboard
+  'Solicitada': '#1D4ED8',   // azul (blue-600) - exacto del dashboard
+  'Devuelta': '#DC2626',     // rojo (red-600) - exacto del dashboard
+  'Generada': '#D97706',     // amarillo (yellow-600) - exacto del dashboard
+  'Aprobada': '#16A34A',     // verde (green-600) - exacto del dashboard
+  'Pagada': '#047857'        // esmeralda (emerald-700) - exacto del dashboard
 }
 
 const COLORES_TIPOS_SERVICIO = {
@@ -1531,11 +1531,11 @@ export default function ReportesPage() {
                           {/* Definir colores por estado */}
                           {(() => {
                             const coloresEstados = {
-                              'Solicitada': { bg: 'bg-blue-500', color: '#3B82F6' },
-                              'Devuelta': { bg: 'bg-red-500', color: '#EF4444' },
-                              'Generada': { bg: 'bg-yellow-500', color: '#F59E0B' },
-                              'Aprobada': { bg: 'bg-green-500', color: '#10B981' },
-                              'Pagada': { bg: 'bg-emerald-600', color: '#059669' }
+                              'Solicitada': { bg: 'bg-blue-600', color: '#1D4ED8' },
+                              'Devuelta': { bg: 'bg-red-600', color: '#DC2626' },
+                              'Generada': { bg: 'bg-yellow-600', color: '#D97706' },
+                              'Aprobada': { bg: 'bg-green-600', color: '#16A34A' },
+                              'Pagada': { bg: 'bg-emerald-700', color: '#047857' }
                             }
                             
                             const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
@@ -2312,11 +2312,11 @@ export default function ReportesPage() {
                       Estado Actual
                     </label>
                     <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${
-                      solicitudModal.solicitud?.estado === 'Solicitada' ? 'bg-gray-100 text-gray-800' :
+                      solicitudModal.solicitud?.estado === 'Solicitada' ? 'bg-blue-100 text-blue-800' :
                       solicitudModal.solicitud?.estado === 'Devuelta' ? 'bg-red-100 text-red-800' :
                       solicitudModal.solicitud?.estado === 'Generada' ? 'bg-yellow-100 text-yellow-800' :
-                      solicitudModal.solicitud?.estado === 'Aprobada' ? 'bg-blue-100 text-blue-800' :
-                      solicitudModal.solicitud?.estado === 'Pagada' ? 'bg-green-100 text-green-800' :
+                      solicitudModal.solicitud?.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
+                      solicitudModal.solicitud?.estado === 'Pagada' ? 'bg-emerald-100 text-emerald-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {solicitudModal.solicitud?.estado || 'N/A'}
