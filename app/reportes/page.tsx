@@ -39,13 +39,13 @@ import {
 
 type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
 
-// Colores para las gráficas - Tonos pastel como la modal
+// Colores para las gráficas - Tonos intermedios visibles pero no agresivos
 const COLORES_ESTADOS = {
-  'Solicitada': '#DBEAFE',   // azul pastel (blue-200) - suave y elegante
-  'Devuelta': '#FECACA',     // rojo pastel (red-200) - suave y elegante
-  'Generada': '#FEF3C7',     // amarillo pastel (yellow-200) - suave y elegante
-  'Aprobada': '#D1FAE5',     // verde pastel (green-200) - suave y elegante
-  'Pagada': '#A7F3D0'        // esmeralda pastel (emerald-200) - suave y elegante
+  'Solicitada': '#60A5FA',   // azul intermedio (blue-400) - visible y equilibrado
+  'Devuelta': '#F87171',     // rojo intermedio (red-400) - visible y equilibrado
+  'Generada': '#FBBF24',     // amarillo intermedio (yellow-400) - visible y equilibrado
+  'Aprobada': '#4ADE80',     // verde intermedio (green-400) - visible y equilibrado
+  'Pagada': '#34D399'        // esmeralda intermedio (emerald-400) - visible y equilibrado
 }
 
 const COLORES_TIPOS_SERVICIO = {
@@ -1531,11 +1531,11 @@ export default function ReportesPage() {
                           {/* Definir colores por estado */}
                           {(() => {
                             const coloresEstados = {
-                              'Solicitada': { bg: 'bg-blue-200', color: '#DBEAFE' },
-                              'Devuelta': { bg: 'bg-red-200', color: '#FECACA' },
-                              'Generada': { bg: 'bg-yellow-200', color: '#FEF3C7' },
-                              'Aprobada': { bg: 'bg-green-200', color: '#D1FAE5' },
-                              'Pagada': { bg: 'bg-emerald-200', color: '#A7F3D0' }
+                              'Solicitada': { bg: 'bg-blue-400', color: '#60A5FA' },
+                              'Devuelta': { bg: 'bg-red-400', color: '#F87171' },
+                              'Generada': { bg: 'bg-yellow-400', color: '#FBBF24' },
+                              'Aprobada': { bg: 'bg-green-400', color: '#4ADE80' },
+                              'Pagada': { bg: 'bg-emerald-400', color: '#34D399' }
                             }
                             
                             const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
