@@ -1531,11 +1531,11 @@ export default function ReportesPage() {
                           {/* Definir colores por estado */}
                           {(() => {
                             const coloresEstados = {
-                              'Solicitada': { bg: 'bg-blue-400', color: '#60A5FA' },
-                              'Devuelta': { bg: 'bg-red-400', color: '#F87171' },
-                              'Generada': { bg: 'bg-yellow-400', color: '#FBBF24' },
-                              'Aprobada': { bg: 'bg-purple-400', color: '#A78BFA' },
-                              'Pagada': { bg: 'bg-emerald-400', color: '#34D399' }
+                              'Solicitada': { bg: 'bg-blue-400', color: COLORES_ESTADOS['Solicitada'] },
+                              'Devuelta': { bg: 'bg-red-400', color: COLORES_ESTADOS['Devuelta'] },
+                              'Generada': { bg: 'bg-yellow-400', color: COLORES_ESTADOS['Generada'] },
+                              'Aprobada': { bg: 'bg-purple-400', color: COLORES_ESTADOS['Aprobada'] },
+                              'Pagada': { bg: 'bg-emerald-400', color: COLORES_ESTADOS['Pagada'] }
                             }
                             
                             const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
