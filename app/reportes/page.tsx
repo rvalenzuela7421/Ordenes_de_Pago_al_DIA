@@ -809,6 +809,84 @@ export default function ReportesPage() {
     )
   }
 
+  // Componente de filtro de búsqueda estilo dashboard
+  const SearchFilter = ({ 
+    value, 
+    onChange, 
+    placeholder,
+    field 
+  }: {
+    value: string
+    onChange: (value: string) => void
+    placeholder: string
+    field: string
+  }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    
+    useEffect(() => {
+      const handleClickOutside = () => {
+        setIsOpen(false)
+      }
+      
+      if (isOpen) {
+        document.addEventListener('click', handleClickOutside)
+        return () => document.removeEventListener('click', handleClickOutside)
+      }
+    }, [isOpen])
+
+    return (
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsOpen(!isOpen)
+          }}
+          className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-600 min-w-[100px] max-w-[150px]"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+          </svg>
+          <span className="truncate">
+            {value || placeholder}
+          </span>
+          <svg className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px]">
+            <div className="p-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700">Buscar:</span>
+                {value && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange('')
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={`Escribir ${field.toLowerCase()}...`}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Función para aplicar ordenamiento y filtros a las solicitudes
   const getSolicitudesFiltradas = () => {
     if (!seccionSeleccionada) return []
@@ -1563,89 +1641,85 @@ export default function ReportesPage() {
                                 Cerrar detalles
                               </button>
                             </div>
-                            {/* Filtros */}
-                            <div className="mb-4 flex gap-4">
-                              <div className="w-64">
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Filtrar por Compañía Receptora
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Buscar compañía..."
-                                  value={filtrosTabla.companiaReceptora}
-                                  onChange={(e) => setFiltrosTabla(prev => ({ ...prev, companiaReceptora: e.target.value }))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                                />
-                              </div>
-                              <div className="w-64">
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Filtrar por Concepto
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder="Buscar concepto..."
-                                  value={filtrosTabla.concepto}
-                                  onChange={(e) => setFiltrosTabla(prev => ({ ...prev, concepto: e.target.value }))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                                />
-                              </div>
-                              <div className="flex items-end">
-                                <button
-                                  onClick={() => setFiltrosTabla({ companiaReceptora: '', concepto: '' })}
-                                  className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
-                                >
-                                  Limpiar filtros
-                                </button>
-                              </div>
-                            </div>
-
                             <div className="overflow-x-auto">
-                              <table className="min-w-full divide-y divide-gray-200">
+                              <table className="min-w-full text-sm divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th 
-                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-32 cursor-pointer hover:bg-gray-100 select-none"
-                                      onClick={() => handleSort('fecha_solicitud')}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        Fecha de Solicitud
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[130px]">
+                                      <div 
+                                        onClick={() => handleSort('fecha_solicitud')}
+                                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                                      >
+                                        <div className="capitalize">
+                                          <div>Fecha de</div>
+                                          <div>Solicitud</div>
+                                        </div>
                                         {getSortIcon('fecha_solicitud')}
                                       </div>
                                     </th>
-                                    <th 
-                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-36 cursor-pointer hover:bg-gray-100 select-none"
-                                      onClick={() => handleSort('numero_solicitud')}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        Número de Solicitud
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[150px]">
+                                      <div 
+                                        onClick={() => handleSort('numero_solicitud')}
+                                        className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                                      >
+                                        <div className="capitalize">
+                                          <div>Número de</div>
+                                          <div>Solicitud</div>
+                                        </div>
                                         {getSortIcon('numero_solicitud')}
                                       </div>
                                     </th>
-                                    <th 
-                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-20 cursor-pointer hover:bg-gray-100 select-none"
-                                      onClick={() => handleSort('compania_receptora')}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        Compañía Receptora
-                                        {getSortIcon('compania_receptora')}
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[160px]">
+                                      <div className="space-y-2">
+                                        <div 
+                                          onClick={() => handleSort('compania_receptora')}
+                                          className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                                        >
+                                          <div className="capitalize">
+                                            <div>Compañía</div>
+                                            <div>Receptora</div>
+                                          </div>
+                                          {getSortIcon('compania_receptora')}
+                                        </div>
+                                        <SearchFilter
+                                          value={filtrosTabla.companiaReceptora}
+                                          onChange={(value) => setFiltrosTabla(prev => ({ ...prev, companiaReceptora: value }))}
+                                          placeholder="Filtrar..."
+                                          field="Compañía"
+                                        />
                                       </div>
                                     </th>
-                                    <th 
-                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-16 cursor-pointer hover:bg-gray-100 select-none"
-                                      onClick={() => handleSort('concepto')}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        Concepto
-                                        {getSortIcon('concepto')}
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[140px]">
+                                      <div className="space-y-2">
+                                        <div 
+                                          onClick={() => handleSort('concepto')}
+                                          className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                                        >
+                                          <div className="capitalize">
+                                            <div>Concepto</div>
+                                          </div>
+                                          {getSortIcon('concepto')}
+                                        </div>
+                                        <SearchFilter
+                                          value={filtrosTabla.concepto}
+                                          onChange={(value) => setFiltrosTabla(prev => ({ ...prev, concepto: value }))}
+                                          placeholder="Filtrar..."
+                                          field="Concepto"
+                                        />
                                       </div>
                                     </th>
-                                    <th 
-                                      className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider w-32 cursor-pointer hover:bg-gray-100 select-none"
-                                      onClick={() => handleSort('total_solicitud')}
-                                    >
-                                      <div className="flex items-center justify-end gap-2">
-                                        Valor Total
-                                        {getSortIcon('total_solicitud')}
+                                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 w-[130px]">
+                                      <div 
+                                        onClick={() => handleSort('total_solicitud')}
+                                        className="flex items-start justify-end cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
+                                      >
+                                        <div className="flex items-start gap-2">
+                                          <div className="capitalize text-right">
+                                            <div>Valor</div>
+                                            <div>Total</div>
+                                          </div>
+                                          {getSortIcon('total_solicitud')}
+                                        </div>
                                       </div>
                                     </th>
                                   </tr>
@@ -1653,23 +1727,23 @@ export default function ReportesPage() {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                   {getSolicitudesFiltradas().slice(0, 50).map((solicitud: any, index: number) => (
                                     <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-32">
+                                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
                                       </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-36">
+                                      <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {solicitud.numero_solicitud}
                                       </td>
-                                      <td className="px-6 py-4 text-sm text-gray-900 w-20 truncate">
+                                      <td className="px-3 py-4 text-sm text-gray-900 truncate max-w-[160px]">
                                         <div title={solicitud.compania_receptora}>
                                           {solicitud.compania_receptora}
                                         </div>
                                       </td>
-                                      <td className="px-6 py-4 text-sm text-gray-900 w-16 truncate">
+                                      <td className="px-3 py-4 text-sm text-gray-900 truncate max-w-[140px]">
                                         <div title={solicitud.concepto}>
                                           {solicitud.concepto}
                                         </div>
                                       </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right w-32">
+                                      <td className="px-3 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
                                         {formatCurrency(solicitud.total_solicitud)}
                                       </td>
                                     </tr>
