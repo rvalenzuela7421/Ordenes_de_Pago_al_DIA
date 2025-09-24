@@ -1792,7 +1792,21 @@ export default function ReportesPage() {
                                         {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
                                       </td>
                                       <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {solicitud.numero_solicitud}
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => {
+                                              // TODO: Implementar funcionalidad de edición
+                                              console.log('Editar solicitud:', solicitud.numero_solicitud)
+                                            }}
+                                            className="flex items-center justify-center w-5 h-5 text-gray-400 hover:text-blue-600 transition-colors"
+                                            title="Editar solicitud"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                          </button>
+                                          <span>{solicitud.numero_solicitud}</span>
+                                        </div>
                                       </td>
                                       <td className="px-3 py-4 text-sm text-gray-900 truncate max-w-[160px]">
                                         <div title={solicitud.compania_receptora}>
