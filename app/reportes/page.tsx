@@ -1989,7 +1989,7 @@ export default function ReportesPage() {
                                 
                                 {/* Eje superior con valores de referencia */}
                                 <div className="flex items-center mb-2">
-                                  <div className="w-48"></div>
+                                  <div className="w-64"></div>
                                   <div className="flex-1 flex justify-between text-xs text-gray-500 px-1">
                                     {steps.map((step, index) => (
                                       <span key={index} className="font-medium">{step}</span>
@@ -2000,7 +2000,7 @@ export default function ReportesPage() {
                                 
                                 {/* Líneas de grid vertical */}
                                 <div className="flex items-center mb-4">
-                                  <div className="w-48"></div>
+                                  <div className="w-64"></div>
                                   <div className="flex-1 relative">
                                     {steps.map((step, index) => (
                                       <div
@@ -2023,7 +2023,7 @@ export default function ReportesPage() {
                                     return (
                                       <div key={index} className="flex items-center">
                                         {/* Label de la compañía */}
-                                        <div className="w-48 pr-4">
+                                        <div className="w-64 pr-4">
                                           <div className="text-right">
                                             <div className="font-medium text-gray-900 text-sm truncate" title={compania.nombre}>
                                               {compania.nombre}
