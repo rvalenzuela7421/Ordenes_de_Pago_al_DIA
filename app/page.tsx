@@ -195,8 +195,11 @@ export default function Dashboard() {
     if (filters.dateRange.from) {
       const fechaDesde = new Date(filters.dateRange.from + 'T00:00:00-05:00')
       filtered = filtered.filter(orden => {
+        // ✅ VERCEL CACHE FIX: Verificación explícita de fecha
         const fechaValue = orden[filters.dateRange.tipo]
-        if (!fechaValue) return false
+        if (!fechaValue || fechaValue === undefined || fechaValue === null) {
+          return false // Excluir órdenes sin fecha
+        }
         const fechaOrden = new Date(fechaValue)
         return fechaOrden >= fechaDesde
       })
@@ -204,8 +207,11 @@ export default function Dashboard() {
     if (filters.dateRange.to) {
       const fechaHasta = new Date(filters.dateRange.to + 'T23:59:59-05:00')
       filtered = filtered.filter(orden => {
+        // ✅ VERCEL CACHE FIX: Verificación explícita de fecha
         const fechaValue = orden[filters.dateRange.tipo]
-        if (!fechaValue) return false
+        if (!fechaValue || fechaValue === undefined || fechaValue === null) {
+          return false // Excluir órdenes sin fecha
+        }
         const fechaOrden = new Date(fechaValue)
         return fechaOrden <= fechaHasta
       })
