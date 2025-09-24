@@ -158,8 +158,8 @@ export default function ReportesPage() {
   }>({ field: 'fecha_solicitud', direction: 'desc' })
   
   const [filtrosTabla, setFiltrosTabla] = useState({
-    companiaReceptora: '',
-    concepto: ''
+    companiaReceptora: [] as string[],
+    concepto: [] as string[]
   })
   const [filtros, setFiltros] = useState<FilterState>({
     dateRange: { from: '', to: '' },
@@ -809,20 +809,23 @@ export default function ReportesPage() {
     )
   }
 
-  // Componente de filtro de búsqueda estilo dashboard
-  const SearchFilter = ({ 
-    value, 
+  // Componente de filtro multi-selección estilo dashboard
+  const MultiSelectFilter = ({ 
+    options, 
+    selectedValues, 
     onChange, 
     placeholder,
-    field 
+    maxDisplay = 2 
   }: {
-    value: string
-    onChange: (value: string) => void
+    options: string[]
+    selectedValues: string[]
+    onChange: (values: string[]) => void
     placeholder: string
-    field: string
+    maxDisplay?: number
   }) => {
     const [isOpen, setIsOpen] = useState(false)
     
+    // Cerrar dropdown al hacer click fuera
     useEffect(() => {
       const handleClickOutside = () => {
         setIsOpen(false)
@@ -833,6 +836,19 @@ export default function ReportesPage() {
         return () => document.removeEventListener('click', handleClickOutside)
       }
     }, [isOpen])
+    
+    const handleToggle = (value: string) => {
+      const newValues = selectedValues.includes(value) 
+        ? selectedValues.filter(v => v !== value)
+        : [...selectedValues, value]
+      onChange(newValues)
+    }
+
+    const displayText = selectedValues.length === 0 
+      ? placeholder
+      : selectedValues.length <= maxDisplay
+        ? selectedValues.join(', ')
+        : `${selectedValues.slice(0, maxDisplay).join(', ')} +${selectedValues.length - maxDisplay}`
 
     return (
       <div className="relative">
@@ -846,24 +862,22 @@ export default function ReportesPage() {
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
           </svg>
-          <span className="truncate">
-            {value || placeholder}
-          </span>
+          <span className="truncate">{displayText}</span>
           <svg className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         
         {isOpen && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px]">
+          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px] max-h-[200px] overflow-y-auto">
             <div className="p-2">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-700">Buscar:</span>
-                {value && (
+                <span className="text-xs font-medium text-gray-700">Filtrar por:</span>
+                {selectedValues.length > 0 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      onChange('')
+                      onChange([])
                     }}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
@@ -871,20 +885,37 @@ export default function ReportesPage() {
                   </button>
                 )}
               </div>
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder={`Escribir ${field.toLowerCase()}...`}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
-                onClick={(e) => e.stopPropagation()}
-                autoFocus
-              />
+              <div className="space-y-1">
+                {options.map(option => (
+                  <label key={option} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedValues.includes(option)}
+                      onChange={() => handleToggle(option)}
+                      className="rounded border-gray-300 text-bolivar-green focus:ring-bolivar-green"
+                    />
+                    <span className="text-xs text-gray-700 truncate">{option}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </div>
     )
+  }
+
+  // Función para obtener opciones únicas de filtros
+  const getFilterOptions = (field: string) => {
+    if (!seccionSeleccionada) return []
+    
+    const uniqueValues = Array.from(new Set(
+      seccionSeleccionada.solicitudes
+        .map(s => s[field])
+        .filter(val => val && val.trim() !== '')
+    )).sort()
+    
+    return uniqueValues
   }
 
   // Función para aplicar ordenamiento y filtros a las solicitudes
@@ -894,15 +925,15 @@ export default function ReportesPage() {
     let solicitudes = [...seccionSeleccionada.solicitudes]
 
     // Aplicar filtros
-    if (filtrosTabla.companiaReceptora) {
+    if (filtrosTabla.companiaReceptora.length > 0) {
       solicitudes = solicitudes.filter(s => 
-        s.compania_receptora?.toLowerCase().includes(filtrosTabla.companiaReceptora.toLowerCase())
+        filtrosTabla.companiaReceptora.includes(s.compania_receptora)
       )
     }
     
-    if (filtrosTabla.concepto) {
+    if (filtrosTabla.concepto.length > 0) {
       solicitudes = solicitudes.filter(s => 
-        s.concepto?.toLowerCase().includes(filtrosTabla.concepto.toLowerCase())
+        filtrosTabla.concepto.includes(s.concepto)
       )
     }
 
@@ -1566,18 +1597,18 @@ export default function ReportesPage() {
                                                             minWidth: segmentPercentage > 10 ? 'auto' : '20px'
                                                           }}
                                                           title={`${estado}: ${cantidad} solicitudes - Clic para ver detalles`}
-                                                          onClick={() => {
-                                                            // Filtrar solicitudes por tipo y estado
-                                                            const solicitudesFiltradas = tipo.ordenes.filter((orden: any) => orden.estado === estado)
-                                                            setSeccionSeleccionada({
-                                                              tipoServicio: tipo.tipoServicio,
-                                                              estado: estado,
-                                                              solicitudes: solicitudesFiltradas
-                                                            })
-                                                            // Limpiar filtros al cambiar de sección
-                                                            setFiltrosTabla({ companiaReceptora: '', concepto: '' })
-                                                            setSortState({ field: 'fecha_solicitud', direction: 'desc' })
-                                                          }}
+                                onClick={() => {
+                                  // Filtrar solicitudes por tipo y estado
+                                  const solicitudesFiltradas = tipo.ordenes.filter((orden: any) => orden.estado === estado)
+                                  setSeccionSeleccionada({
+                                    tipoServicio: tipo.tipoServicio,
+                                    estado: estado,
+                                    solicitudes: solicitudesFiltradas
+                                  })
+                                  // Limpiar filtros al cambiar de sección
+                                  setFiltrosTabla({ companiaReceptora: [], concepto: [] })
+                                  setSortState({ field: 'fecha_solicitud', direction: 'desc' })
+                                }}
                                                         >
                                                           {segmentPercentage > 10 && (
                                                             <span className="text-white text-xs font-semibold">
@@ -1630,7 +1661,7 @@ export default function ReportesPage() {
                               <button
                                 onClick={() => {
                                   setSeccionSeleccionada(null)
-                                  setFiltrosTabla({ companiaReceptora: '', concepto: '' })
+                                  setFiltrosTabla({ companiaReceptora: [], concepto: [] })
                                   setSortState({ field: 'fecha_solicitud', direction: 'desc' })
                                 }}
                                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-800 bg-yellow-400 hover:bg-yellow-500 rounded-md transition-colors duration-200"
@@ -1681,11 +1712,12 @@ export default function ReportesPage() {
                                           </div>
                                           {getSortIcon('compania_receptora')}
                                         </div>
-                                        <SearchFilter
-                                          value={filtrosTabla.companiaReceptora}
-                                          onChange={(value) => setFiltrosTabla(prev => ({ ...prev, companiaReceptora: value }))}
+                                        <MultiSelectFilter
+                                          options={getFilterOptions('compania_receptora')}
+                                          selectedValues={filtrosTabla.companiaReceptora}
+                                          onChange={(values) => setFiltrosTabla(prev => ({ ...prev, companiaReceptora: values }))}
                                           placeholder="Filtrar..."
-                                          field="Compañía"
+                                          maxDisplay={1}
                                         />
                                       </div>
                                     </th>
@@ -1700,11 +1732,12 @@ export default function ReportesPage() {
                                           </div>
                                           {getSortIcon('concepto')}
                                         </div>
-                                        <SearchFilter
-                                          value={filtrosTabla.concepto}
-                                          onChange={(value) => setFiltrosTabla(prev => ({ ...prev, concepto: value }))}
+                                        <MultiSelectFilter
+                                          options={getFilterOptions('concepto')}
+                                          selectedValues={filtrosTabla.concepto}
+                                          onChange={(values) => setFiltrosTabla(prev => ({ ...prev, concepto: values }))}
                                           placeholder="Filtrar..."
-                                          field="Concepto"
+                                          maxDisplay={1}
                                         />
                                       </div>
                                     </th>
