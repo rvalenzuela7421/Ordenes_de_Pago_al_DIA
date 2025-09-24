@@ -2424,7 +2424,7 @@ export default function ReportesPage() {
                         <span className="text-green-500 text-sm font-medium">$</span>
                       </div>
                       <div className="w-full pl-8 pr-3 py-3 border border-green-200 rounded-lg bg-green-50 text-green-900 font-bold text-lg">
-                        {(solicitudModal.solicitud?.monto_solicitud || 0).toLocaleString('es-CO')}
+                        {formatCurrency(solicitudModal.solicitud?.monto_solicitud || 0).replace('$ ', '')}
                       </div>
                     </div>
                   </div>
@@ -2438,7 +2438,7 @@ export default function ReportesPage() {
                         <span className="text-orange-500 text-sm font-medium">$</span>
                       </div>
                       <div className="w-full pl-8 pr-3 py-3 border border-orange-200 rounded-lg bg-orange-50 text-orange-900 font-bold text-lg">
-                        {(solicitudModal.solicitud?.iva || 0).toLocaleString('es-CO')}
+                        {formatCurrency(solicitudModal.solicitud?.iva || 0).replace('$ ', '')}
                       </div>
                     </div>
                   </div>
@@ -2452,7 +2452,7 @@ export default function ReportesPage() {
                         <span className="text-purple-500 text-sm font-medium">$</span>
                       </div>
                       <div className="w-full pl-8 pr-3 py-3 border border-purple-200 rounded-lg bg-purple-50 text-purple-900 font-bold text-xl">
-                        {(solicitudModal.solicitud?.total_solicitud || 0).toLocaleString('es-CO')}
+                        {formatCurrency(solicitudModal.solicitud?.total_solicitud || 0).replace('$ ', '')}
                       </div>
                     </div>
                   </div>
