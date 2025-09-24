@@ -1716,7 +1716,7 @@ export default function ReportesPage() {
                                         {getSortIcon('fecha_solicitud')}
                                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[160px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[80px]">
                                       <div 
                                         onClick={() => handleSort('numero_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
@@ -1818,7 +1818,7 @@ export default function ReportesPage() {
                                   )}
                                 </tbody>
                               </table>
-                            </div>
+                      </div>
 
                             {/* Controles de paginación */}
                             {allFilteredSolicitudes.length > 0 && totalPages > 1 && pageSize > 0 && (
