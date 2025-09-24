@@ -2275,10 +2275,20 @@ export default function ReportesPage() {
                   <svg className="w-5 h-5 text-bolivar-green mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  Información Básica
+                  Información de la Solicitud
                 </h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📅 Fecha de Solicitud
+                    </label>
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                      {solicitudModal.solicitud?.fecha_solicitud ? 
+                        new Date(solicitudModal.solicitud.fecha_solicitud).toLocaleDateString('es-CO') : 'N/A'}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       📄 Número de Solicitud
@@ -2290,11 +2300,10 @@ export default function ReportesPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      📅 Fecha de Solicitud
+                      Tipo de Solicitud
                     </label>
                     <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                      {solicitudModal.solicitud?.fecha_solicitud ? 
-                        new Date(solicitudModal.solicitud.fecha_solicitud).toLocaleDateString('es-CO') : 'N/A'}
+                      {solicitudModal.solicitud?.tipo_solicitud || 'N/A'}
                     </div>
                   </div>
 
@@ -2313,25 +2322,16 @@ export default function ReportesPage() {
                       {solicitudModal.solicitud?.estado || 'N/A'}
                     </span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Solicitud
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                      {solicitudModal.solicitud?.tipo_solicitud || 'N/A'}
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Información de la Solicitud */}
+              {/* Detalles de la Solicitud */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                   <svg className="w-5 h-5 text-bolivar-green mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  Información de la Solicitud
+                  Detalles de la Solicitud
                 </h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
