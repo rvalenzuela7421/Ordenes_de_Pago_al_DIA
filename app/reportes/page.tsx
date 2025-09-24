@@ -5,7 +5,7 @@ import {
   getOrdenesPago, 
   getReporteEstados, 
   getReporteTipoServicio, 
-  getReporteFinanciero, 
+  getReporteCompaniaReceptora, 
   getReporteEficiencia,
   exportToCSV,
   formatDate, 
@@ -19,7 +19,7 @@ import type {
   FilterState,
   ReporteEstados, 
   ReporteTipoServicio, 
-  ReporteFinanciero, 
+  ReporteCompaniaReceptora, 
   ReporteEficiencia 
 } from '@/lib/dashboard-data'
 import {
@@ -38,7 +38,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
-type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
+type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'companiaReceptora' | 'eficiencia' | null
 
 // Colores para las gráficas - Tonos intermedios visibles pero no agresivos
 const COLORES_ESTADOS = {
@@ -146,6 +146,7 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(false)
   const [reporteActivo, setReporteActivo] = useState<TipoReporte>(null)
   const [datosReporte, setDatosReporte] = useState<any>(null)
+  const [ordenes, setOrdenes] = useState<OrdenPago[]>([])
   const [seccionSeleccionada, setSeccionSeleccionada] = useState<{
     tipoServicio: string
     estado: string
@@ -597,101 +598,31 @@ export default function ReportesPage() {
     setLoading(false)
   }
 
-  const generarReporteFinanciero = async () => {
+  const generarReporteCompaniaReceptora = async () => {
     setLoading(true)
     try {
-      const datos = await getReporteFinanciero(filtros.dateRange.from || filtros.dateRange.to ? filtros : undefined)
+      const datos = await getReporteCompaniaReceptora(filtros.dateRange.from || filtros.dateRange.to ? filtros : undefined)
       
-      // Obtener órdenes para calcular período
-      let ordenes: OrdenPago[]
-      let fechaInicio: string
-      let fechaFin: string
+      // Cargar órdenes para la interactividad
+      const ordenesData = await getOrdenesPago(filtros.dateRange.from || filtros.dateRange.to ? filtros : undefined)
+      setOrdenes(ordenesData)
+      
+      console.log('🏢 Reporte por Compañía Receptora generado:', {
+        totalOrdenes: datos.totalOrdenes,
+        montoTotal: datos.montoTotal,
+        totalCompanias: datos.companias.length,
+        periodo: datos.periodo
+      })
 
-      if (!filtros.dateRange.from && !filtros.dateRange.to) {
-        ordenes = await getOrdenesPago() // Sin filtros = todas las órdenes
-        if (ordenes.length > 0) {
-          const fechas = ordenes.map(o => o.fecha_solicitud).sort()
-          fechaInicio = fechas[0]
-          fechaFin = fechas[fechas.length - 1]
-        } else {
-          fechaInicio = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          fechaFin = new Date().toISOString().split('T')[0]
-        }
-      } else {
-        fechaInicio = filtros.dateRange.from || new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        fechaFin = filtros.dateRange.to || new Date().toISOString().split('T')[0]
-        const filtrosPeriodo = {
-          ...filtros,
-          dateRange: { from: fechaInicio, to: fechaFin }
-        }
-        ordenes = await getOrdenesPago(filtrosPeriodo)
-      }
-
-      // Determinar el título del período
-      let tituloPeriodo: string
-      if (!filtros.dateRange.from && !filtros.dateRange.to) {
-        tituloPeriodo = `${formatearFechaUtil(fechaInicio)} al ${formatearFechaUtil(fechaFin)} (Período completo)`
-      } else {
-        tituloPeriodo = `${formatearFechaUtil(fechaInicio)} al ${formatearFechaUtil(fechaFin)}`
-      }
-      
-      // Calcular estadísticas básicas
-      const totalOrdenes = datos.totalOrdenes
-      const montoBase = datos.montoBase || 0
-      const totalIva = datos.totalIva || 0
-      const montoTotal = datos.montoTotal || 0
-      
-      // Preparar datos para gráfica de distribución IVA
-      const datosIvaGrafica = [
-        { 
-          name: 'Sin IVA', 
-          value: datos.distribucionIva.sinIva.monto,
-          cantidad: datos.distribucionIva.sinIva.cantidad,
-          color: COLORES_GRAFICAS[0]
-        },
-        { 
-          name: 'IVA 19%', 
-          value: datos.distribucionIva.con19.monto,
-          cantidad: datos.distribucionIva.con19.cantidad,
-          color: COLORES_GRAFICAS[1]
-        },
-        { 
-          name: 'IVA 5%', 
-          value: datos.distribucionIva.con5.monto,
-          cantidad: datos.distribucionIva.con5.cantidad,
-          color: COLORES_GRAFICAS[2]
-        },
-        { 
-          name: 'IVA 0%', 
-          value: datos.distribucionIva.con0.monto,
-          cantidad: datos.distribucionIva.con0.cantidad,
-          color: COLORES_GRAFICAS[3]
-        }
-      ].filter(item => item.value > 0)
-      
-      // Datos para gráfica por estado
-      const datosEstadoGrafica = Object.entries(datos.porEstado).map(([estado, datos]: [string, any]) => ({
-        estado,
-        'Monto Base': datos.montoBase,
-        'IVA': datos.iva,
-        'Total': datos.total,
-        cantidad: datos.cantidad
-      }))
-      
       setDatosReporte({
         ...datos,
-        datosIvaGrafica,
-        datosEstadoGrafica,
-        totalOrdenes,
-        montoBase,
-        totalIva,
-        montoTotal,
-        periodo: tituloPeriodo
+        // Mapear para mantener compatibilidad con el estado
+        periodo: datos.periodo
       })
-      setReporteActivo('financiero')
+      setReporteActivo('companiaReceptora')
       setModalAbierto(true)
     } catch (error) {
-      console.error('Error generando reporte financiero:', error)
+      console.error('Error generando reporte por compañía receptora:', error)
     }
     setLoading(false)
   }
@@ -1135,20 +1066,20 @@ export default function ReportesPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="bg-yellow-100 p-3 rounded-lg">
                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte Financiero</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte por Compañía Receptora</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Análisis financiero con gráficas de distribución de IVA
+              Análisis detallado por compañía receptora con gráficas de barras horizontales
             </p>
             <button 
-              onClick={generarReporteFinanciero}
+              onClick={generarReporteCompaniaReceptora}
               className="w-full bg-yellow-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading && reporteActivo === 'financiero' ? 'Generando...' : 'Generar Reporte'}
+              {loading && reporteActivo === 'companiaReceptora' ? 'Generando...' : 'Generar Reporte'}
             </button>
           </div>
 
@@ -1206,7 +1137,7 @@ export default function ReportesPage() {
                   {reporteActivo === 'estados' && '📊 Reporte por Estados'}
                   {reporteActivo === 'periodos' && '📈 Reporte por Períodos'}
                   {reporteActivo === 'tipoServicio' && '🏢 Reporte por Tipo de Solicitud'}
-                  {reporteActivo === 'financiero' && '💰 Reporte Financiero'}
+                  {reporteActivo === 'companiaReceptora' && '🏢 Reporte por Compañía Receptora'}
                   {reporteActivo === 'eficiencia' && '⚡ Reporte de Eficiencia'}
                 </h2>
                 <button
@@ -1988,8 +1919,8 @@ export default function ReportesPage() {
                   </div>
                 )}
 
-                {/* Contenido del Reporte Financiero */}
-                {reporteActivo === 'financiero' && datosReporte && (
+                {/* Contenido del Reporte por Compañía Receptora */}
+                {reporteActivo === 'companiaReceptora' && datosReporte && (
                   <div className="space-y-6">
                     {/* Tarjetas de Estadísticas */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -2000,7 +1931,191 @@ export default function ReportesPage() {
                       
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                         <h3 className="text-sm font-medium text-green-700 mb-1">Monto Solicitado</h3>
-                        <p className="text-2xl font-bold text-green-900">{formatCurrency(datosReporte.montoBase || 0)}</p>
+                        <p className="text-2xl font-bold text-green-900">{formatCurrency(datosReporte.totalBase || 0)}</p>
+                      </div>
+                      
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                        <h3 className="text-sm font-medium text-orange-700 mb-1">IVA</h3>
+                        <p className="text-2xl font-bold text-orange-900">{formatCurrency(datosReporte.totalIva || 0)}</p>
+                      </div>
+                      
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+                        <h3 className="text-sm font-medium text-purple-700 mb-1">Total Monto Solicitado</h3>
+                        <p className="text-2xl font-bold text-purple-900">{formatCurrency(datosReporte.montoTotal || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6 text-center">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Período Analizado: <span className="text-gray-700">{datosReporte.periodo}</span>
+                      </h3>
+                    </div>
+
+                    {/* Gráfica de Barras Horizontales por Compañía Receptora */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      
+                      <div className="mb-3" style={{ minHeight: `${Math.max(200, (datosReporte.companias?.length || 2) * 80 + 160)}px` }}>
+                        {/* Barras horizontales apiladas por estado */}
+                        <div className="space-y-6">
+                          {/* Definir colores por estado */}
+                          {(() => {
+                            const coloresEstados = {
+                              'Solicitada': { bg: 'bg-blue-400', color: COLORES_ESTADOS['Solicitada'] },
+                              'Devuelta': { bg: 'bg-red-400', color: COLORES_ESTADOS['Devuelta'] },
+                              'Generada': { bg: 'bg-yellow-400', color: COLORES_ESTADOS['Generada'] },
+                              'Aprobada': { bg: 'bg-purple-400', color: COLORES_ESTADOS['Aprobada'] },
+                              'Pagada': { bg: 'bg-emerald-400', color: COLORES_ESTADOS['Pagada'] }
+                            }
+                            
+                            const maxValue = Math.max(...(datosReporte.companias?.map((c: any) => Number(c.cantidad)) || [1]))
+                            const roundedMax = Math.ceil(maxValue / 100) * 100
+                            const steps = [0, Math.round(roundedMax * 0.25), Math.round(roundedMax * 0.5), Math.round(roundedMax * 0.75), roundedMax]
+                            
+                            return (
+                              <div>
+                                {/* Leyenda de estados en orden lógico */}
+                                <div className="flex flex-wrap gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-sm font-medium text-gray-700">Estados (orden del proceso):</span>
+                                  {['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada'].map((estado) => {
+                                    const config = coloresEstados[estado as keyof typeof coloresEstados]
+                                    return (
+                                      <div key={estado} className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded ${config.bg}`}></div>
+                                        <span className="text-xs font-medium text-gray-600">{estado}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                                
+                                {/* Eje superior con valores de referencia */}
+                                <div className="flex items-center mb-2">
+                                  <div className="w-48"></div>
+                                  <div className="flex-1 flex justify-between text-xs text-gray-500 px-1">
+                                    {steps.map((step, index) => (
+                                      <span key={index} className="font-medium">{step}</span>
+                                    ))}
+                                  </div>
+                                  <div className="w-16"></div>
+                                </div>
+                                
+                                {/* Líneas de grid vertical */}
+                                <div className="flex items-center mb-4">
+                                  <div className="w-48"></div>
+                                  <div className="flex-1 relative">
+                                    {steps.map((step, index) => (
+                                      <div
+                                        key={index}
+                                        className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                        style={{ left: `${(step / roundedMax) * 100}%` }}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="w-16"></div>
+                                </div>
+                                
+                                {/* Barras por compañía */}
+                                <div className="space-y-4">
+                                  {datosReporte.companias?.map((compania: any, index: number) => {
+                                    // Organizar estados en orden lógico
+                                    const estadosOrden = ['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada']
+                                    let acumulado = 0
+                                    
+                                    return (
+                                      <div key={index} className="flex items-center">
+                                        {/* Label de la compañía */}
+                                        <div className="w-48 pr-4">
+                                          <div className="text-right">
+                                            <div className="font-medium text-gray-900 text-sm truncate" title={compania.nombre}>
+                                              {compania.nombre}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                              {compania.cantidad} solicitudes ({compania.porcentaje}%)
+                                            </div>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Barra apilada */}
+                                        <div className="flex-1 relative h-8 bg-gray-100 rounded-lg overflow-hidden">
+                                          {estadosOrden.map((estado) => {
+                                            const estadoData = compania.estados?.[estado]
+                                            if (!estadoData || estadoData.cantidad === 0) return null
+                                            
+                                            const ancho = (estadoData.cantidad / roundedMax) * 100
+                                            const segmentPercentage = (estadoData.cantidad / compania.cantidad) * 100
+                                            const config = coloresEstados[estado as keyof typeof coloresEstados]
+                                            const left = (acumulado / roundedMax) * 100
+                                            acumulado += estadoData.cantidad
+                                            
+                                            return (
+                                              <div
+                                                key={estado}
+                                                className={`absolute top-0 bottom-0 ${config.bg} flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity`}
+                                                style={{ 
+                                                  left: `${left}%`,
+                                                  width: `${ancho}%`
+                                                }}
+                                                title={`${estado}: ${estadoData.cantidad} solicitudes (${segmentPercentage.toFixed(1)}% de ${compania.nombre})`}
+                                                onClick={() => {
+                                                  // Obtener solicitudes de esta compañía y estado
+                                                  const solicitudesFiltradas = ordenes
+                                                    .filter((orden: OrdenPago) => orden.compania_receptora === compania.nombre && orden.estado === estado)
+                                                    .sort((a: OrdenPago, b: OrdenPago) => new Date(b.fecha_solicitud).getTime() - new Date(a.fecha_solicitud).getTime())
+                                                  
+                                                  setSeccionSeleccionada({
+                                                    titulo: `${compania.nombre} - Estado "${estado}"`,
+                                                    cantidad: estadoData.cantidad,
+                                                    compania: compania.nombre,
+                                                    estado: estado,
+                                                    solicitudes: solicitudesFiltradas
+                                                  })
+                                                  // Limpiar filtros al cambiar de sección
+                                                  setFiltrosTabla({ companiaReceptora: [], concepto: [] })
+                                                  setSortState({ field: 'fecha_solicitud', direction: 'desc' })
+                                                  setCurrentPage(1)
+                                                }}
+                                              >
+                                                {segmentPercentage > 10 && (
+                                                  <span className="text-white text-xs font-bold drop-shadow">
+                                                    {estadoData.cantidad}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
+                                        
+                                        {/* Valor total a la derecha */}
+                                        <div className="w-16 pl-3 text-right">
+                                          <span className="text-sm font-medium text-gray-900">
+                                            {compania.cantidad}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contenido del Reporte de Eficiencia */}
+                {reporteActivo === 'eficiencia' && datosReporte && (
+                  <div className="space-y-6">
+                    {/* Tarjetas de Estadísticas */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                        <h3 className="text-sm font-medium text-blue-700 mb-1">Total solicitudes</h3>
+                        <p className="text-2xl font-bold text-blue-900">{datosReporte.totalOrdenes || 0}</p>
+                      </div>
+                      
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <h3 className="text-sm font-medium text-green-700 mb-1">Monto Solicitado</h3>
+                        <p className="text-2xl font-bold text-green-900">{formatCurrency(datosReporte.totalBase || datosReporte.montoBase || 0)}</p>
                       </div>
                       
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">

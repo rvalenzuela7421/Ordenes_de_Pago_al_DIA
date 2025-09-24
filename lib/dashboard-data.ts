@@ -391,33 +391,26 @@ export interface ReporteTipoServicio {
   }
 }
 
-// Interfaz para reporte financiero
-export interface ReporteFinanciero {
-  resumenGeneral: {
-    totalOrdenes: number
-    montoBase: number
-    totalIva: number
-    montoTotal: number
-    promedioOrden: number
-  }
-  porEstado: {
-    [key: string]: {
-      cantidad: number
-      montoBase: number
-      iva: number
-      total: number
-    }
-  }
-  distribucionIva: {
-    sinIva: { cantidad: number, monto: number }
-    con19: { cantidad: number, monto: number }
-    con5: { cantidad: number, monto: number }
-    con0: { cantidad: number, monto: number }
-  }
-  tendenciaMensual: {
-    mes: string
+// Interfaz para reporte por compañía receptora
+export interface ReporteCompaniaReceptora {
+  totalOrdenes: number
+  montoTotal: number
+  totalIva: number
+  totalBase: number
+  periodo: string
+  companias: {
+    nombre: string
     cantidad: number
-    monto: number
+    monto_solicitud: number
+    iva: number
+    total_solicitud: number
+    porcentaje: number
+    estados: {
+      [key: string]: {
+        cantidad: number
+        porcentaje: number
+      }
+    }
   }[]
 }
 
@@ -575,108 +568,99 @@ export async function getReporteTipoServicio(filters?: FilterState): Promise<Rep
   }
 }
 
-// Función para generar reporte financiero
-export async function getReporteFinanciero(filters?: FilterState): Promise<ReporteFinanciero> {
+// Función para generar reporte por compañía receptora
+export async function getReporteCompaniaReceptora(filters?: FilterState): Promise<ReporteCompaniaReceptora> {
   try {
     const ordenes = await getOrdenesPago(filters)
     
+    // Calcular totales generales
     const totalOrdenes = ordenes.length
-    const montoBase = ordenes.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
-    const totalIva = ordenes.reduce((sum, orden) => sum + orden.iva, 0)
     const montoTotal = ordenes.reduce((sum, orden) => sum + orden.total_solicitud, 0)
-    const promedioOrden = totalOrdenes > 0 ? montoTotal / totalOrdenes : 0
+    const totalIva = ordenes.reduce((sum, orden) => sum + orden.iva, 0)
+    const totalBase = ordenes.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
     
-    // Agrupación por estado
-    const porEstado: { [key: string]: any } = {}
-    ordenes.forEach(orden => {
-      if (!porEstado[orden.estado]) {
-        porEstado[orden.estado] = {
-          cantidad: 0,
-          montoBase: 0,
-          iva: 0,
-          total: 0
-        }
-      }
-      porEstado[orden.estado].cantidad += 1
-      porEstado[orden.estado].montoBase += orden.monto_solicitud
-      porEstado[orden.estado].iva += orden.iva
-      porEstado[orden.estado].total += orden.total_solicitud
-    })
-    
-    // Distribución de IVA
-    const distribucionIva = {
-      sinIva: { cantidad: 0, monto: 0 },
-      con19: { cantidad: 0, monto: 0 },
-      con5: { cantidad: 0, monto: 0 },
-      con0: { cantidad: 0, monto: 0 }
+    // Calcular período
+    let periodo = 'Todos los registros'
+    if (filters?.dateRange?.from || filters?.dateRange?.to) {
+      const desde = filters.dateRange.from ? formatDate(filters.dateRange.from) : 'inicio'
+      const hasta = filters.dateRange.to ? formatDate(filters.dateRange.to) : 'actualidad'
+      periodo = `${desde} - ${hasta}`
+    } else if (ordenes.length > 0) {
+      const fechas = ordenes.map(o => o.fecha_solicitud).sort()
+      const desde = formatDate(fechas[0])
+      const hasta = formatDate(fechas[fechas.length - 1])
+      periodo = `${desde} - ${hasta}`
     }
     
+    // Agrupar por compañía receptora
+    const companiasMap: { [key: string]: OrdenPago[] } = {}
     ordenes.forEach(orden => {
-      if (orden.iva === 0) {
-        distribucionIva.sinIva.cantidad += 1
-        distribucionIva.sinIva.monto += orden.total_solicitud
-      } else {
-        const porcentajeIva = Math.round((orden.iva / orden.monto_solicitud) * 100)
-        if (porcentajeIva === 19) {
-          distribucionIva.con19.cantidad += 1
-          distribucionIva.con19.monto += orden.total_solicitud
-        } else if (porcentajeIva === 5) {
-          distribucionIva.con5.cantidad += 1
-          distribucionIva.con5.monto += orden.total_solicitud
-        } else {
-          distribucionIva.con0.cantidad += 1
-          distribucionIva.con0.monto += orden.total_solicitud
+      const compania = orden.compania_receptora || 'Sin especificar'
+      if (!companiasMap[compania]) {
+        companiasMap[compania] = []
+      }
+      companiasMap[compania].push(orden)
+    })
+    
+    const companias = Object.entries(companiasMap)
+      .map(([nombre, ordenesCompania]) => {
+        const cantidad = ordenesCompania.length
+        const monto_solicitud = ordenesCompania.reduce((sum, orden) => sum + orden.monto_solicitud, 0)
+        const iva = ordenesCompania.reduce((sum, orden) => sum + orden.iva, 0)
+        const total_solicitud = ordenesCompania.reduce((sum, orden) => sum + orden.total_solicitud, 0)
+        const porcentaje = totalOrdenes > 0 ? Math.round((cantidad / totalOrdenes) * 100) : 0
+        
+        // Calcular estados para esta compañía
+        const estados: { [key: string]: { cantidad: number, porcentaje: number } } = {}
+        const estadosOrden = ['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada']
+        
+        // Inicializar todos los estados en 0
+        estadosOrden.forEach(estado => {
+          estados[estado] = { cantidad: 0, porcentaje: 0 }
+        })
+        
+        // Contar estados actuales
+        ordenesCompania.forEach(orden => {
+          if (estados[orden.estado]) {
+            estados[orden.estado].cantidad += 1
+          }
+        })
+        
+        // Calcular porcentajes de estados
+        estadosOrden.forEach(estado => {
+          estados[estado].porcentaje = cantidad > 0 ? 
+            Math.round((estados[estado].cantidad / cantidad) * 100) : 0
+        })
+        
+        return {
+          nombre,
+          cantidad,
+          monto_solicitud,
+          iva,
+          total_solicitud,
+          porcentaje,
+          estados
         }
-      }
-    })
-    
-    // Tendencia mensual
-    const tendenciaMap: { [key: string]: { cantidad: number, monto: number } } = {}
-    ordenes.forEach(orden => {
-      const fecha = new Date(orden.fecha_solicitud)
-      const mes = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, '0')}`
-      
-      if (!tendenciaMap[mes]) {
-        tendenciaMap[mes] = { cantidad: 0, monto: 0 }
-      }
-      tendenciaMap[mes].cantidad += 1
-      tendenciaMap[mes].monto += orden.total_solicitud
-    })
-    
-    const tendenciaMensual = Object.entries(tendenciaMap)
-      .map(([mes, data]) => ({ mes, ...data }))
-      .sort((a, b) => a.mes.localeCompare(b.mes))
+      })
+      .sort((a, b) => b.cantidad - a.cantidad) // Ordenar por cantidad descendente
     
     return {
-      resumenGeneral: {
-        totalOrdenes,
-        montoBase,
-        totalIva,
-        montoTotal,
-        promedioOrden
-      },
-      porEstado,
-      distribucionIva,
-      tendenciaMensual
+      totalOrdenes,
+      montoTotal,
+      totalIva,
+      totalBase,
+      periodo,
+      companias
     }
   } catch (error) {
-    console.error('Error generando reporte financiero:', error)
+    console.error('Error generando reporte por compañía receptora:', error)
     return {
-      resumenGeneral: {
-        totalOrdenes: 0,
-        montoBase: 0,
-        totalIva: 0,
-        montoTotal: 0,
-        promedioOrden: 0
-      },
-      porEstado: {},
-      distribucionIva: {
-        sinIva: { cantidad: 0, monto: 0 },
-        con19: { cantidad: 0, monto: 0 },
-        con5: { cantidad: 0, monto: 0 },
-        con0: { cantidad: 0, monto: 0 }
-      },
-      tendenciaMensual: []
+      totalOrdenes: 0,
+      montoTotal: 0,
+      totalIva: 0,
+      totalBase: 0,
+      periodo: 'Error al obtener datos',
+      companias: []
     }
   }
 }
