@@ -1805,7 +1805,7 @@ export default function ReportesPage() {
                                   {getSolicitudesFiltradas().map((solicitud: any, index: number) => (
                                     <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}>
                                       <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
+                                        {formatDate(solicitud.fecha_solicitud)}
                                       </td>
                                       <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         <div className="flex items-center gap-2">

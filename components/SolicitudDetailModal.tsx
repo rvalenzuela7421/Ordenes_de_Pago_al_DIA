@@ -1,6 +1,7 @@
 'use client'
 
-import { formatCurrency } from '@/lib/dashboard-data'
+import { useEffect } from 'react'
+import { formatCurrency, formatDate } from '@/lib/dashboard-data'
 import type { OrdenPago } from '@/lib/dashboard-data'
 
 interface SolicitudDetailModalProps {
@@ -9,7 +10,25 @@ interface SolicitudDetailModalProps {
   onClose: () => void
 }
 
+
 export default function SolicitudDetailModal({ isOpen, solicitud, onClose }: SolicitudDetailModalProps) {
+  // Manejar tecla ESCAPE para cerrar modal
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen || !solicitud) return null
 
   return (
@@ -50,8 +69,7 @@ export default function SolicitudDetailModal({ isOpen, solicitud, onClose }: Sol
                   📅 Fecha de Solicitud
                 </label>
                 <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                  {solicitud?.fecha_solicitud ? 
-                    new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO') : 'N/A'}
+                  {solicitud?.fecha_solicitud ? formatDate(solicitud.fecha_solicitud) : 'N/A'}
                 </div>
               </div>
 
@@ -106,8 +124,7 @@ export default function SolicitudDetailModal({ isOpen, solicitud, onClose }: Sol
                   📅 Fecha Documento de Cobro
                 </label>
                 <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                  {solicitud?.fecha_cuenta_cobro ? 
-                    new Date(solicitud.fecha_cuenta_cobro).toLocaleDateString('es-CO') : 'N/A'}
+                  {solicitud?.fecha_cuenta_cobro ? formatDate(solicitud.fecha_cuenta_cobro) : 'N/A'}
                 </div>
               </div>
 
