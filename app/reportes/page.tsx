@@ -39,13 +39,13 @@ import {
 
 type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
 
-// Colores para las gráficas
+// Colores para las gráficas - Coherentes con dashboard
 const COLORES_ESTADOS = {
-  'Solicitada': '#3B82F6',   // azul
-  'Devuelta': '#EF4444',     // rojo
-  'Generada': '#F59E0B',     // amarillo
-  'Aprobada': '#10B981',     // verde
-  'Pagada': '#059669'        // verde esmeralda
+  'Solicitada': '#3B82F6',   // azul (blue-500) - coherente con dashboard
+  'Devuelta': '#EF4444',     // rojo (red-500) - coherente con dashboard
+  'Generada': '#F59E0B',     // amarillo (yellow-500) - coherente con dashboard
+  'Aprobada': '#10B981',     // verde (green-500) - coherente con dashboard
+  'Pagada': '#059669'        // esmeralda (emerald-600) - coherente con dashboard
 }
 
 const COLORES_TIPOS_SERVICIO = {
@@ -1531,11 +1531,11 @@ export default function ReportesPage() {
                           {/* Definir colores por estado */}
                           {(() => {
                             const coloresEstados = {
-                              'Solicitada': { bg: 'bg-gray-400', color: '#9CA3AF' },
+                              'Solicitada': { bg: 'bg-blue-500', color: '#3B82F6' },
                               'Devuelta': { bg: 'bg-red-500', color: '#EF4444' },
-                              'Generada': { bg: 'bg-yellow-400', color: '#FBBF24' },
-                              'Aprobada': { bg: 'bg-sky-400', color: '#38BDF8' },
-                              'Pagada': { bg: 'bg-green-700', color: '#15803D' }
+                              'Generada': { bg: 'bg-yellow-500', color: '#F59E0B' },
+                              'Aprobada': { bg: 'bg-green-500', color: '#10B981' },
+                              'Pagada': { bg: 'bg-emerald-600', color: '#059669' }
                             }
                             
                             const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
