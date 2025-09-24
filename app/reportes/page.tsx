@@ -179,21 +179,25 @@ export default function ReportesPage() {
   // Modal states
   const [modalAbierto, setModalAbierto] = useState(false)
 
-  // Manejar tecla ESC para cerrar modal
+  // Manejar tecla ESC para cerrar modals
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && modalAbierto) {
+      if (event.key === 'Escape') {
+        if (solicitudModal.isOpen) {
+          cerrarSolicitudModal()
+        } else if (modalAbierto) {
         cerrarModal()
+        }
       }
     }
 
-    if (modalAbierto) {
+    if (modalAbierto || solicitudModal.isOpen) {
       document.addEventListener('keydown', handleEscKey)
       return () => {
         document.removeEventListener('keydown', handleEscKey)
       }
     }
-  }, [modalAbierto])
+  }, [modalAbierto, solicitudModal.isOpen])
 
   // Función utilitaria para formatear fechas correctamente (evitando problema de timezone)
   const formatearFechaUtil = (fechaISO: string | null) => {
@@ -240,6 +244,11 @@ export default function ReportesPage() {
     setModalAbierto(false)
     setReporteActivo(null)
     setDatosReporte(null)
+  }
+
+  // Función para cerrar modal de detalles de solicitud
+  const cerrarSolicitudModal = () => {
+    setSolicitudModal({ isOpen: false, solicitud: null })
   }
 
   // Función para limpiar filtros
@@ -2261,9 +2270,20 @@ export default function ReportesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-gray-50 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header del Modal */}
-            <div className="bg-bolivar-green px-8 py-6 rounded-t-2xl">
+            <div className="bg-bolivar-green px-8 py-6 rounded-t-2xl relative">
               <h1 className="text-2xl font-bold text-white text-center">Detalles de la Solicitud</h1>
               <p className="text-sm text-green-100 text-center mt-2">Información completa de la solicitud seleccionada</p>
+              
+              {/* Botón X para cerrar */}
+              <button
+                onClick={cerrarSolicitudModal}
+                className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors duration-200 p-2 hover:bg-white hover:bg-opacity-20 rounded-full"
+                title="Cerrar modal (ESC)"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
             {/* Contenido del Modal */}
@@ -2394,54 +2414,46 @@ export default function ReportesPage() {
                   Valores Financieros
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Vr. Solicitud
+                    <label className="block text-sm font-medium text-green-700 mb-2">
+                      💰 Monto Solicitado
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 text-sm">$</span>
+                        <span className="text-green-500 text-sm font-medium">$</span>
                       </div>
-                      <div className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-semibold text-green-700">
+                      <div className="w-full pl-8 pr-3 py-3 border border-green-200 rounded-lg bg-green-50 text-green-900 font-bold text-lg">
                         {(solicitudModal.solicitud?.valor_solicitud || 0).toLocaleString('es-CO')}
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      IVA ({(((solicitudModal.solicitud?.iva || 0) / (solicitudModal.solicitud?.valor_solicitud || 1)) * 100).toFixed(1)}%)
+                    <label className="block text-sm font-medium text-orange-700 mb-2">
+                      🧾 IVA ({(((solicitudModal.solicitud?.iva || 0) / (solicitudModal.solicitud?.valor_solicitud || 1)) * 100).toFixed(1)}%)
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 text-sm">$</span>
+                        <span className="text-orange-500 text-sm font-medium">$</span>
                       </div>
-                      <div className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-semibold text-blue-700">
+                      <div className="w-full pl-8 pr-3 py-3 border border-orange-200 rounded-lg bg-orange-50 text-orange-900 font-bold text-lg">
                         {(solicitudModal.solicitud?.iva || 0).toLocaleString('es-CO')}
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Total Solicitud
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      💎 Total Monto Solicitado
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 text-sm">$</span>
+                        <span className="text-purple-500 text-sm font-medium">$</span>
                       </div>
-                      <div className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md bg-yellow-50 border-yellow-300 text-gray-900 font-bold text-lg">
+                      <div className="w-full pl-8 pr-3 py-3 border border-purple-200 rounded-lg bg-purple-50 text-purple-900 font-bold text-xl">
                         {(solicitudModal.solicitud?.total_solicitud || 0).toLocaleString('es-CO')}
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                      (solicitudModal.solicitud?.iva || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {(solicitudModal.solicitud?.iva || 0) > 0 ? '✅ Tiene IVA' : 'Sin IVA'}
                     </div>
                   </div>
                 </div>
@@ -2518,7 +2530,7 @@ export default function ReportesPage() {
             <div className="bg-white px-8 py-6 rounded-b-2xl border-t border-gray-200">
               <div className="flex justify-center">
                 <button
-                  onClick={() => setSolicitudModal({ isOpen: false, solicitud: null })}
+                  onClick={cerrarSolicitudModal}
                   className="flex items-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-medium rounded-lg transition-colors duration-200"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
