@@ -1704,7 +1704,7 @@ export default function ReportesPage() {
                               <table className="min-w-full text-sm divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[130px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[110px]">
                                       <div 
                                         onClick={() => handleSort('fecha_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
@@ -1716,7 +1716,7 @@ export default function ReportesPage() {
                                         {getSortIcon('fecha_solicitud')}
                                       </div>
                                     </th>
-                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[150px]">
+                                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 w-[120px]">
                                       <div 
                                         onClick={() => handleSort('numero_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
