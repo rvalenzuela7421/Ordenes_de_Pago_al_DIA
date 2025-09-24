@@ -164,6 +164,12 @@ export default function ReportesPage() {
   
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+
+  // Estado para el modal de detalles de solicitud
+  const [solicitudModal, setSolicitudModal] = useState<{
+    isOpen: boolean
+    solicitud: any | null
+  }>({ isOpen: false, solicitud: null })
   const [filtros, setFiltros] = useState<FilterState>({
     dateRange: { from: '', to: '' },
     proveedores: [],
@@ -1795,11 +1801,10 @@ export default function ReportesPage() {
                                         <div className="flex items-center gap-2">
                                           <button
                                             onClick={() => {
-                                              // TODO: Implementar funcionalidad de edición
-                                              console.log('Editar solicitud:', solicitud.numero_solicitud)
+                                              setSolicitudModal({ isOpen: true, solicitud: solicitud })
                                             }}
                                             className="group flex items-center justify-center w-5 h-5 transition-colors"
-                                            title="Editar solicitud"
+                                            title="Ver detalles de solicitud"
                                           >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                                               {/* Borde de la hoja - Verde institucional en hover */}
@@ -2244,6 +2249,187 @@ export default function ReportesPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Detalles de Solicitud */}
+      {solicitudModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header del Modal */}
+            <div className="bg-gray-50 px-8 py-6 rounded-t-2xl border-b border-gray-200">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 text-center">Detalles de Solicitud</h2>
+              <p className="text-sm text-gray-600 text-center mt-2">Información completa de la solicitud seleccionada</p>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="px-8 py-6 space-y-6">
+              {/* Información Básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Número de Solicitud:</label>
+                    <p className="text-lg font-mono text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.numero_solicitud || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha de Solicitud:</label>
+                    <p className="text-lg text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.fecha_solicitud ? 
+                        new Date(solicitudModal.solicitud.fecha_solicitud).toLocaleDateString('es-CO') : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Estado:</label>
+                    <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${
+                      solicitudModal.solicitud?.estado === 'Solicitada' ? 'bg-gray-100 text-gray-800' :
+                      solicitudModal.solicitud?.estado === 'Devuelta' ? 'bg-red-100 text-red-800' :
+                      solicitudModal.solicitud?.estado === 'Generada' ? 'bg-yellow-100 text-yellow-800' :
+                      solicitudModal.solicitud?.estado === 'Aprobada' ? 'bg-blue-100 text-blue-800' :
+                      solicitudModal.solicitud?.estado === 'Pagada' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {solicitudModal.solicitud?.estado || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de Solicitud:</label>
+                    <p className="text-lg text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.tipo_solicitud || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha Documento de Cobro:</label>
+                    <p className="text-lg text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.fecha_cuenta_cobro ? 
+                        new Date(solicitudModal.solicitud.fecha_cuenta_cobro).toLocaleDateString('es-CO') : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información de Empresa */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Información de la Empresa</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Compañía Receptora:</label>
+                    <p className="text-base text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.compania_receptora || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Proveedor:</label>
+                    <p className="text-base text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.proveedor || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información del Servicio */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalles del Servicio</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Concepto:</label>
+                    <p className="text-base text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border">
+                      {solicitudModal.solicitud?.concepto || 'N/A'}
+                    </p>
+                  </div>
+                  {solicitudModal.solicitud?.descripcion && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Descripción:</label>
+                      <div className="text-base text-gray-900 bg-gray-50 px-4 py-2 rounded-lg border whitespace-pre-line">
+                        {solicitudModal.solicitud.descripcion}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Información Financiera */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Financiera</h3>
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-xl border border-green-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-600 mb-2">Valor Solicitud:</p>
+                      <p className="text-xl font-bold text-green-700">
+                        {formatCurrency(solicitudModal.solicitud?.valor_solicitud || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-600 mb-2">
+                        IVA ({(((solicitudModal.solicitud?.iva || 0) / (solicitudModal.solicitud?.valor_solicitud || 1)) * 100).toFixed(1)}%):
+                      </p>
+                      <p className="text-xl font-bold text-blue-700">
+                        {formatCurrency(solicitudModal.solicitud?.iva || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-600 mb-2">Total Solicitud:</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(solicitudModal.solicitud?.total_solicitud || 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Documentos Anexos */}
+              {solicitudModal.solicitud?.archivo_pdf_url && (
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Documentos Anexos</h3>
+                  <div className="flex items-center gap-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex-shrink-0">
+                      <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">Documento PDF anexo</p>
+                      <p className="text-xs text-blue-700">Archivo adjunto a la solicitud</p>
+                    </div>
+                    <a
+                      href={solicitudModal.solicitud.archivo_pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Ver Archivo
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer del Modal */}
+            <div className="bg-gray-50 px-8 py-6 rounded-b-2xl border-t border-gray-200">
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setSolicitudModal({ isOpen: false, solicitud: null })}
+                  className="flex items-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-medium rounded-lg transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
