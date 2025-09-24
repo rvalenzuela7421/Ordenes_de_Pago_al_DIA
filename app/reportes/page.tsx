@@ -1782,8 +1782,8 @@ export default function ReportesPage() {
                                       >
                                         <div className="flex items-start gap-2">
                                           <div className="capitalize text-right">
-                                            <div>Valor</div>
-                                            <div>Total</div>
+                                            <div>Total Monto</div>
+                                            <div>Solicitado</div>
                                           </div>
                                           {getSortIcon('total_solicitud')}
                                         </div>
@@ -1804,7 +1804,7 @@ export default function ReportesPage() {
                                               setSolicitudModal({ isOpen: true, solicitud: solicitud })
                                             }}
                                             className="group flex items-center justify-center w-5 h-5 transition-colors"
-                                            title="Ver detalles de solicitud"
+                                            title="Ver solicitud"
                                           >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                                               {/* Borde de la hoja - Verde institucional en hover */}
