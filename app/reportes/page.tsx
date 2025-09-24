@@ -2424,14 +2424,14 @@ export default function ReportesPage() {
                         <span className="text-green-500 text-sm font-medium">$</span>
                       </div>
                       <div className="w-full pl-8 pr-3 py-3 border border-green-200 rounded-lg bg-green-50 text-green-900 font-bold text-lg">
-                        {(solicitudModal.solicitud?.valor_solicitud || 0).toLocaleString('es-CO')}
+                        {(solicitudModal.solicitud?.monto_solicitud || 0).toLocaleString('es-CO')}
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-orange-700 mb-2">
-                      🧾 IVA ({(((solicitudModal.solicitud?.iva || 0) / (solicitudModal.solicitud?.valor_solicitud || 1)) * 100).toFixed(1)}%)
+                      🧾 IVA ({(((solicitudModal.solicitud?.iva || 0) / (solicitudModal.solicitud?.monto_solicitud || 1)) * 100).toFixed(1)}%)
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
