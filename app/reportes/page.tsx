@@ -145,6 +145,11 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(false)
   const [reporteActivo, setReporteActivo] = useState<TipoReporte>(null)
   const [datosReporte, setDatosReporte] = useState<any>(null)
+  const [seccionSeleccionada, setSeccionSeleccionada] = useState<{
+    tipoServicio: string
+    estado: string
+    solicitudes: any[]
+  } | null>(null)
   const [filtros, setFiltros] = useState<FilterState>({
     dateRange: { from: '', to: '' },
     proveedores: [],
@@ -880,9 +885,9 @@ export default function ReportesPage() {
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte por Tipo de Servicio</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reporte por Tipo de Solicitud</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Análisis detallado por tipo de solicitud con gráficas de barras
+              Análisis detallado por tipo de solicitud con gráficas de barras horizontales
             </p>
             <button 
               onClick={generarReporteTipoServicio}
@@ -968,7 +973,7 @@ export default function ReportesPage() {
                 <h2 className="text-xl font-semibold text-gray-900">
                   {reporteActivo === 'estados' && '📊 Reporte por Estados'}
                   {reporteActivo === 'periodos' && '📈 Reporte por Períodos'}
-                  {reporteActivo === 'tipoServicio' && '🏢 Reporte por Tipo de Servicio'}
+                  {reporteActivo === 'tipoServicio' && '🏢 Reporte por Tipo de Solicitud'}
                   {reporteActivo === 'financiero' && '💰 Reporte Financiero'}
                   {reporteActivo === 'eficiencia' && '⚡ Reporte de Eficiencia'}
                 </h2>
@@ -1263,7 +1268,7 @@ export default function ReportesPage() {
                   </div>
                 )}
 
-                {/* Contenido del Reporte por Tipo de Servicio */}
+                {/* Contenido del Reporte por Tipo de Solicitud */}
                 {reporteActivo === 'tipoServicio' && datosReporte && (
                   <div className="space-y-6">
                     {/* Tarjetas de Estadísticas */}
@@ -1295,118 +1300,268 @@ export default function ReportesPage() {
                       </h3>
                     </div>
 
-                    {/* Gráfica de Pie para Tipos de Servicio */}
+                    {/* Gráfica de Barras Horizontales por Tipo de Solicitud */}
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Tipo de Servicio</h3>
                       
-                      <div className="h-96 mb-6">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <defs>
-                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => {
-                                const color = COLORES_TIPOS_SERVICIO[tipo.tipoServicio as keyof typeof COLORES_TIPOS_SERVICIO] || COLORES_GRAFICAS[index % COLORES_GRAFICAS.length]
-                                return (
-                                  <linearGradient key={`gradient-${tipo.tipoServicio}`} id={`gradient-${tipo.tipoServicio.replace(/\s+/g, '-')}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor={color} stopOpacity={1} />
-                                    <stop offset="100%" stopColor={color} stopOpacity={0.8} />
-                                  </linearGradient>
-
-                                )
-                              })}
-                            </defs>
-                            <Pie
-                              data={datosReporte.tiposServicio?.map((tipo: any) => ({
-                                name: tipo.tipoServicio,
-                                value: tipo.cantidad,
-                                monto: tipo.monto,
-                                montoBase: tipo.montoBase,
-                                iva: tipo.iva,
-                                porcentaje: tipo.porcentaje
-                              })) || []}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={(props) => {
-                                const tipoData = datosReporte.tiposServicio?.[props.index]
-                                return <CustomPieLabel {...props} data={datosReporte.tiposServicio?.map((tipo: any) => ({ value: tipo.cantidad })) || []} porcentaje={tipoData?.porcentaje} />
-                              }}
-                              outerRadius={120}
-                              innerRadius={60}
-                              fill="#8884d8"
-                              dataKey="value"
-                              stroke="#fff"
-                              strokeWidth={3}
-                              startAngle={90}
-                              endAngle={450}
-                            >
-                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
-                                <Cell 
-                                  key={`cell-${index}`} 
-                                  fill={`url(#gradient-${tipo.tipoServicio.replace(/\s+/g, '-')})`}
+                      <div className="mb-3" style={{ minHeight: `${Math.max(200, (datosReporte.tiposServicio?.length || 2) * 80 + 160)}px` }}>
+                        {/* Barras horizontales apiladas por estado */}
+                        <div className="space-y-6">
+                          {/* Definir colores por estado */}
+                          {(() => {
+                            const coloresEstados = {
+                              'Solicitada': { bg: 'bg-gray-400', color: '#9CA3AF' },
+                              'Devuelta': { bg: 'bg-red-500', color: '#EF4444' },
+                              'Generada': { bg: 'bg-yellow-400', color: '#FBBF24' },
+                              'Aprobada': { bg: 'bg-sky-400', color: '#38BDF8' },
+                              'Pagada': { bg: 'bg-green-700', color: '#15803D' }
+                            }
+                            
+                            const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
+                            const roundedMax = Math.ceil(maxValue / 100) * 100
+                            const steps = [0, Math.round(roundedMax * 0.25), Math.round(roundedMax * 0.5), Math.round(roundedMax * 0.75), roundedMax]
+                            
+                            return (
+                              <div>
+                                {/* Leyenda de estados en orden lógico */}
+                                <div className="flex flex-wrap gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-sm font-medium text-gray-700">Estados (orden del proceso):</span>
+                                  {['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada'].map((estado) => {
+                                    const config = coloresEstados[estado as keyof typeof coloresEstados]
+                                    return (
+                                      <div key={estado} className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded ${config.bg}`}></div>
+                                        <span className="text-xs font-medium text-gray-600">{estado}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                                
+                                {/* Eje superior con valores de referencia */}
+                                <div className="flex items-center mb-2">
+                                  <div className="w-48"></div>
+                                  <div className="flex-1 flex justify-between text-xs text-gray-500 px-1">
+                                    {steps.map((step, index) => (
+                                      <span key={index} className="font-medium">{step}</span>
+                                    ))}
+                                  </div>
+                                  <div className="w-16"></div>
+                                </div>
+                                
+                                {/* Líneas de grid vertical */}
+                                <div className="flex items-center mb-4">
+                                  <div className="w-48"></div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute inset-0 flex justify-between">
+                                      {steps.map((_, index) => (
+                                        <div key={index} className="w-px bg-gray-300 h-full opacity-60"></div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="w-16"></div>
+                                </div>
+                                
+                                {/* Barras apiladas */}
+                                <div className="space-y-3">
+                                  {datosReporte.tiposServicio
+                                    ?.sort((a: any, b: any) => b.cantidad - a.cantidad)
+                                    .map((tipo: any, index: number) => {
+                                      const totalPercentage = (Number(tipo.cantidad) / roundedMax) * 100
+                                      
+                                      return (
+                                        <div key={index} className="flex items-center">
+                                          <div className="w-48 text-sm font-medium text-gray-700 text-right pr-4">
+                                            {tipo.tipoServicio}
+                                          </div>
+                                          <div className="flex-1 relative">
+                                            {/* Grid de fondo */}
+                                            <div className="absolute inset-0 flex justify-between opacity-30">
+                                              {steps.map((_, gridIndex) => (
+                                                <div key={gridIndex} className="w-px bg-gray-300 h-full"></div>
+                                              ))}
+                                            </div>
+                                            
+                                            {/* Barra apilada */}
+                                            <div className="bg-gray-100 rounded h-10 relative overflow-hidden border border-gray-200">
+                                              <div 
+                                                className="flex h-full"
+                                                style={{ width: `${totalPercentage}%`, minWidth: totalPercentage > 0 ? '50px' : '0px' }}
+                                              >
+                                                {(() => {
+                                                  // Orden lógico de los estados según el flujo del proceso
+                                                  const ordenEstados = ['Solicitada', 'Devuelta', 'Generada', 'Aprobada', 'Pagada']
+                                                  
+                                                  return ordenEstados
+                                                    .filter(estado => (tipo.estados || {})[estado] > 0)
+                                                    .map((estado, segIndex) => {
+                                                      const cantidad = tipo.estados[estado]
+                                                      const segmentPercentage = (Number(cantidad) / tipo.cantidad) * 100
+                                                      const config = coloresEstados[estado as keyof typeof coloresEstados]
+                                                      
+                                                      return (
+                                                        <div
+                                                          key={segIndex}
+                                                          className="flex items-center justify-center text-white text-xs font-semibold relative group cursor-pointer hover:opacity-80 transition-opacity"
                                   style={{
-                                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))'
-                                  }}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              content={({ active, payload }) => {
-                                if (active && payload && payload.length) {
-                                  const data = payload[0].payload
-                                  return (
-                                    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                                      <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
-                                      <div className="space-y-1 text-sm">
-                                        <p className="text-blue-600">Cantidad: <span className="font-medium">{data.value}</span></p>
-                                        <p className="text-green-600">Monto Base: <span className="font-medium">{formatCurrency(data.montoBase)}</span></p>
-                                        <p className="text-orange-600">IVA: <span className="font-medium">{formatCurrency(data.iva)}</span></p>
-                                        <p className="text-purple-600">Total: <span className="font-medium">{formatCurrency(data.monto)}</span></p>
-                                        <p className="text-gray-600">Participación: <span className="font-medium">{data.porcentaje}%</span></p>
+                                                            width: `${segmentPercentage}%`,
+                                                            backgroundColor: config?.color || '#6B7280',
+                                                            minWidth: segmentPercentage > 10 ? 'auto' : '20px'
+                                                          }}
+                                                          title={`${estado}: ${cantidad} solicitudes - Clic para ver detalles`}
+                                                          onClick={() => {
+                                                            // Filtrar solicitudes por tipo y estado
+                                                            const solicitudesFiltradas = tipo.ordenes.filter((orden: any) => orden.estado === estado)
+                                                            setSeccionSeleccionada({
+                                                              tipoServicio: tipo.tipoServicio,
+                                                              estado: estado,
+                                                              solicitudes: solicitudesFiltradas
+                                                            })
+                                                          }}
+                                                        >
+                                                          {segmentPercentage > 10 && (
+                                                            <span className="text-white text-xs font-semibold">
+                                                              {cantidad}
+                                                            </span>
+                                                          )}
+                                                          
+                                                          {/* Tooltip */}
+                                                          <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-black text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                                            {estado}: {cantidad} solicitudes
                                       </div>
                                     </div>
                                   )
-                                }
-                                return null
-                              }}
-                            />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              height={36}
-                              formatter={(value: string) => value.length > 25 ? value.substring(0, 22) + '...' : value}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
+                                                    })
+                                                })()}
                       </div>
 
-                      {/* Tabla de Detalles */}
-                      <div className="mt-6 border-t pt-6">
-                        <h4 className="text-md font-medium text-gray-900 mb-4">Detalle por Tipo de Servicio</h4>
+                                              {/* Total en el extremo derecho */}
+                                              <div className="absolute right-2 top-0 h-full flex items-center">
+                                                <span className="text-gray-700 text-sm font-semibold bg-white bg-opacity-90 px-1 rounded">
+                                                  {tipo.cantidad}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="w-16 text-sm text-gray-600 font-medium text-center">
+                                            {tipo.porcentaje}%
+                                          </div>
+                                        </div>
+                                      )
+                                    }) || []}
+                                </div>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Tabla de Detalles Interactiva */}
+                      <div className="mt-3 border-t pt-4">
+                        {seccionSeleccionada ? (
+                          <div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-md font-medium text-gray-900">
+                                Detalles: {seccionSeleccionada.tipoServicio} - Estado "{seccionSeleccionada.estado}"
+                                <span className="ml-2 text-sm text-gray-600">
+                                  ({seccionSeleccionada.solicitudes.length} solicitudes)
+                                </span>
+                              </h4>
+                              <button
+                                onClick={() => setSeccionSeleccionada(null)}
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+                              >
+                                Cerrar detalles
+                              </button>
+                            </div>
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Servicio</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Solicitado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Monto Solicitado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tipo.tipoServicio}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tipo.cantidad}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.montoBase)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.iva)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(tipo.monto)}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tipo.porcentaje}%</td>
-                                </tr>
-                              )) || <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No hay datos disponibles</td></tr>}
-                            </tbody>
-                          </table>
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-32">
+                                      Fecha de Solicitud
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-36">
+                                      Número de Solicitud
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-20">
+                                      Compañía Receptora
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-16">
+                                      Concepto
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider w-32">
+                                      Valor Total
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {seccionSeleccionada.solicitudes.slice(0, 20).map((solicitud: any, index: number) => (
+                                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-32">
+                                        {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-36">
+                                        {solicitud.numero_solicitud}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 w-20 truncate">
+                                        <div title={solicitud.compania_receptora}>
+                                          {solicitud.compania_receptora}
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-gray-900 w-16 truncate">
+                                        <div title={solicitud.concepto}>
+                                          {solicitud.concepto}
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right w-32">
+                                        {formatCurrency(solicitud.total_solicitud)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                              {seccionSeleccionada.solicitudes.length > 20 && (
+                                <div className="mt-3 text-sm text-gray-600 text-center">
+                                  Mostrando las primeras 20 de {seccionSeleccionada.solicitudes.length} solicitudes
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h4 className="text-md font-medium text-gray-900 mb-4">
+                              Detalle por Tipo de Solicitud
+                              <span className="block text-sm font-normal text-gray-600 mt-1">
+                                Haz clic en cualquier sección de las barras para ver detalles específicos
+                              </span>
+                            </h4>
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider">Tipo de Solicitud</th>
+                                    <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 tracking-wider">Cantidad</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">Monto Solicitado</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">Iva</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">Total Monto Solicitado</th>
+                                    <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 tracking-wider">Porcentaje</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tipo.tipoServicio}</td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{tipo.cantidad}</td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.montoBase)}</td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.iva)}</td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.monto)}</td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{tipo.porcentaje}%</td>
+                                    </tr>
+                                  )) || <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No hay datos disponibles</td></tr>}
+                                </tbody>
+                              </table>
                         </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
