@@ -2385,12 +2385,35 @@ export default function ReportesPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Proveedor/Acreedor
+                      👤 Proveedor/Acreedor
                     </label>
                     <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                       {solicitudModal.solicitud?.proveedor || 'N/A'}
                     </div>
                   </div>
+
+                  {/* Campos específicos para Pago de Servicios Públicos */}
+                  {solicitudModal.solicitud?.tipo_solicitud === 'Pago de Servicios Públicos' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          🏢 Area Solicitante
+                        </label>
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                          {solicitudModal.solicitud?.area_solicitante || 'N/A'}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ✅ Autorizador
+                        </label>
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                          {solicitudModal.solicitud?.autorizador || 'N/A'}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {solicitudModal.solicitud?.descripcion && (
