@@ -1715,7 +1715,7 @@ export default function ReportesPage() {
                                         onClick={() => handleSort('fecha_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                                       >
-                                        <div className="capitalize">
+                                        <div>
                                           <div>Fecha de</div>
                                           <div>Solicitud</div>
                                         </div>
@@ -1727,7 +1727,7 @@ export default function ReportesPage() {
                                         onClick={() => handleSort('numero_solicitud')}
                                         className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                                       >
-                                        <div className="capitalize">
+                                        <div>
                                           <div>Número de</div>
                                           <div>Solicitud</div>
                                         </div>
@@ -1740,7 +1740,7 @@ export default function ReportesPage() {
                                           onClick={() => handleSort('compania_receptora')}
                                           className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                                         >
-                                          <div className="capitalize">
+                                          <div>
                                             <div>Compañía</div>
                                             <div>Receptora</div>
                                           </div>
@@ -1761,7 +1761,7 @@ export default function ReportesPage() {
                                           onClick={() => handleSort('concepto')}
                                           className="flex items-start justify-between cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                                         >
-                                          <div className="capitalize">
+                                          <div>
                                             <div>Concepto</div>
                                           </div>
                                           {getSortIcon('concepto')}
@@ -1781,7 +1781,7 @@ export default function ReportesPage() {
                                         className="flex items-start justify-end cursor-pointer hover:bg-gray-100 transition-colors p-1 rounded"
                                       >
                                         <div className="flex items-start gap-2">
-                                          <div className="capitalize text-right">
+                                          <div className="text-right">
                                             <div>Total Monto</div>
                                             <div>Solicitado</div>
                                           </div>
@@ -1799,13 +1799,13 @@ export default function ReportesPage() {
                                       </td>
                                       <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() => {
-                                              setSolicitudModal({ isOpen: true, solicitud: solicitud })
-                                            }}
-                                            className="group flex items-center justify-center w-5 h-5 transition-colors"
-                                            title="Ver solicitud"
-                                          >
+                                          <div className="relative group">
+                                            <button
+                                              onClick={() => {
+                                                setSolicitudModal({ isOpen: true, solicitud: solicitud })
+                                              }}
+                                              className="group flex items-center justify-center w-5 h-5 transition-colors"
+                                            >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                                               {/* Borde de la hoja - Verde institucional en hover */}
                                               <path 
@@ -1826,7 +1826,13 @@ export default function ReportesPage() {
                                                 d="M17.586 3.586a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                               />
                                             </svg>
-                                          </button>
+                                            </button>
+                                            {/* Tooltip personalizado - aparece inmediatamente */}
+                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-100 pointer-events-none whitespace-nowrap z-10">
+                                              Ver solicitud
+                                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-l-transparent border-r-transparent border-t-gray-800"></div>
+                                            </div>
+                                          </div>
                                           <span>{solicitud.numero_solicitud}</span>
                                         </div>
                                       </td>
