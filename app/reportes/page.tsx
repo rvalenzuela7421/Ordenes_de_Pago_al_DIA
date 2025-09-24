@@ -151,7 +151,7 @@ export default function ReportesPage() {
     solicitudes: any[]
   } | null>(null)
   
-  // Estados para ordenamiento y filtros de la tabla de detalles
+  // Estados para ordenamiento, filtros y paginación de la tabla de detalles
   const [sortState, setSortState] = useState<{
     field: string
     direction: 'asc' | 'desc'
@@ -161,6 +161,9 @@ export default function ReportesPage() {
     companiaReceptora: [] as string[],
     concepto: [] as string[]
   })
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [filtros, setFiltros] = useState<FilterState>({
     dateRange: { from: '', to: '' },
     proveedores: [],
@@ -918,8 +921,8 @@ export default function ReportesPage() {
     return uniqueValues
   }
 
-  // Función para aplicar ordenamiento y filtros a las solicitudes
-  const getSolicitudesFiltradas = () => {
+  // Función para aplicar ordenamiento y filtros a las solicitudes (sin paginación para contar totales)
+  const getAllFilteredSolicitudes = () => {
     if (!seccionSeleccionada) return []
     
     let solicitudes = [...seccionSeleccionada.solicitudes]
@@ -961,6 +964,29 @@ export default function ReportesPage() {
 
     return solicitudes
   }
+
+  // Función para aplicar paginación a las solicitudes filtradas
+  const getSolicitudesFiltradas = () => {
+    const allFiltered = getAllFilteredSolicitudes()
+    
+    if (pageSize === 0) return allFiltered // Mostrar todos
+    
+    const startIndex = (currentPage - 1) * pageSize
+    return allFiltered.slice(startIndex, startIndex + pageSize)
+  }
+
+  // Calcular datos de paginación
+  const allFilteredSolicitudes = getAllFilteredSolicitudes()
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(allFilteredSolicitudes.length / pageSize)
+  const startRecord = allFilteredSolicitudes.length > 0 ? 
+    (pageSize === 0 ? 1 : (currentPage - 1) * pageSize + 1) : 0
+  const endRecord = allFilteredSolicitudes.length > 0 ? 
+    (pageSize === 0 ? allFilteredSolicitudes.length : Math.min(currentPage * pageSize, allFilteredSolicitudes.length)) : 0
+
+  // Resetear página cuando cambien los filtros
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filtrosTabla, sortState])
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -1608,6 +1634,7 @@ export default function ReportesPage() {
                                   // Limpiar filtros al cambiar de sección
                                   setFiltrosTabla({ companiaReceptora: [], concepto: [] })
                                   setSortState({ field: 'fecha_solicitud', direction: 'desc' })
+                                  setCurrentPage(1)
                                 }}
                                                         >
                                                           {segmentPercentage > 10 && (
@@ -1655,7 +1682,7 @@ export default function ReportesPage() {
                               <h4 className="text-md font-medium text-gray-900">
                                 Detalles: {seccionSeleccionada.tipoServicio} - Estado "{seccionSeleccionada.estado}"
                                 <span className="ml-2 text-sm text-gray-600">
-                                  ({seccionSeleccionada.solicitudes.length} solicitudes)
+                                  ({allFilteredSolicitudes.length} solicitudes)
                                 </span>
                               </h4>
                               <button
@@ -1663,6 +1690,7 @@ export default function ReportesPage() {
                                   setSeccionSeleccionada(null)
                                   setFiltrosTabla({ companiaReceptora: [], concepto: [] })
                                   setSortState({ field: 'fecha_solicitud', direction: 'desc' })
+                                  setCurrentPage(1)
                                 }}
                                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-800 bg-yellow-400 hover:bg-yellow-500 rounded-md transition-colors duration-200"
                               >
@@ -1739,7 +1767,7 @@ export default function ReportesPage() {
                                           placeholder="Filtrar..."
                                           maxDisplay={1}
                                         />
-                                      </div>
+                      </div>
                                     </th>
                                     <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 w-[130px]">
                                       <div 
@@ -1758,7 +1786,7 @@ export default function ReportesPage() {
                                   </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                  {getSolicitudesFiltradas().slice(0, 50).map((solicitud: any, index: number) => (
+                                  {getSolicitudesFiltradas().map((solicitud: any, index: number) => (
                                     <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}>
                                       <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
@@ -1790,12 +1818,82 @@ export default function ReportesPage() {
                                   )}
                                 </tbody>
                               </table>
-                              {getSolicitudesFiltradas().length > 50 && (
-                                <div className="mt-3 text-sm text-gray-600 text-center">
-                                  Mostrando las primeras 50 de {getSolicitudesFiltradas().length} solicitudes
-                                </div>
-                              )}
                             </div>
+
+                            {/* Controles de paginación */}
+                            {allFilteredSolicitudes.length > 0 && totalPages > 1 && pageSize > 0 && (
+                              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                  <div className="text-sm text-gray-700">
+                                    Página <span className="font-medium">{currentPage}</span> de{' '}
+                                    <span className="font-medium">{totalPages}</span>
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-2">
+                                    {/* Indicador de registros mostrados */}
+                                    <div className="text-sm text-gray-600 mr-4">
+                                      Mostrando {startRecord} a {endRecord} registros de {allFilteredSolicitudes.length}
+                                    </div>
+                                    
+                                    <button
+                                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                      disabled={currentPage === 1}
+                                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      Anterior
+                                    </button>
+                                    
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
+                                      if (pageNum > totalPages) return null
+                                      
+                                      return (
+                                        <button
+                                          key={pageNum}
+                                          onClick={() => setCurrentPage(pageNum)}
+                                          className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                                            currentPage === pageNum
+                                              ? 'bg-bolivar-green text-white'
+                                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          {pageNum}
+                                        </button>
+                                      )
+                                    })}
+                                    
+                                    <button
+                                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                      disabled={currentPage === totalPages}
+                                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      Siguiente
+                                    </button>
+                                    
+                                    {/* Controles de paginación */}
+                                    <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
+                                      <select
+                                        value={pageSize}
+                                        onChange={(e) => {
+                                          setPageSize(Number(e.target.value))
+                                          setCurrentPage(1) // Reset a la primera página al cambiar tamaño
+                                        }}
+                                        className="px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-bolivar-green"
+                                      >
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                        <option value={0}>Todos</option>
+                                      </select>
+                                      <span className="text-sm text-gray-600 whitespace-nowrap">
+                                        por página
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div>
@@ -1805,31 +1903,31 @@ export default function ReportesPage() {
                                 Haz clic en cualquier sección de las barras para ver detalles específicos
                               </span>
                             </h4>
-                            <div className="overflow-x-auto">
-                              <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                  <tr>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
                                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider">Tipo de Solicitud</th>
                                     <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 tracking-wider">Cantidad</th>
                                     <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">Monto Solicitado</th>
                                     <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">IVA</th>
                                     <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider">Total Monto Solicitado</th>
                                     <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 tracking-wider">Porcentaje</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                  {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
-                                    <tr key={index} className="hover:bg-gray-50">
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tipo.tipoServicio}</td>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {datosReporte.tiposServicio?.map((tipo: any, index: number) => (
+                                <tr key={index} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tipo.tipoServicio}</td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{tipo.cantidad}</td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.montoBase)}</td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.iva)}</td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(tipo.monto)}</td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{tipo.porcentaje}%</td>
-                                    </tr>
-                                  )) || <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No hay datos disponibles</td></tr>}
-                                </tbody>
-                              </table>
+                                </tr>
+                              )) || <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No hay datos disponibles</td></tr>}
+                            </tbody>
+                          </table>
                         </div>
                           </div>
                         )}
