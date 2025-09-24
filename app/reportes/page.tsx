@@ -39,13 +39,13 @@ import {
 
 type TipoReporte = 'estados' | 'periodos' | 'tipoServicio' | 'financiero' | 'eficiencia' | null
 
-// Colores para las gráficas - Exactamente iguales al dashboard
+// Colores para las gráficas - Tonos pastel como la modal
 const COLORES_ESTADOS = {
-  'Solicitada': '#1D4ED8',   // azul (blue-600) - exacto del dashboard
-  'Devuelta': '#DC2626',     // rojo (red-600) - exacto del dashboard
-  'Generada': '#D97706',     // amarillo (yellow-600) - exacto del dashboard
-  'Aprobada': '#16A34A',     // verde (green-600) - exacto del dashboard
-  'Pagada': '#047857'        // esmeralda (emerald-700) - exacto del dashboard
+  'Solicitada': '#DBEAFE',   // azul pastel (blue-200) - suave y elegante
+  'Devuelta': '#FECACA',     // rojo pastel (red-200) - suave y elegante
+  'Generada': '#FEF3C7',     // amarillo pastel (yellow-200) - suave y elegante
+  'Aprobada': '#D1FAE5',     // verde pastel (green-200) - suave y elegante
+  'Pagada': '#A7F3D0'        // esmeralda pastel (emerald-200) - suave y elegante
 }
 
 const COLORES_TIPOS_SERVICIO = {
@@ -1531,11 +1531,11 @@ export default function ReportesPage() {
                           {/* Definir colores por estado */}
                           {(() => {
                             const coloresEstados = {
-                              'Solicitada': { bg: 'bg-blue-600', color: '#1D4ED8' },
-                              'Devuelta': { bg: 'bg-red-600', color: '#DC2626' },
-                              'Generada': { bg: 'bg-yellow-600', color: '#D97706' },
-                              'Aprobada': { bg: 'bg-green-600', color: '#16A34A' },
-                              'Pagada': { bg: 'bg-emerald-700', color: '#047857' }
+                              'Solicitada': { bg: 'bg-blue-200', color: '#DBEAFE' },
+                              'Devuelta': { bg: 'bg-red-200', color: '#FECACA' },
+                              'Generada': { bg: 'bg-yellow-200', color: '#FEF3C7' },
+                              'Aprobada': { bg: 'bg-green-200', color: '#D1FAE5' },
+                              'Pagada': { bg: 'bg-emerald-200', color: '#A7F3D0' }
                             }
                             
                             const maxValue = Math.max(...(datosReporte.tiposServicio?.map((t: any) => Number(t.cantidad)) || [1]))
