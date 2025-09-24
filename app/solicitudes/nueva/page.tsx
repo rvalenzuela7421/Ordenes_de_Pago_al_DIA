@@ -1353,7 +1353,7 @@ export default function NuevaSolicitudPage() {
             <svg className="w-5 h-5 text-bolivar-green mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            Información de la Solicitud
+            Información del Documento de Cobro
           </h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1508,7 +1508,7 @@ export default function NuevaSolicitudPage() {
             {/* Acreedor */}
             <div>
               <label htmlFor="acreedor" className="block text-sm font-medium text-gray-700 mb-2">
-                Acreedor <span className="text-red-500">*</span>
+                Proveedor/Acreedor <span className="text-red-500">*</span>
               </label>
               <select
                 id="acreedor"
@@ -1970,7 +1970,7 @@ export default function NuevaSolicitudPage() {
               </h3>
               <div className="text-sm text-gray-600 mb-6 space-y-2">
                 <p><strong>Compañía Receptora:</strong> {formData.proveedor}</p>
-                <p><strong>Acreedor:</strong> {formData.acreedor}</p>
+                <p><strong>Proveedor/Acreedor:</strong> {formData.acreedor}</p>
                 {tipoSolicitud === 'Pago de Servicios Públicos' && formData.areaSolicitante && (
                   <p><strong>Area Solicitante:</strong> {formData.areaSolicitante}</p>
                 )}
