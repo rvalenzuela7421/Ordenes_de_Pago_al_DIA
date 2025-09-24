@@ -150,6 +150,17 @@ export default function ReportesPage() {
     estado: string
     solicitudes: any[]
   } | null>(null)
+  
+  // Estados para ordenamiento y filtros de la tabla de detalles
+  const [sortState, setSortState] = useState<{
+    field: string
+    direction: 'asc' | 'desc'
+  }>({ field: 'fecha_solicitud', direction: 'desc' })
+  
+  const [filtrosTabla, setFiltrosTabla] = useState({
+    companiaReceptora: '',
+    concepto: ''
+  })
   const [filtros, setFiltros] = useState<FilterState>({
     dateRange: { from: '', to: '' },
     proveedores: [],
@@ -770,6 +781,76 @@ export default function ReportesPage() {
       console.error('Error exportando datos:', error)
     }
     setLoading(false)
+  }
+
+  // Funciones para ordenamiento y filtros de tabla de detalles
+  const handleSort = (field: string) => {
+    setSortState(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === 'desc' ? 'asc' : 'desc'
+    }))
+  }
+
+  const getSortIcon = (field: string) => {
+    if (sortState.field !== field) {
+      return <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+      </svg>
+    }
+    
+    return sortState.direction === 'desc' ? (
+      <svg className="w-3 h-3 text-bolivar-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    ) : (
+      <svg className="w-3 h-3 text-bolivar-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    )
+  }
+
+  // Función para aplicar ordenamiento y filtros a las solicitudes
+  const getSolicitudesFiltradas = () => {
+    if (!seccionSeleccionada) return []
+    
+    let solicitudes = [...seccionSeleccionada.solicitudes]
+
+    // Aplicar filtros
+    if (filtrosTabla.companiaReceptora) {
+      solicitudes = solicitudes.filter(s => 
+        s.compania_receptora?.toLowerCase().includes(filtrosTabla.companiaReceptora.toLowerCase())
+      )
+    }
+    
+    if (filtrosTabla.concepto) {
+      solicitudes = solicitudes.filter(s => 
+        s.concepto?.toLowerCase().includes(filtrosTabla.concepto.toLowerCase())
+      )
+    }
+
+    // Aplicar ordenamiento
+    solicitudes.sort((a, b) => {
+      let aVal = a[sortState.field]
+      let bVal = b[sortState.field]
+      
+      // Manejar fechas
+      if (sortState.field.includes('fecha')) {
+        aVal = aVal ? new Date(aVal) : null
+        bVal = bVal ? new Date(bVal) : null
+      }
+      
+      // Manejar valores null/undefined
+      if (aVal == null && bVal == null) return 0
+      if (aVal == null) return sortState.direction === 'asc' ? -1 : 1
+      if (bVal == null) return sortState.direction === 'asc' ? 1 : -1
+      
+      // Comparación normal
+      if (aVal < bVal) return sortState.direction === 'asc' ? -1 : 1
+      if (aVal > bVal) return sortState.direction === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return solicitudes
   }
 
   return (
@@ -1415,6 +1496,9 @@ export default function ReportesPage() {
                                                               estado: estado,
                                                               solicitudes: solicitudesFiltradas
                                                             })
+                                                            // Limpiar filtros al cambiar de sección
+                                                            setFiltrosTabla({ companiaReceptora: '', concepto: '' })
+                                                            setSortState({ field: 'fecha_solicitud', direction: 'desc' })
                                                           }}
                                                         >
                                                           {segmentPercentage > 10 && (
@@ -1466,36 +1550,106 @@ export default function ReportesPage() {
                                 </span>
                               </h4>
                               <button
-                                onClick={() => setSeccionSeleccionada(null)}
+                                onClick={() => {
+                                  setSeccionSeleccionada(null)
+                                  setFiltrosTabla({ companiaReceptora: '', concepto: '' })
+                                  setSortState({ field: 'fecha_solicitud', direction: 'desc' })
+                                }}
                                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
                               >
                                 Cerrar detalles
                               </button>
                             </div>
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
+                            {/* Filtros */}
+                            <div className="mb-4 flex gap-4">
+                              <div className="w-64">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Filtrar por Compañía Receptora
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Buscar compañía..."
+                                  value={filtrosTabla.companiaReceptora}
+                                  onChange={(e) => setFiltrosTabla(prev => ({ ...prev, companiaReceptora: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                                />
+                              </div>
+                              <div className="w-64">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Filtrar por Concepto
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Buscar concepto..."
+                                  value={filtrosTabla.concepto}
+                                  onChange={(e) => setFiltrosTabla(prev => ({ ...prev, concepto: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-bolivar-green focus:border-transparent"
+                                />
+                              </div>
+                              <div className="flex items-end">
+                                <button
+                                  onClick={() => setFiltrosTabla({ companiaReceptora: '', concepto: '' })}
+                                  className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+                                >
+                                  Limpiar filtros
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-32">
-                                      Fecha de Solicitud
+                                    <th 
+                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-32 cursor-pointer hover:bg-gray-100 select-none"
+                                      onClick={() => handleSort('fecha_solicitud')}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        Fecha de Solicitud
+                                        {getSortIcon('fecha_solicitud')}
+                                      </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-36">
-                                      Número de Solicitud
+                                    <th 
+                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-36 cursor-pointer hover:bg-gray-100 select-none"
+                                      onClick={() => handleSort('numero_solicitud')}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        Número de Solicitud
+                                        {getSortIcon('numero_solicitud')}
+                                      </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-20">
-                                      Compañía Receptora
+                                    <th 
+                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-20 cursor-pointer hover:bg-gray-100 select-none"
+                                      onClick={() => handleSort('compania_receptora')}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        Compañía Receptora
+                                        {getSortIcon('compania_receptora')}
+                                      </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-16">
-                                      Concepto
+                                    <th 
+                                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 tracking-wider w-16 cursor-pointer hover:bg-gray-100 select-none"
+                                      onClick={() => handleSort('concepto')}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        Concepto
+                                        {getSortIcon('concepto')}
+                                      </div>
                                     </th>
-                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider w-32">
-                                      Valor Total
+                                    <th 
+                                      className="px-6 py-3 text-right text-sm font-medium text-gray-500 tracking-wider w-32 cursor-pointer hover:bg-gray-100 select-none"
+                                      onClick={() => handleSort('total_solicitud')}
+                                    >
+                                      <div className="flex items-center justify-end gap-2">
+                                        Valor Total
+                                        {getSortIcon('total_solicitud')}
+                                      </div>
                                     </th>
                                   </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                  {seccionSeleccionada.solicitudes.slice(0, 20).map((solicitud: any, index: number) => (
-                                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                  {getSolicitudesFiltradas().slice(0, 50).map((solicitud: any, index: number) => (
+                                    <tr key={index} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-32">
                                         {new Date(solicitud.fecha_solicitud).toLocaleDateString('es-CO')}
                                       </td>
@@ -1517,11 +1671,18 @@ export default function ReportesPage() {
                                       </td>
                                     </tr>
                                   ))}
+                                  {getSolicitudesFiltradas().length === 0 && (
+                                    <tr>
+                                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                        No se encontraron solicitudes con los filtros aplicados
+                                      </td>
+                                    </tr>
+                                  )}
                                 </tbody>
                               </table>
-                              {seccionSeleccionada.solicitudes.length > 20 && (
+                              {getSolicitudesFiltradas().length > 50 && (
                                 <div className="mt-3 text-sm text-gray-600 text-center">
-                                  Mostrando las primeras 20 de {seccionSeleccionada.solicitudes.length} solicitudes
+                                  Mostrando las primeras 50 de {getSolicitudesFiltradas().length} solicitudes
                                 </div>
                               )}
                             </div>
