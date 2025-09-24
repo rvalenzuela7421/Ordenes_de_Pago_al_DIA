@@ -1798,11 +1798,28 @@ export default function ReportesPage() {
                                               // TODO: Implementar funcionalidad de edición
                                               console.log('Editar solicitud:', solicitud.numero_solicitud)
                                             }}
-                                            className="flex items-center justify-center w-5 h-5 text-gray-400 hover:text-blue-600 transition-colors"
+                                            className="group flex items-center justify-center w-5 h-5 transition-colors"
                                             title="Editar solicitud"
                                           >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                              {/* Borde de la hoja - Verde institucional en hover */}
+                                              <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                stroke="currentColor"
+                                                className="text-gray-400 group-hover:text-green-700 transition-colors"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5"
+                                              />
+                                              {/* Lápiz - Amarillo institucional en hover */}
+                                              <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                stroke="currentColor"
+                                                className="text-gray-400 group-hover:text-yellow-400 transition-colors"
+                                                d="M17.586 3.586a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
                                             </svg>
                                           </button>
                                           <span>{solicitud.numero_solicitud}</span>
