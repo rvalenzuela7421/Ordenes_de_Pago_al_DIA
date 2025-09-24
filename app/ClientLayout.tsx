@@ -135,7 +135,9 @@ export default function ClientLayout({
     }
     
     // Guardar la ruta actual para la próxima navegación
-    sessionStorage.setItem('previousPath', pathname)
+    if (pathname) {
+      sessionStorage.setItem('previousPath', pathname)
+    }
   }, [pathname, isAuthRoute])
 
   // También escuchar eventos de focus de la ventana (cuando el usuario regresa)
