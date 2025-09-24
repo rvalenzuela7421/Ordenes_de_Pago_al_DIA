@@ -44,7 +44,7 @@ const COLORES_ESTADOS = {
   'Solicitada': '#60A5FA',   // azul intermedio (blue-400) - visible y equilibrado
   'Devuelta': '#F87171',     // rojo intermedio (red-400) - visible y equilibrado
   'Generada': '#FBBF24',     // amarillo intermedio (yellow-400) - visible y equilibrado
-  'Aprobada': '#4ADE80',     // verde intermedio (green-400) - visible y equilibrado
+  'Aprobada': '#A78BFA',     // morado intermedio (purple-400) - visible y equilibrado
   'Pagada': '#34D399'        // esmeralda intermedio (emerald-400) - visible y equilibrado
 }
 
@@ -1534,7 +1534,7 @@ export default function ReportesPage() {
                               'Solicitada': { bg: 'bg-blue-400', color: '#60A5FA' },
                               'Devuelta': { bg: 'bg-red-400', color: '#F87171' },
                               'Generada': { bg: 'bg-yellow-400', color: '#FBBF24' },
-                              'Aprobada': { bg: 'bg-green-400', color: '#4ADE80' },
+                              'Aprobada': { bg: 'bg-purple-400', color: '#A78BFA' },
                               'Pagada': { bg: 'bg-emerald-400', color: '#34D399' }
                             }
                             
@@ -2315,7 +2315,7 @@ export default function ReportesPage() {
                       solicitudModal.solicitud?.estado === 'Solicitada' ? 'bg-blue-100 text-blue-800' :
                       solicitudModal.solicitud?.estado === 'Devuelta' ? 'bg-red-100 text-red-800' :
                       solicitudModal.solicitud?.estado === 'Generada' ? 'bg-yellow-100 text-yellow-800' :
-                      solicitudModal.solicitud?.estado === 'Aprobada' ? 'bg-green-100 text-green-800' :
+                      solicitudModal.solicitud?.estado === 'Aprobada' ? 'bg-purple-100 text-purple-800' :
                       solicitudModal.solicitud?.estado === 'Pagada' ? 'bg-emerald-100 text-emerald-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>

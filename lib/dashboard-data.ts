@@ -322,9 +322,9 @@ export function getEstadoColor(estado: string): { bg: string; text: string; bord
       border: 'border-yellow-200'
     },
     'Aprobada': {
-      bg: 'bg-green-100',
-      text: 'text-green-800',
-      border: 'border-green-200'
+      bg: 'bg-purple-100',
+      text: 'text-purple-800',
+      border: 'border-purple-200'
     },
     'Pagada': {
       bg: 'bg-emerald-100',
