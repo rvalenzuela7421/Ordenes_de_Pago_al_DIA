@@ -195,14 +195,18 @@ export default function Dashboard() {
     if (filters.dateRange.from) {
       const fechaDesde = new Date(filters.dateRange.from + 'T00:00:00-05:00')
       filtered = filtered.filter(orden => {
-        const fechaOrden = new Date(orden[filters.dateRange.tipo])
+        const fechaValue = orden[filters.dateRange.tipo]
+        if (!fechaValue) return false
+        const fechaOrden = new Date(fechaValue)
         return fechaOrden >= fechaDesde
       })
     }
     if (filters.dateRange.to) {
       const fechaHasta = new Date(filters.dateRange.to + 'T23:59:59-05:00')
       filtered = filtered.filter(orden => {
-        const fechaOrden = new Date(orden[filters.dateRange.tipo])
+        const fechaValue = orden[filters.dateRange.tipo]
+        if (!fechaValue) return false
+        const fechaOrden = new Date(fechaValue)
         return fechaOrden <= fechaHasta
       })
     }
