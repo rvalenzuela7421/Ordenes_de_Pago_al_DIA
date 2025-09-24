@@ -1644,7 +1644,7 @@ export default function ReportesPage() {
                                 }}
                                                         >
                                                           {segmentPercentage > 10 && (
-                                                            <span className="text-white text-xs font-semibold">
+                                                            <span className="text-white text-sm font-bold">
                                                               {cantidad}
                                                             </span>
                                                           )}
